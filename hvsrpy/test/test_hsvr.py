@@ -11,14 +11,14 @@ class Test(unittest.TestCase):
     def test_init(self):
         # amp as 1d array
         frq = np.linspace(1, 10, 20)
-        amp = np.sin(2*np.pi*5*np.linspace(0, 10, 20))
+        amp = np.sin(2*np.pi*5*np.linspace(0, 10, 20))+10
         myhvsr = hv.Hvsr(amp, frq)
         self.assertListEqual(frq.tolist(), myhvsr.frq.tolist())
         self.assertListEqual(amp.tolist(), myhvsr.amp.tolist())
 
         # # amp as 2d array
         frq = np.linspace(1, 10, 20)
-        amp = np.sin(2*np.pi*5*np.linspace(0, 10, 20))*np.ones((20, 20))
+        amp = (np.sin(2*np.pi*5*np.linspace(0, 10, 20))+10)*np.ones((20, 20))
         myhvsr = hv.Hvsr(amp, frq)
         self.assertListEqual(frq.tolist(), myhvsr.frq.tolist())
         self.assertListEqual(amp.tolist(), myhvsr.amp.tolist())
@@ -26,19 +26,19 @@ class Test(unittest.TestCase):
     def test_find_peaks(self):
         # amp as 1d array - single peak
         frq = np.array([1, 2, 3, 4, 5])
-        amp = np.array([-1, 0, 1, 0, -1])
+        amp = np.array([0, 0, 1, 0, 0])
         myhvsr = hv.Hvsr(amp, frq)
         self.assertListEqual([2], hv.Hvsr.find_peaks(myhvsr.amp)[0].tolist())
 
         # amp as 2d array - single peak
         frq = np.array([1, 2, 3, 4, 5])
-        amp = np.array([[-1, 0, 1, 0, -1], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0]])
+        amp = np.array([[0, 0, 1, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0]])
         myhvsr = hv.Hvsr(amp, frq)
         self.assertListEqual([[2], [1], [2]], hv.Hvsr.find_peaks(myhvsr.amp)[0])
 
         # amp as 1d array - multiple peak
         frq = np.array([1, 2, 3, 4, 5])
-        amp = np.array([-1, 1, 0, 1, 0])
+        amp = np.array([0, 1, 0, 1, 0])
         myhvsr = hv.Hvsr(amp, frq)
         self.assertListEqual([1, 3], hv.Hvsr.find_peaks(myhvsr.amp)[0].tolist())
 

@@ -8,44 +8,71 @@ logging.getLogger()
 
 class Hvsr():
     """Class for creating and manipulating horizontal-to-vertical
-    spectral ratio objects.
+    spectral ratio (H/V) objects.
 
     Attributes:
         amp : ndarray
-            Array of horitzontal-to-vertical amplitudes. Each row
-            represents an individual curve and each column a
-            particular frequency.
+            Array of H/V amplitudes. Each row represents an individual
+            curve and each column a frequency.
         frq : ndarray
             Vector of frequencies, corresponding to each column.
         n_windows : int
-            Number of windows in hvsr object.
-        valid_windows : ndarray
-            Array of booleans of length `n_windows` which determines
-            which windows are valid.
+            Number of windows in Hvsr object.
         valid_window_indices : ndarray
-            Array of indices for valid windows.
-        peaks : ndarray
+            Array of indices indicating valid windows.
 
     """
     @staticmethod
-    def check_input(name, value):
-        pass
+    def _check_input(name, value):
+        """Basic check on input values.
+        
+        Specifically;
+            1. `value` must be of type `list`, `tuple`, `ndarray`.
+            2. If `value` is not `ndarray`, convert to `ndarray`.
+            3. `value` must be >=0. 
+
+        Args:
+            name : str
+                Name of `value` to be checked, used solely for
+                meaningful error messages.
+            value : any
+                Value to be checked.
+
+        Returns:
+            `value` which may have been cast to a `ndarray`.
+
+        Raises:
+            TypeError:
+                If `value` is not one of those specified.
+            ValueError:
+                If `value` has negative values.
+        """
+
+        if type(value) not in [list, tuple, np.ndarray]:
+            msg = f"{name} must be of type ndarray, not {type(value)}."
+            raise TypeError(msg)
+        if type(value) in [list, tuple]:
+            value = np.array(value)
+        if np.sum(value<0):
+            print(value)
+            raise ValueError(f"{name} must be >= 0.")
+        return value
 
     def __init__(self, amplitude, frequency, find_peaks=True):
         """Initialize a Hvsr oject from amplitude and frequency vector.
 
         Args:
-            amplitude : np.array
-                See class attribute documentation.
-            frequency : np.array
-                See class attribute documentation.
+            amplitude : ndarray
+                Array of H/V amplitudes. Each row represents an individual
+                curve and each column a frequency.
+            frequency : ndarray
+                Vector of frequencies, corresponding to each column.
 
         Returns:
             Initialized Hvsr object.
         """
-        # TODO (jpv): Add check, see method above.
-        self.amp = amplitude
-        self.frq = frequency
+        self.amp = self._check_input("amplitude", amplitude)
+        self.frq = self._check_input("frequency", frequency)
         self.n_windows = self.amp.shape[0] if len(self.amp.shape) > 1 else 1
         self.valid_window_indices = np.arange(self.n_windows)
         self.master_peak_frq = np.zeros(self.n_windows)
@@ -76,17 +103,18 @@ class Hvsr():
 
         Args:
             amp : ndarray
-                Vector or array of amplitudes.
-            **kwargs : various
+                Vector or array of amplitudes. See `amp` attribute for 
+                details.
+            **kwargs : dict
                 Refer to `scipy.signal.find_peaks` documentation:
                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html
 
         Returns:
-            peaks : np.array or list
-                np.array or list of np.arrays (one per window) of peak
-                indices.
+            peaks : ndarray or list
+                `ndarray` or `list` of `ndarrays` (one per window) of
+                peak indices.
 
-            properties : various
+            properties : dict
                 Refer to `scipy.signal.find_peaks` documentation.
         """
         if len(amp.shape) == 1:
@@ -100,8 +128,16 @@ class Hvsr():
             return (peaks, settings)
 
     def update_peaks(self, **kwargs):
-        """Update `peaks` attribute using the lowest frequency, highest
-        amplitude peak."""
+        """Update `peaks` attribute with the lowest frequency, highest
+        amplitude peak.
+        
+        Args:
+            **kwargs:
+                Refer to `find_peaks` documentation.
+            
+        Returns:
+            `None`, update `peaks` attribute.
+        """
         if not self.initialized_peaks:
             self.initialized_peaks=True
 
@@ -127,34 +163,42 @@ class Hvsr():
         self.valid_window_indices = np.array(valid_indices)
 
     def mean_f0(self, distribution='log-normal'):
-        """Return mean value of f0 of valid timewindows using different
-        distribution.
+        """Return mean value of `f0` of valid timewindows.
 
         Args:
             distribution : {'normal', 'log-normal'}
+                Assumed distribution of `f0`, default is `log-normal`.
 
-        Return:
-            mean : float
-                Mean value according to the distribution specified.
+        Returns:
+            Mean value of `f0` according to the distribution specified.
+
+        Raises:
+            KeyError:
+                If `distribution` does not match the available options.
         """
         if distribution == "normal":
             return np.mean(self.peak_frq)
         elif distribution == "log-normal":
             return np.exp(np.mean(np.log(self.peak_frq)))
         else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+            msg = f"distribution type {distribution} not recognized."
+            raise KeyError(msg)
 
     def std_f0(self, distribution='log-normal'):
-        """Return std_deviation value of f0 using different
-        distributions.
+        """Return sample standard deviation of `f0` of valid timewindows.
 
         Args:
-            distribution : {'normal', 'log-normal'}
+            distribution : {'normal', 'log-normal'}, optional
+                Assumed distribution of `f0`, default is `log-normal`.
 
-        Return:
+        Returns:
             std : float
                 Sample standard deviation value according to the
                 distribution specified.
+        
+        Raises:
+            KeyError:
+                If `distribution` does not match the available options.
         """
         if distribution == "normal":
             return np.std(self.peak_frq, ddof=1)
@@ -164,14 +208,20 @@ class Hvsr():
             raise KeyError(f"distribution type {distribution} not recognized.")
 
     def mean_curve(self, distribution='log-normal'):
-        """Return mean hvsr curve.
+        """Return mean H/V curve.
 
         Args:
-            distribution : {'normal', 'log-normal'}
+            distribution : {'normal', 'log-normal'}, optional
+                Assumed distribution of mean curve, default is 
+                `log-normal`.
 
-        Return:
-            mean : ndarray
-                Mean hvsr curve according to the distribution specified.
+        Returns:
+            Mean H/V curve as `ndarray` according to the distribution
+            specified.
+        
+        Raises:
+            KeyError:
+                If `distribution` does not match the available options.
         """
         if self.n_windows == 1:
             return self.amp
@@ -184,19 +234,26 @@ class Hvsr():
             raise KeyError(f"distribution type {distribution} not recognized.")
 
     def std_curve(self, distribution='log-normal'):
-        """Return the standard deviation of mean hvsr curve.
+        """Sample standard deviation associate with the mean H/V curve.
 
         Args:
-            distribution : {'normal', 'log-normal'}
+            distribution : {'normal', 'log-normal'}, optional
+                Assumed distribution of H/V curve, default is
+                `log-normal`.
 
-        Return:
-            std : ndarray
-                Standard deviation of hvsr curve according to the
-                distribution specified.
+        Returns:
+            Sample standard deviation of H/V curve as `ndarray`
+            according to the distribution specified.
+
+        Raises:
+            ValueError:
+                If only single time window is defined.
+            KeyError:
+                If `distribution` does not match the available options.
         """
         if self.n_windows == 1:
-            raise ValueError(
-                f"The standard deviation of the mean curve is not defined for a single window.")
+            msg = "The standard deviation of the mean curve is not defined for a single window."
+            raise ValueError(msg)
 
         if distribution == "normal":
             return np.std(self.amp[self.valid_window_indices], axis=0, ddof=1)
@@ -206,6 +263,15 @@ class Hvsr():
             raise KeyError(f"distribution type {distribution} not recognized.")
 
     def mc_peak(self, distribution='log-normal'):
+        """Peak of mean H/V curve.
+
+        Args:
+            distribution : {'normal', 'log-normal'}, optional
+                Refer to method `mean_curve` for details.
+        
+        Returns:
+            Frequency associated with the peak of the mean H/V curve.
+        """
         mc = self.mean_curve(distribution)
         return self.frq[np.where(mc == np.max(mc[self.find_peaks(mc)[0]]))]
 
