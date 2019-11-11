@@ -25,7 +25,7 @@ class Hvsr():
     @staticmethod
     def _check_input(name, value):
         """Basic check on input values.
-        
+
         Specifically;
             1. `value` must be of type `list`, `tuple`, `ndarray`.
             2. If `value` is not `ndarray`, convert to `ndarray`.
@@ -53,7 +53,7 @@ class Hvsr():
             raise TypeError(msg)
         if type(value) in [list, tuple]:
             value = np.array(value)
-        if np.sum(value<0):
+        if np.sum(value < 0):
             print(value)
             raise ValueError(f"{name} must be >= 0.")
         return value
@@ -130,16 +130,16 @@ class Hvsr():
     def update_peaks(self, **kwargs):
         """Update `peaks` attribute with the lowest frequency, highest
         amplitude peak.
-        
+
         Args:
             **kwargs:
                 Refer to `find_peaks` documentation.
-            
+
         Returns:
             `None`, update `peaks` attribute.
         """
         if not self.initialized_peaks:
-            self.initialized_peaks=True
+            self.initialized_peaks = True
 
         if self.n_windows == 1:
             peak_indices, _ = self.find_peaks(self.amp, **kwargs)
@@ -153,7 +153,8 @@ class Hvsr():
         valid_indices = []
         for c_window, c_window_peaks in zip(self.valid_window_indices, peak_indices):
             try:
-                c_index = np.where(self.amp[c_window] == np.max(self.amp[c_window, c_window_peaks]))
+                c_index = np.where(self.amp[c_window] == np.max(
+                    self.amp[c_window, c_window_peaks]))
                 self.master_peak_amp[c_window] = self.amp[c_window, c_index]
                 self.master_peak_frq[c_window] = self.frq[c_index]
                 valid_indices.append(c_window)
@@ -195,7 +196,7 @@ class Hvsr():
             std : float
                 Sample standard deviation value according to the
                 distribution specified.
-        
+
         Raises:
             KeyError:
                 If `distribution` does not match the available options.
@@ -218,7 +219,7 @@ class Hvsr():
         Returns:
             Mean H/V curve as `ndarray` according to the distribution
             specified.
-        
+
         Raises:
             KeyError:
                 If `distribution` does not match the available options.
@@ -268,14 +269,14 @@ class Hvsr():
         Args:
             distribution : {'normal', 'log-normal'}, optional
                 Refer to method `mean_curve` for details.
-        
+
         Returns:
             Frequency associated with the peak of the mean H/V curve.
         """
         mc = self.mean_curve(distribution)
         return self.frq[np.where(mc == np.max(mc[self.find_peaks(mc)[0]]))]
 
-    def reject_windows(self, n=2, max_iterations=50, distribution='log-normal'):
+    def reject_windows(self, n=2, max_iterations=50, distribution_f0='log-normal', distribution_mc='log-normal'):
         """Perform rejection of H/V windows using the method proposed by
         Chen et al. (2020).
 
@@ -286,37 +287,44 @@ class Hvsr():
             max_iterations : int, optional
                 Maximum number of rejection iterations (default value is
                 50).
+            distribution_f0 : {'log-normal', 'normal'}, optional
+                Assumed distribution of `f0` from time windows, the
+                default is 'log-normal'.
+            distribution_mc : {'log-normal', 'normal'}, optional
+                Assumed distribution of mean curve, the default is
+                'log-normal'.
 
         Returns:
-            window_ids : np.array
-                Index for each window.
+            c_iteration : int
+                Number of iterations required for convergence.
         """
         if not self.initialized_peaks:
             self.update_peaks()
 
-        if distribution == 'log-normal':
+        if distribution_f0 == 'log-normal':
             def calulate_range(mean, std, n):
                 upper = np.exp(np.log(mean)+n*std)
                 lower = np.exp(np.log(mean)-n*std)
                 return (lower, upper)
-        elif distribution == 'normal':
+        elif distribution_f0 == 'normal':
             def calulate_range(mean, std, n):
                 upper = mean+n*std
                 lower = mean-n*std
                 return (lower, upper)
         else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+            raise KeyError(
+                f"distribution type {distribution_f0} not recognized.")
 
         for c_iteration in range(max_iterations):
 
             logging.debug(f"c_iteration: {c_iteration}")
             logging.debug(f"valid_window_indices: {self.valid_window_indices}")
 
-            mean_f0 = self.mean_f0(distribution)
+            mean_f0 = self.mean_f0(distribution_f0)
             logging.debug(f"mean_f0: {mean_f0}")
-            std_f0 = self.std_f0(distribution)
+            std_f0 = self.std_f0(distribution_f0)
             logging.debug(f"std_f0: {std_f0}")
-            mc_peak = self.mc_peak(distribution)
+            mc_peak = self.mc_peak(distribution_mc)
             logging.debug(f"mc_peaks: {mc_peak}")
 
             d_before = abs(mean_f0 - mc_peak)
@@ -331,14 +339,15 @@ class Hvsr():
                     keep_indices.append(c_window)
             self.valid_window_indices = np.array(keep_indices)
 
-            new_mean_f0 = self.mean_f0(distribution)
-            new_mc_peak = self.mc_peak(distribution)
-            new_std_f0 = self.std_f0(distribution)
+            new_mean_f0 = self.mean_f0(distribution_f0)
+            new_mc_peak = self.mc_peak(distribution_mc)
+            new_std_f0 = self.std_f0(distribution_f0)
 
             d_after = abs(new_mean_f0 - new_mc_peak)
 
             if std_f0 == 0 or new_std_f0 == 0 or d_before == 0:
-                logging.info(f"Performed {c_iteration} iterations, returning b/c 0 values.")
+                msg = f"Performed {c_iteration} iterations, returning b/c 0 values."
+                logging.warning(msg)
                 return c_iteration
 
             logging.debug(
@@ -347,5 +356,91 @@ class Hvsr():
                 f"std relative difference: {(abs(std_f0 - new_std_f0)/std_f0)}")
 
             if ((abs(d_after - d_before)/d_before) < 0.01) and ((abs(std_f0 - new_std_f0)/std_f0) < 0.01):
-                logging.info(f"Performed {c_iteration} iterations, returning b/c rejection converged.")
+                msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
+                logging.info(msg)
                 return c_iteration
+
+    def nstd_f0(self, n, distribution):
+        """Return nth standard deviation `f0`.
+
+        Args:
+            n : float
+                Number of standard deviations away from the mean curve.
+            distribution : {'log-normal', 'normal'}, optional
+                Assumed distribution of mean curve, the default is
+                'log-normal'.
+
+        Return:
+            nth standard deviation curve as an `ndarray`.
+        """
+        if distribution == "normal":
+            return (self.mean_f0(distribution) + n*self.std_f0(distribution))
+        elif distribution == "log-normal":
+            return (np.exp(np.log(self.mean_f0(distribution)) + n*self.std_f0(distribution)))
+        else:
+            raise KeyError(f"distribution type {distribution} not recognized.")
+
+    def nstd_curve(self, n, distribution):
+        """Return nth standard deviation curve.
+
+        Args:
+            n : float
+                Number of standard deviations away from the mean curve.
+            distribution_mc : {'log-normal', 'normal'}, optional
+                Assumed distribution of mean curve, the default is
+                'log-normal'.
+
+        Return:
+            nth standard deviation curve as an `ndarray`.
+        """
+        if distribution == "normal":
+            return (self.mean_curve(distribution) + n*self.std_curve(distribution))
+        elif distribution == "log-normal":
+            return (np.exp(np.log(self.mean_curve(distribution)) + n*self.std_curve(distribution)))
+        else:
+            raise KeyError(f"distribution type {distribution} not recognized.")
+
+    def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):
+        """Save H/V data to file following the Geopsy format.
+
+        Args:
+            fname : str
+                Name of file to save the results, may be a full or
+                relative path.
+            distribution_f0 : {'log-normal', 'normal'}, optional
+                Assumed distribution of `f0` from the time windows, the
+                default is 'log-normal'.
+            distribution_mc : {'log-normal', 'normal'}, optional
+                Assumed distribution of mean curve, the default is
+                'log-normal'.
+
+        Returns:
+            `None`, writes file to disk.
+        """
+        # f0 from windows
+        mean = self.mean_f0(distribution_f0)
+        lower = self.nstd_f0(-1, distribution_f0)
+        upper = self.nstd_f0(+1, distribution_f0)
+
+        # mean curve
+        mc = self.mean_curve(distribution_mc)
+        mc_peak = self.mc_peak(distribution_mc)
+        _min = self.nstd_curve(-1, distribution_mc)
+        _max = self.nstd_curve(+1, distribution_mc)
+
+        lines = [
+            f"# hvsrpy output version 0.0.1",
+            f"# Number of windows = {len(self.valid_window_indices)}",
+            f"# f0 from average\t{mc_peak[0]}",
+            f"# Number of windows for f0 = {len(self.valid_window_indices)}",
+            f"# f0 from windows\t{mean}\t{lower}\t{upper}",
+            f"# Peak amplitude\t{mc[np.where(self.frq == mc_peak)][0]}",
+            f"# Position\t{0} {0} {0}",
+            f"# Category\tDefault",
+            f"# Frequency\tAverage\tMin\tMax",
+        ]
+        with open(fname, "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+            for f_i, a_i, n_i, x_i in zip(self.frq, mc, _min, _max):
+                f.write(f"{f_i}\t{a_i}\t{n_i}\t{x_i}\n")
