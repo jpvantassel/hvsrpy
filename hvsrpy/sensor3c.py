@@ -185,68 +185,52 @@ class Sensor3c():
         for comp in [self.ew_f, self.ns_f, self.vt_f]:
             comp.resample(fmin, fmax, fn, res_type, inplace)
 
-    # TODO (jpv): Refactor division and combination of horizontals.
-    def calc_hv(self, ratio_type='squared-average', find_peaks=False):
-        """Calculate Horizontal-to-Vertical Spectral Ratio (H/V).
+    def combine_horizontals(self, method='squared-average'):
+        """Combine two horizontal components (ns and ew).
 
         Args:
             ratio_type : {'squared-averge', 'geometric-mean'}, optional
                 Defines how the two horizontal components are combined 
                 to represent a single horizontal component. By default
-                the square-average approach is used.
-            find_peaks : bool, optional
-                Determines if peaks in H/V curve will be defined. By
-                default these peaks are not found.
+                the 'square-average' approach is used.
 
-        Returns:
-            Hvsr object.
+        Return:
+            A FourierTransform object representing the combined
+            horizontal component.
         """
-        if ratio_type == 'squared-average':
-            horizontal = np.sqrt((self.ns_f.amp*self.ns_f.amp + self.ew_f.amp*self.ew_f.amp)/2)
-        elif ratio_type == 'geometric-mean':
+        if method == 'squared-average':
+            horizontal = np.sqrt(
+                (self.ns_f.amp*self.ns_f.amp + self.ew_f.amp*self.ew_f.amp)/2)
+        elif method == 'geometric-mean':
             horizontal = np.sqrt(self.ns_f.amp * self.ew_f.amp)
         else:
             raise NotImplementedError(
-                f"ratio_type {ratio_type} has not been implemented.")
-        hor = FourierTransform(horizontal, self.vt_f.frq)
-        hor.resample(minf=0.3, maxf=40, nf=2048, res_type="log", inplace=True)
-        hor.smooth_konno_ohmachi(bandwidth=40)
-        
-        self.vt_f.resample(minf=0.3, maxf=40, nf=2048, res_type="log", inplace=True)
-        self.vt_f.smooth_konno_ohmachi(bandwidth=40)
-
-        hvsr = FourierTransform(hor.amp/self.vt_f.amp, self.vt_f.frq)        
-        # hvsr.resample(minf=0.3, maxf=40, nf=2048, res_type="log", inplace=True)
-
-        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=find_peaks)
+                f"ratio_type {method} has not been implemented.")
+        return FourierTransform(horizontal, self.ns_f.frq)
 
     # TODO (jpv): Refactor hv methods
-    def hv(self, windowlength, flow, fhigh, forder, width, bandwidth, fmin, fmax, fn, res_type, ratio_type, find_peaks=False):
+    def hv(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method, find_peaks=False):
         """Prepare time series and fourier transform and compute H/V.
 
         Args:
             windowlength : float
                 Length of time windows in seconds.
-            flow : float
-                Low-cut filter frequency.
-            fhigh : float
-                High-cut filter frequency.
-            forder : int
-                Filter order
-            width : float
+            bp_filter : dict
+                Bandpass filter settings, `dict` is of the form 
+                {'flag':`bool`, 'flow':`float`, 'fhigh':`float`, 
+                'order':`int`} refer to `SigProPy` documentation for
+                details.
+            taper_width : float
                 Width of cosine taper.
             bandwidth : float
                 Width of Konno and Ohmachi Smoothing window.
-            fmin : float
-                Minimum frequency for resampling.
-            fmax : float
-                Maximum frequency for resampling.
-            fn : int
-                Number of points for resampling.
-            res_type : {'log', 'linear'}
-                Type of resampling
-            ratio_type : {'squared-averge', 'geometric-mean'}
-                Refer to method `calc_hv` for details.
+            resampling : dict
+                Resampling settings, `dict` is of the form 
+                {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
+                'res_type':`str`} refer to `SigProPy` documentation for
+                details.
+            method : {'squared-averge', 'geometric-mean'}
+                Refer to method `combine_horizontals` for details.
             find_peaks : bool
                 Refer to method `calc_hv` for details.
 
@@ -259,33 +243,29 @@ class Sensor3c():
         """
         self.split(windowlength)
         self.detrend()
-        self.cosine_taper(width)
-        # self.bandpassfilter(flow, fhigh, forder)
+        if bp_filter["flag"]:
+            self.bandpassfilter(flow=bp_filter["flow"],
+                                fhigh=bp_filter["fhigh"],
+                                order=bp_filter["order"])
+        self.cosine_taper(width=taper_width)
         self.transform()
 
-        # self.smooth(bandwidth)
         for comp in [self.ns_f, self.ew_f, self.vt_f]:
             comp.amp = comp.mag
-        # self.resample(fmin, fmax, fn, res_type, inplace=True)
 
-        return self.calc_hv(ratio_type, find_peaks)
+        # Horizontal Component
+        hor = self.combine_horizontals(method=method)
+        hor.smooth_konno_ohmachi(bandwidth)
 
-    def hv_reject(self, windowlength, flow, fhigh, forder, width, bandwidth, fmin, fmax, fn, res_type, ratio_type, n, max_iter):
-        """Perform H/V calculation with window rejection developed by
-        Cheng et al. (in review). 
+        # Vertical Component
+        self.vt_f.smooth_konno_ohmachi(bandwidth)
 
-        Args:
-            n : float
-                Number of standard deviations to consider for rejection.
-            max_iter : int
-                Number of interations to consider during rejection.
-            for_other_args : *
-                Refer to method `hv` for details.    
+        # H/V
+        hvsr = FourierTransform(hor.amp/self.vt_f.amp, hor.frq)
+        hvsr.resample(minf=resampling["minf"],
+                     maxf=resampling["maxf"],
+                     nf=resampling["nf"],
+                     res_type=resampling["res_type"],
+                     inplace=True)
 
-        Returns:
-            Initialized Hvsr object.
-        """
-        hvsr = self.hv(windowlength, flow, fhigh, forder, width, bandwidth,
-                       fmin, fmax, fn, res_type, ratio_type, find_peaks=True)
-        hvsr.reject_windows(n, max_iter)
-        return hvsr
+        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=find_peaks)
