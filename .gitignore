@@ -1,5 +1,8 @@
 # Files
 *.egg-info
-__pycache__
 *.pyc
 *.tmp_profiler_run
+
+# Folders
+.ipynb_checkpoints
+__pycache__
