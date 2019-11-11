@@ -134,6 +134,14 @@ class Sensor3c():
         for comp in [self.ew, self.ns, self.vt]:
             comp.split(windowlength)
 
+    def detrend(self):
+        """Detrend component TimeSeries.
+
+        Refer to `sigpropy` documentation for details.
+        """
+        for comp in [self.ew, self.ns, self.vt]:
+            comp.detrend()
+
     def bandpassfilter(self, flow, fhigh, order):
         """Bandpassfilter component TimeSeries.
 
@@ -194,13 +202,23 @@ class Sensor3c():
             Hvsr object.
         """
         if ratio_type == 'squared-average':
-            horizontal = np.sqrt((self.ns_f.amp**2 + self.ew_f.amp**2)/2)
+            horizontal = np.sqrt((self.ns_f.amp*self.ns_f.amp + self.ew_f.amp*self.ew_f.amp)/2)
         elif ratio_type == 'geometric-mean':
             horizontal = np.sqrt(self.ns_f.amp * self.ew_f.amp)
         else:
             raise NotImplementedError(
                 f"ratio_type {ratio_type} has not been implemented.")
-        return Hvsr(horizontal/self.vt_f.amp, self.vt_f.frq, find_peaks=find_peaks)
+        hor = FourierTransform(horizontal, self.vt_f.frq)
+        hor.resample(minf=0.3, maxf=40, nf=2048, res_type="log", inplace=True)
+        hor.smooth_konno_ohmachi(bandwidth=40)
+        
+        self.vt_f.resample(minf=0.3, maxf=40, nf=2048, res_type="log", inplace=True)
+        self.vt_f.smooth_konno_ohmachi(bandwidth=40)
+
+        hvsr = FourierTransform(hor.amp/self.vt_f.amp, self.vt_f.frq)        
+        # hvsr.resample(minf=0.3, maxf=40, nf=2048, res_type="log", inplace=True)
+
+        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=find_peaks)
 
     # TODO (jpv): Refactor hv methods
     def hv(self, windowlength, flow, fhigh, forder, width, bandwidth, fmin, fmax, fn, res_type, ratio_type, find_peaks=False):
@@ -240,11 +258,16 @@ class Sensor3c():
             the documenation of `SigProPy`.
         """
         self.split(windowlength)
-        self.bandpassfilter(flow, fhigh, forder)
+        self.detrend()
         self.cosine_taper(width)
+        # self.bandpassfilter(flow, fhigh, forder)
         self.transform()
-        self.smooth(bandwidth)
-        self.resample(fmin, fmax, fn, res_type, inplace=True)
+
+        # self.smooth(bandwidth)
+        for comp in [self.ns_f, self.ew_f, self.vt_f]:
+            comp.amp = comp.mag
+        # self.resample(fmin, fmax, fn, res_type, inplace=True)
+
         return self.calc_hv(ratio_type, find_peaks)
 
     def hv_reject(self, windowlength, flow, fhigh, forder, width, bandwidth, fmin, fmax, fn, res_type, ratio_type, n, max_iter):
