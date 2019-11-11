@@ -1,0 +1,83 @@
+### Parameters ###
+SIGNAL FILE NAME=UT.STN11.A2_C50.miniseed
+# TYPEs:
+#   - Signal: from the start or to the end of signal (TEXT are useless)
+#   - Delta: a fixed duration counted from the start or the end (e.g. TEXT=1h).
+#   - Pick: from or to a time pick (TEXT=time pick name).
+#   - Absolute: from or to a fixed time (e.g. TEXT=3d5h6m45s)
+FROM_TIME_TYPE=Signal
+FROM_TIME_TEXT=0s
+# TYPEs: Signal, Delta, Absolute
+TO_TIME_TYPE=Signal
+TO_TIME_TEXT=0s
+REFERENCE=
+# TYPEs: Exactly, AtLeast, FrequencyDependent
+WINDOW_LENGTH_TYPE=Exactly
+WINDOW_MIN_LENGTH(s)=59.99
+WINDOW_MAX_LENGTH(s)=59.99
+WINDOW_MAX_COUNT=0
+WINDOW_POWER_OF_TWO (y/n)=n
+BAD_SAMPLE_TOLERANCE (s)=0
+BAD_SAMPLE_GAP (s)=0
+WINDOW_OVERLAP (%)=0
+# TYPEs: NoSampleThreshold, RelativeSampleThreshold, AbsoluteSampleThreshold
+BAD_SAMPLE_THRESHOLD_TYPE=NoSampleThreshold
+ANTI-TRIGGERING_ON_RAW_SIGNAL (y/n)=n
+ANTI-TRIGGERING_ON_FILTERED_SIGNAL (y/n)=n
+SMOOTHING TYPE=KonnoOmachi
+SMOOTHING CONSTANT=40
+WINDOW TYPE=Tuckey
+WINDOW REVERSED=n
+WINDOW ALPHA=0.1
+MINIMUM FREQUENCY=0.3
+MAXIMUM FREQUENCY=40
+# Either 'log' or 'linear'
+SAMPLING_TYPE FREQUENCY=Log
+# Number of samples is either set to a fixed value or through a step between samples
+SAMPLES_NUMBER FREQUENCY=2048
+# MINIMUM, MAXIMUM and SAMPLING_TYPE must be defiend before STEP
+# STEP=ratio between two successive samples for 'log' scales
+# STEP=difference between two successive samples for 'linear' scales
+STEP FREQUENCY=1.00239
+INVERSED FREQUENCY (y/n)=n
+HIGH PASS FREQUENCY=0
+HORIZONTAL COMPONENTS=Squared
+HORIZONTAL AZIMUTH=0
+### End Parameters ###
+### Windowing Log ###
+Automatic windowing
+### End Windowing Log ###
+### Time Windows ###
+# Number= 30
+# Start time 	 End Time 	 Window length
+-5.24286e+7	-5.24285e+7	59.99
+-5.24285e+7	-5.24285e+7	59.99
+-5.24285e+7	-5.24284e+7	59.99
+-5.24284e+7	-5.24284e+7	59.99
+-5.24284e+7	-5.24283e+7	59.99
+-5.24283e+7	-5.24282e+7	59.99
+-5.24282e+7	-5.24282e+7	59.99
+-5.24282e+7	-5.24281e+7	59.99
+-5.24281e+7	-5.24281e+7	59.99
+-5.24281e+7	-5.2428e+7	59.99
+-5.2428e+7	-5.24279e+7	59.99
+-5.24279e+7	-5.24279e+7	59.99
+-5.24279e+7	-5.24278e+7	59.99
+-5.24278e+7	-5.24278e+7	59.99
+-5.24278e+7	-5.24277e+7	59.99
+-5.24277e+7	-5.24276e+7	59.99
+-5.24276e+7	-5.24276e+7	59.99
+-5.24276e+7	-5.24275e+7	59.99
+-5.24275e+7	-5.24275e+7	59.99
+-5.24275e+7	-5.24274e+7	59.99
+-5.24274e+7	-5.24273e+7	59.99
+-5.24273e+7	-5.24273e+7	59.99
+-5.24273e+7	-5.24272e+7	59.99
+-5.24272e+7	-5.24272e+7	59.99
+-5.24272e+7	-5.24271e+7	59.99
+-5.24271e+7	-5.2427e+7	59.99
+-5.2427e+7	-5.2427e+7	59.99
+-5.2427e+7	-5.24269e+7	59.99
+-5.24269e+7	-5.24269e+7	59.99
+-5.24269e+7	-5.24268e+7	59.99
+### End Time Windows ###
