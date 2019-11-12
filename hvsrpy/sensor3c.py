@@ -114,8 +114,9 @@ class Sensor3c():
             fname : str
                 Name of miniseed file, full path may be used if desired.
                 The file should contain three traces with the 
-                appropriate channel names. Refer to `SEED` Manual for 
-                specifics (https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf).
+                appropriate channel names. Refer to the `SEED` Manual 
+                `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
+                for specifics.
 
         Returns:
             Initialized 3-component sensor (Sensor3c) object.
@@ -146,7 +147,7 @@ class Sensor3c():
     def split(self, windowlength):
         """Split component TimeSeries.
 
-        Refer to `sigpropy` documentation for details.
+        Refer to `SigProPy` documentation for details.
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.split(windowlength)
@@ -154,7 +155,7 @@ class Sensor3c():
     def detrend(self):
         """Detrend component TimeSeries.
 
-        Refer to `sigpropy` documentation for details.
+        Refer to `SigProPy` documentation for details.
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.detrend()
@@ -162,7 +163,7 @@ class Sensor3c():
     def bandpassfilter(self, flow, fhigh, order):
         """Bandpassfilter component TimeSeries.
 
-        Refer to `sigpropy` documentation for details.
+        Refer to `SigProPy` documentation for details.
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.bandpassfilter(flow, fhigh, order)
@@ -170,7 +171,7 @@ class Sensor3c():
     def cosine_taper(self, width):
         """Cosine taper component TimeSeries.
 
-        Refer to `sigpropy` documentation for details.
+        Refer to `SigProPy` documentation for details.
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.cosine_taper(width)
@@ -189,7 +190,7 @@ class Sensor3c():
     def smooth(self, bandwidth):
         """Smooth component FourierTransforms.
 
-        Refer to `sigpropy` documentation for details.
+        Refer to `SigProPy` documentation for details.
         """
         for comp in [self.ew_f, self.ns_f, self.vt_f]:
             comp.smooth_konno_ohmachi(bandwidth)
@@ -197,7 +198,7 @@ class Sensor3c():
     def resample(self, fmin, fmax, fn, res_type, inplace):
         """Resample component FourierTransforms.
 
-        Refer to `sigpropy` documentation for details.
+        Refer to `SigProPy` documentation for details.
         """
         for comp in [self.ew_f, self.ns_f, self.vt_f]:
             comp.resample(fmin, fmax, fn, res_type, inplace)
@@ -209,7 +210,7 @@ class Sensor3c():
             ratio_type : {'squared-averge', 'geometric-mean'}, optional
                 Defines how the two horizontal components are combined 
                 to represent a single horizontal component. By default
-                the 'square-average' approach is used.
+                the 'squared-average' approach is used.
 
         Return:
             A FourierTransform object representing the combined
@@ -233,7 +234,7 @@ class Sensor3c():
                 Length of time windows in seconds.
             bp_filter : dict
                 Bandpass filter settings, of the form 
-                {'flag':`bool`, 'flow':`float`, 'fhigh':`float`, 
+                {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
                 'order':`int`}.
             taper_width : float
                 Width of cosine taper.

@@ -25,7 +25,7 @@ logging.getLogger()
 
 class Hvsr():
     """Class for creating and manipulating horizontal-to-vertical
-    spectral ratio (H/V) objects.
+    spectral ratio objects.
 
     Attributes:
         amp : ndarray
@@ -92,25 +92,25 @@ class Hvsr():
         self.frq = self._check_input("frequency", frequency)
         self.n_windows = self.amp.shape[0] if len(self.amp.shape) > 1 else 1
         self.valid_window_indices = np.arange(self.n_windows)
-        self.master_peak_frq = np.zeros(self.n_windows)
-        self.master_peak_amp = np.zeros(self.n_windows)
-        self.initialized_peaks = find_peaks
+        self._master_peak_frq = np.zeros(self.n_windows)
+        self._master_peak_amp = np.zeros(self.n_windows)
+        self._initialized_peaks = find_peaks
         if find_peaks:
             self.update_peaks()
 
     @property
     def peak_frq(self):
         """Return valid peaks frequency vector."""
-        if not self.initialized_peaks:
+        if not self._initialized_peaks:
             self.update_peaks()
-        return self.master_peak_frq[self.valid_window_indices]
+        return self._master_peak_frq[self.valid_window_indices]
 
     @property
     def peak_amp(self):
         """Return valid peaks amplitude vector."""
-        if not self.initialized_peaks:
+        if not self._initialized_peaks:
             self.update_peaks()
-        return self.master_peak_amp[self.valid_window_indices]
+        return self._master_peak_amp[self.valid_window_indices]
 
     @staticmethod
     def find_peaks(amp, **kwargs):
@@ -123,8 +123,8 @@ class Hvsr():
                 Vector or array of amplitudes. See `amp` attribute for 
                 details.
             **kwargs : dict
-                Refer to `scipy.signal.find_peaks` documentation [here](
-                https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html)
+                Refer to `scipy.signal.find_peaks` documentation
+                `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_.
 
         Returns:
             peaks : ndarray or list
@@ -150,19 +150,19 @@ class Hvsr():
 
         Args:
             **kwargs:
-                Refer to `find_peaks` documentation.
+                Refer to static method `find_peaks` documentation.
 
         Returns:
             `None`, update `peaks` attribute.
         """
-        if not self.initialized_peaks:
-            self.initialized_peaks = True
+        if not self._initialized_peaks:
+            self._initialized_peaks = True
 
         if self.n_windows == 1:
             peak_indices, _ = self.find_peaks(self.amp, **kwargs)
             c_index = np.where(self.amp == np.max(self.amp[peak_indices]))
-            self.master_peak_amp = self.amp[c_index]
-            self.master_peak_frq = self.frq[c_index]
+            self._master_peak_amp = self.amp[c_index]
+            self._master_peak_frq = self.frq[c_index]
             return
 
         peak_indices, _ = self.find_peaks(self.amp[self.valid_window_indices],
@@ -172,8 +172,8 @@ class Hvsr():
             try:
                 c_index = np.where(self.amp[c_window] == np.max(
                     self.amp[c_window, c_window_peaks]))
-                self.master_peak_amp[c_window] = self.amp[c_window, c_index]
-                self.master_peak_frq[c_window] = self.frq[c_index]
+                self._master_peak_amp[c_window] = self.amp[c_window, c_index]
+                self._master_peak_frq[c_window] = self.frq[c_index]
                 valid_indices.append(c_window)
             except:
                 assert(c_window_peaks.size == 0)
@@ -316,7 +316,7 @@ class Hvsr():
             c_iteration : int
                 Number of iterations required for convergence.
         """
-        if not self.initialized_peaks:
+        if not self._initialized_peaks:
             self.update_peaks()
 
         # TODO (jpv): Remove this section and use new nstd method.
@@ -405,7 +405,7 @@ class Hvsr():
         Args:
             n : float
                 Number of standard deviations away from the mean curve.
-            distribution_mc : {'log-normal', 'normal'}, optional
+            distribution : {'log-normal', 'normal'}, optional
                 Assumed distribution of mean curve, the default is
                 'log-normal'.
 

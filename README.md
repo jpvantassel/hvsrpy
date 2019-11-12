@@ -7,7 +7,7 @@
 ---
 
 `hvsrpy` is a Python module for performing horizontal-to-vertical spectral ratio
-(H/V) calculations. `hvsrpy` was developed by Joseph P. Vantassel with
+(H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
 Cox at the University of Texas at Austin. The fully-automated frequency-domain
 rejection algorithm implemented in `hvsrpy` was developed by Tianjian Cheng
