@@ -39,27 +39,27 @@ class Hvsr():
                 Value to be checked.
 
         Returns:
-            `value` which may have been cast to a `ndarray`.
+            `value` as an `ndarray`.
 
         Raises:
             TypeError:
-                If `value` is not one of those specified.
+                If `value` is not one of the types specified.
             ValueError:
-                If `value` has negative values.
+                If `value` contains a negative values.
         """
 
         if type(value) not in [list, tuple, np.ndarray]:
-            msg = f"{name} must be of type ndarray, not {type(value)}."
+            msg = f"{name} must be of type `ndarray`, not `{type(value)}`."
             raise TypeError(msg)
         if type(value) in [list, tuple]:
             value = np.array(value)
         if np.sum(value < 0):
-            print(value)
             raise ValueError(f"{name} must be >= 0.")
         return value
 
     def __init__(self, amplitude, frequency, find_peaks=True):
-        """Initialize a Hvsr oject from amplitude and frequency vector.
+        """Initialize a Hvsr oject from an amplitude and frequency
+        vector.
 
         Args:
             amplitude : ndarray
@@ -90,14 +90,14 @@ class Hvsr():
 
     @property
     def peak_amp(self):
-        """Return valid peaks ampltiude vector."""
+        """Return valid peaks amplitude vector."""
         if not self.initialized_peaks:
             self.update_peaks()
         return self.master_peak_amp[self.valid_window_indices]
 
     @staticmethod
     def find_peaks(amp, **kwargs):
-        """Returns index of all peaks in `amp`.
+        """Returns the indices of all peaks in `amp`.
 
         Wrapper method for scipy.signal.find_peaks function.
 
@@ -106,8 +106,8 @@ class Hvsr():
                 Vector or array of amplitudes. See `amp` attribute for 
                 details.
             **kwargs : dict
-                Refer to `scipy.signal.find_peaks` documentation:
-                https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html
+                Refer to `scipy.signal.find_peaks` documentation [here](
+                https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html)
 
         Returns:
             peaks : ndarray or list
@@ -186,7 +186,8 @@ class Hvsr():
             raise KeyError(msg)
 
     def std_f0(self, distribution='log-normal'):
-        """Return sample standard deviation of `f0` of valid timewindows.
+        """Return sample standard deviation of `f0` of valid
+        timewindows.
 
         Args:
             distribution : {'normal', 'log-normal'}, optional
@@ -278,7 +279,7 @@ class Hvsr():
 
     def reject_windows(self, n=2, max_iterations=50, distribution_f0='log-normal', distribution_mc='log-normal'):
         """Perform rejection of H/V windows using the method proposed by
-        Chen et al. (2020).
+        Cox et al. (in review).
 
         Args:
             n : float, optional
@@ -301,6 +302,7 @@ class Hvsr():
         if not self.initialized_peaks:
             self.update_peaks()
 
+        # TODO (jpv): Remove this section and use new nstd method.
         if distribution_f0 == 'log-normal':
             def calulate_range(mean, std, n):
                 upper = np.exp(np.log(mean)+n*std)
@@ -312,8 +314,8 @@ class Hvsr():
                 lower = mean-n*std
                 return (lower, upper)
         else:
-            raise KeyError(
-                f"distribution type {distribution_f0} not recognized.")
+            msg = f"distribution type {distribution_f0} not recognized."
+            raise KeyError(msg)
 
         for c_iteration in range(max_iterations):
 
@@ -361,17 +363,17 @@ class Hvsr():
                 return c_iteration
 
     def nstd_f0(self, n, distribution):
-        """Return nth standard deviation `f0`.
+        """Return nth standard deviation of `f0`.
 
         Args:
             n : float
-                Number of standard deviations away from the mean curve.
+                Number of standard deviations away from the mean `f0`.
             distribution : {'log-normal', 'normal'}, optional
-                Assumed distribution of mean curve, the default is
+                Assumed distribution of `f0`, the default is
                 'log-normal'.
 
         Return:
-            nth standard deviation curve as an `ndarray`.
+            nth standard deviation of `f0` as `float`.
         """
         if distribution == "normal":
             return (self.mean_f0(distribution) + n*self.std_f0(distribution))

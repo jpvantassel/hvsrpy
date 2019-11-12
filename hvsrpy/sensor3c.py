@@ -14,7 +14,7 @@ class Sensor3c():
 
     Attributes:
         ns, ew, vt : Timeseries
-            Timeseries object for each component.
+            TimeSeries object for each component.
         ns_f, ew_f, vt_f : FourierTransform
             FourierTransform object for each component.
     """
@@ -81,8 +81,9 @@ class Sensor3c():
         Returns:
             Initialized 3-component sensor (Sensor3c) object.
         """
-        self.ns, self.ew, self.vt = self._check_input(
-            {"ns": ns, "ew": ew, "vt": vt})
+        self.ns, self.ew, self.vt = self._check_input({"ns": ns,
+                                                       "ew": ew,
+                                                       "vt": vt})
         self.ns_f = None
         self.ew_f = None
         self.vt_f = None
@@ -90,19 +91,18 @@ class Sensor3c():
     @classmethod
     def from_mseed(cls, fname):
         """Initialize a 3-component sensor (Sensor3c) object from a
-        miniseed file.
+        .miniseed file.
 
         Args:
             fname : str
                 Name of miniseed file, full path may be used if desired.
                 The file should contain three traces with the 
-                appropriate channel names. Refer to SEED Manual for 
+                appropriate channel names. Refer to `SEED` Manual for 
                 specifics (https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf).
 
         Returns:
             Initialized 3-component sensor (Sensor3c) object.
         """
-
         traces = obspy.read(fname)
 
         if len(traces) != 3:
@@ -121,7 +121,7 @@ class Sensor3c():
                 vt = TimeSeries.from_trace(trace)
                 found_vt = True
             else:
-                msg = f"Missing, duplicate, or incorrectly named component. See documentation."
+                msg = f"Missing, duplicate, or incorrectly named components. See documentation."
                 raise ValueError(msg)
 
         return cls(ns, ew, vt)
@@ -186,7 +186,7 @@ class Sensor3c():
             comp.resample(fmin, fmax, fn, res_type, inplace)
 
     def combine_horizontals(self, method='squared-average'):
-        """Combine two horizontal components (ns and ew).
+        """Combine two horizontal components (`ns` and `ew`).
 
         Args:
             ratio_type : {'squared-averge', 'geometric-mean'}, optional
@@ -208,31 +208,26 @@ class Sensor3c():
                 f"ratio_type {method} has not been implemented.")
         return FourierTransform(horizontal, self.ns_f.frq)
 
-    # TODO (jpv): Refactor hv methods
-    def hv(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method, find_peaks=False):
-        """Prepare time series and fourier transform and compute H/V.
+    def hv(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
+        """Prepare time series and fourier transforms then compute H/V.
 
         Args:
             windowlength : float
                 Length of time windows in seconds.
             bp_filter : dict
-                Bandpass filter settings, `dict` is of the form 
+                Bandpass filter settings, of the form 
                 {'flag':`bool`, 'flow':`float`, 'fhigh':`float`, 
-                'order':`int`} refer to `SigProPy` documentation for
-                details.
+                'order':`int`}.
             taper_width : float
                 Width of cosine taper.
             bandwidth : float
-                Width of Konno and Ohmachi Smoothing window.
+                Bandwidth of the Konno and Ohmachi smoothing window.
             resampling : dict
-                Resampling settings, `dict` is of the form 
+                Resampling settings, of the form 
                 {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
-                'res_type':`str`} refer to `SigProPy` documentation for
-                details.
+                'res_type':`str`}.
             method : {'squared-averge', 'geometric-mean'}
                 Refer to method `combine_horizontals` for details.
-            find_peaks : bool
-                Refer to method `calc_hv` for details.
 
         Returns:
             Initialized Hvsr object.
@@ -263,9 +258,9 @@ class Sensor3c():
         # H/V
         hvsr = FourierTransform(hor.amp/self.vt_f.amp, hor.frq)
         hvsr.resample(minf=resampling["minf"],
-                     maxf=resampling["maxf"],
-                     nf=resampling["nf"],
-                     res_type=resampling["res_type"],
-                     inplace=True)
+                      maxf=resampling["maxf"],
+                      nf=resampling["nf"],
+                      res_type=resampling["res_type"],
+                      inplace=True)
 
-        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=find_peaks)
+        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False)

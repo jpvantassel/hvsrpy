@@ -1,4 +1,4 @@
-# _hvsrpy_ - A Python module for horizontal-to-vertical spectral ratio (H/V) calculations
+# _hvsrpy_ - A Python module for horizontal-to-vertical spectral ratio calculations
 
 > Joseph Vantassel, University of Texas at Austin
 
@@ -10,7 +10,7 @@
 (H/V) calculations. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
 Cox at the University of Texas at Austin. The fully-automated frequency-domain
-rejection algorithm implemented in `hvsrpy` was developed by Tianjian Cheng 
+rejection algorithm implemented in `hvsrpy` was developed by Tianjian Cheng
 under the supervision of Professor Brady R. Cox at the Univesity of Texas at
 Austin and detailed in Cox et al. (in review).
 
@@ -18,26 +18,27 @@ Austin and detailed in Cox et al. (in review).
 
 ---
 
-While `hvsrpy` can be used to produce results exactly equal to the popular
-open-source program geopsy [](www.geopsy.org), `hvsrpy` contains additional
-functionality including:
+`hvsrpy` contains many additional features not available in other programs for
+example the popular open-source software Geopsy [](www.geopsy.org).
+These additional features include:
 
-- A fully-automated frequency-domain rejection algorithm.
-- An option to use a log-normal distribution for the mean `f0` from the time
-windows so H/V uncertainty can be represented consistently in terms of frequency
-and period.
-- Combination of the two orthoginal horizontal components using the geometric
-mean.
+- A fully-automated frequency-domain rejection algorithm. No need to reject
+time windows manually.
+- The option to use a log-normal distribution for the mean `f0` from the time
+windows allowing H/V uncertainty to be represented consistently in terms of
+frequency and period.
+- The option to combine the two horizontal components using the geometric mean.
 - Direct access to the H/V data from each time window, not only the
 mean/median curve.
+- A performant framework for batch-style processing.
 
 After completing the __Getting Started__ section below, use the provided
 examples to explore all of these new features.
 
-To illustrate that `hvsrpy` can exactly reproduce the results from
+To illustrate that `hvsrpy` can, if desired, exactly reproduce the results from
 Geopsy two comparisons are shown below. One for a single time window and one
 for multiple time windows. More examples and the necessary information to
-reproduce them if so desired are provided at the end of this document.
+reproduce them are provided at the end of this document.
 
 ### Single Time Window
 
@@ -73,7 +74,7 @@ Powershell or `dir` in Command Prompt.
 `pip install -r requirements.txt`. Note that an internet connection is required
 for the installation to be successful.
 
-6. And install the module with `pip install .`.
+6. And install the module with `pip install .`. Note the period.
 
 7. Confirm that `sigpropy` was built successfully by reading the last few
 lines printed to the console.
@@ -92,7 +93,7 @@ sub-directory call `hvsrpy` and a file named `setup.py`.
 4. If in the correct directory, install the module's dependencies with
 `pip install -r requirements.txt`.
 
-5. And install the module with `pip install .`.
+5. And install the module with `pip install .`. Note the period.
 
 6. Confirm that `hvsrpy` was built successfully by reading the last few
 lines printed to the console.
@@ -101,7 +102,7 @@ lines printed to the console.
 
 1. Copy the directory `examples` and its contents out of the directory `hvsrpy`
   which is now located on your main hard drive (recall _Step 1._ of the section
-  __Installing _hvsrpy_ and its dependencies__) and move to any location of your
+  __Installing _hvsrpy_ and its dependencies__) and move to a location of your
   choice.
 
 2. Navigate to the copy of the `examples` directory and open the Jupyter
@@ -110,15 +111,17 @@ lines printed to the console.
 3. Follow the instructions in the notebook for a no-coding-required introduction
   to the `hvsrpy` module.
 
-## Reproducible Comparisons between _hvsrpy_ and _geopsy_
+## Reproducible Comparisons between _hvsrpy_ and _Geopsy_
 
 ### Multiple Windows
 
 All of the following examples utilize the same settings applied to different
-noise records. The settings are provided below with the name of each
-file provided above the corresponding figure. The noise records themselves
-are provided in the `examples` directory included as part of this module, see
-previous section for details, or can be found [here](https://www.designsafe-ci.org/data/browser/public/designsafe.storage.published/PRJ-2075).
+noise records. The settings are
+provided in the __Settings__ section and the name of each file is provided above
+the corresponding figure in the __Results__ section. The noise records
+(i.e., _.miniseed_ files) are provided in the
+`examples` directory included as part of this module or can be found
+[here](https://www.designsafe-ci.org/data/browser/public/designsafe.storage.published//PRJ-2075/Thorndon%20Warf%20(A2)/Unprocessed%20Data/Microtremor%20Array%20Measurements%20(MAM)).
 
 #### Settings
 
@@ -155,15 +158,16 @@ __File Name:__ _UT.STN12.A2_C150.miniseed_
 
 ### Single Window
 
-The following examples use different processing settings to the same noise
-record (_UT.STN11.A2_C50.miniseed_). The default settings are listed below such
-that only the changes from these setting are noted for each example.
+The following examples apply different settings to the same noise
+record (_UT.STN11.A2_C50.miniseed_). For brevity, the default settings are
+listed in the __Default Settings__ section, and only the differences from
+these settings are noted for each example.
 
 #### Default Settings
 
 - __Window Length:__ 60 seconds
 - __Bandpass Filter Boolean:__ False
-- __Cosine Taper Width:__ 10% (i.e., 5% in geopsy)
+- __Cosine Taper Width:__ 10% (i.e., 5% in Geopsy)
 - __Konno and Ohmachi Smoothing Coefficient:__ 40
 - __Resampling:__
   - __Minimum Frequency:__ 0.3 Hz
@@ -184,11 +188,11 @@ __Window Length:__ 120 seconds.
 
 !["s2"](figs/singlewindow_b.png)
 
-__Cosine Taper Width:__ 20 % (i.e., 10% in geopsy)
+__Cosine Taper Width:__ 20 % (i.e., 10% in Geopsy)
 
 !["s3"](figs/singlewindow_e.png)
 
-__Cosine Taper Width:__ 0.2 % (i.e., 0.1% in geopsy)
+__Cosine Taper Width:__ 0.2 % (i.e., 0.1% in Geopsy)
 
 !["s4"](figs/singlewindow_f.png)
 
