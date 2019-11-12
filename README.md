@@ -11,7 +11,7 @@
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
 Cox at the University of Texas at Austin. The fully-automated frequency-domain
 rejection algorithm implemented in `hvsrpy` was developed by Tianjian Cheng
-under the supervision of Professor Brady R. Cox at the Univesity of Texas at
+under the supervision of Professor Brady R. Cox at the University of Texas at
 Austin and detailed in Cox et al. (in review).
 
 ## Comparison of _hvsrpy_ with _geopsy_
@@ -127,7 +127,7 @@ the corresponding figure in the __Results__ section. The noise records
 
 - __Window Length:__ 60 seconds
 - __Bandpass Filter Boolean:__ False
-- __Cosine Taper Width:__ 10% (i.e., 5% in geopsy)
+- __Cosine Taper Width:__ 10% (i.e., 5% in Geopsy)
 - __Konno and Ohmachi Smoothing Coefficient:__ 40
 - __Resampling:__
   - __Minimum Frequency:__ 0.3 Hz

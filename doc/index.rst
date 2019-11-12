@@ -12,7 +12,7 @@ processing. hvsrpy was developed by Joseph P. Vantassel with contributions
 from Dana M. Brannon under the supervision of Professor Brady R. Cox at the
 University of Texas at Austin. The fully-automated frequency-domain rejection
 algorithm implemented in `hvsrpy` was developed by Tianjian Cheng under the
-supervision of Professor Brady R. Cox at the Univesity of Texas at Austin and
+supervision of Professor Brady R. Cox at the University of Texas at Austin and
 detailed in Cox et al. (in review).
 
 The module includes two main class definitons `Sensor3c` and `Hvsr`. These
