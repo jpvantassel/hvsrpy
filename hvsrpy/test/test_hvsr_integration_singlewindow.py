@@ -51,7 +51,7 @@ ratio_type = 'squared-average'
 distribution_type = 'log-normal'
 
 for setting, fname, fname_geopsy in zip(settings, timerecords, known_solutions):
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(4, 3))
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3, 2))
 
     sensor = hv.Sensor3c.from_mseed(fname)
     my_hv = sensor.hv(setting["length"], bp_filter, setting["width"],
@@ -66,4 +66,4 @@ for setting, fname, fname_geopsy in zip(settings, timerecords, known_solutions):
     ax.set_ylabel("H/V Ampltidue (#)")
     ax.set_xscale('log')
     ax.legend()
-    plt.savefig(f"../figs/singlewindow_{fname_geopsy[-4]}.png", dpi=300, bbox_inches='tight')
+    plt.savefig(f"../figs/singlewindow_{fname_geopsy[-4]}.png", dpi=200, bbox_inches='tight')
