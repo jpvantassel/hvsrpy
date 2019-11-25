@@ -72,8 +72,8 @@
 
 
 \title{hvsrpy}
-\date{Nov 12, 2019}
-\release{0.0.1}
+\date{Nov 25, 2019}
+\release{0.1.0}
 \author{Joseph P.\@{} Vantassel}
 \newcommand{\sphinxlogo}{\vbox{}}
 \renewcommand{\releasename}{Release}
@@ -96,7 +96,7 @@ processing. hvsrpy was developed by Joseph P. Vantassel with contributions
 from Dana M. Brannon under the supervision of Professor Brady R. Cox at the
 University of Texas at Austin. The fully-automated frequency-domain rejection
 algorithm implemented in \sphinxtitleref{hvsrpy} was developed by Tianjian Cheng under the
-supervision of Professor Brady R. Cox at the Univesity of Texas at Austin and
+supervision of Professor Brady R. Cox at the University of Texas at Austin and
 detailed in Cox et al. (in review).
 
 The module includes two main class definitons \sphinxtitleref{Sensor3c} and \sphinxtitleref{Hvsr}. These
@@ -278,6 +278,14 @@ the documenation of \sphinxtitleref{SigProPy}.
 
 \end{fulllineitems}
 
+\index{normalization\_factor() (Sensor3c property)@\spxentry{normalization\_factor()}\spxextra{Sensor3c property}}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.normalization_factor}}\pysigline{\sphinxbfcode{\sphinxupquote{property }}\sphinxbfcode{\sphinxupquote{normalization\_factor}}}
+Return sensor time history normalization factor.
+
+\end{fulllineitems}
+
 \index{resample() (Sensor3c method)@\spxentry{resample()}\spxextra{Sensor3c method}}
 
 \begin{fulllineitems}
@@ -409,11 +417,30 @@ Refer to \sphinxtitleref{scipy.signal.find\_peaks} documentation.
 
 \end{fulllineitems}
 
-\index{mc\_peak() (Hvsr method)@\spxentry{mc\_peak()}\spxextra{Hvsr method}}
+\index{mc\_peak\_amp() (Hvsr method)@\spxentry{mc\_peak\_amp()}\spxextra{Hvsr method}}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.mc_peak}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{mc\_peak}}}{\emph{distribution='log-normal'}}{}
-Peak of mean H/V curve.
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.mc_peak_amp}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{mc\_peak\_amp}}}{\emph{distribution='log-normal'}}{}
+Amplitude of the peak of the mean H/V curve.
+\begin{description}
+\item[{Args:}] \leavevmode\begin{description}
+\item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
+Refer to method \sphinxtitleref{mean\_curve} for details.
+
+\end{description}
+
+\item[{Returns:}] \leavevmode
+Ampltiude associated with the peak of the mean H/V curve.
+
+\end{description}
+
+\end{fulllineitems}
+
+\index{mc\_peak\_frq() (Hvsr method)@\spxentry{mc\_peak\_frq()}\spxextra{Hvsr method}}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.mc_peak_frq}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{mc\_peak\_frq}}}{\emph{distribution='log-normal'}}{}
+Frequency of the peak of the mean H/V curve.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
@@ -455,11 +482,37 @@ If \sphinxtitleref{distribution} does not match the available options.
 
 \end{fulllineitems}
 
-\index{mean\_f0() (Hvsr method)@\spxentry{mean\_f0()}\spxextra{Hvsr method}}
+\index{mean\_f0\_amp() (Hvsr method)@\spxentry{mean\_f0\_amp()}\spxextra{Hvsr method}}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.mean_f0}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{mean\_f0}}}{\emph{distribution='log-normal'}}{}
-Return mean value of \sphinxtitleref{f0} of valid timewindows.
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.mean_f0_amp}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{mean\_f0\_amp}}}{\emph{distribution='log-normal'}}{}
+Mean amplitude of \sphinxtitleref{f0} of valid timewindows.
+\begin{description}
+\item[{Args:}] \leavevmode\begin{description}
+\item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}{]}
+Assumed distribution of \sphinxtitleref{f0}, default is \sphinxtitleref{log-normal}.
+
+\end{description}
+
+\item[{Returns:}] \leavevmode
+Mean amplitude of \sphinxtitleref{f0} according to the distribution
+specified.
+
+\item[{Raises:}] \leavevmode\begin{description}
+\item[{KeyError:}] \leavevmode
+If \sphinxtitleref{distribution} does not match the available options.
+
+\end{description}
+
+\end{description}
+
+\end{fulllineitems}
+
+\index{mean\_f0\_frq() (Hvsr method)@\spxentry{mean\_f0\_frq()}\spxextra{Hvsr method}}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.mean_f0_frq}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{mean\_f0\_frq}}}{\emph{distribution='log-normal'}}{}
+Mean \sphinxtitleref{f0} of valid timewindows.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}{]}
@@ -503,10 +556,35 @@ nth standard deviation curve as an \sphinxtitleref{ndarray}.
 
 \end{fulllineitems}
 
-\index{nstd\_f0() (Hvsr method)@\spxentry{nstd\_f0()}\spxextra{Hvsr method}}
+\index{nstd\_f0\_amp() (Hvsr method)@\spxentry{nstd\_f0\_amp()}\spxextra{Hvsr method}}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.nstd_f0}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{nstd\_f0}}}{\emph{n}, \emph{distribution}}{}
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.nstd_f0_amp}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{nstd\_f0\_amp}}}{\emph{n}, \emph{distribution}}{}
+nth sample standard deviation of amplitude of \sphinxtitleref{f0} from time
+windows.
+\begin{description}
+\item[{Args:}] \leavevmode\begin{description}
+\item[{n}] \leavevmode{[}float{]}
+Number of standard deviations away from the mean
+amplitude of \sphinxtitleref{f0} from time windows.
+
+\item[{distribution}] \leavevmode{[}\{‘log-normal’, ‘normal’\}, optional{]}
+Assumed distribution of \sphinxtitleref{f0}, the default is
+‘log-normal’.
+
+\end{description}
+
+\item[{Return:}] \leavevmode
+nth standard deviation of ampltiude of \sphinxtitleref{f0} as \sphinxtitleref{float}.
+
+\end{description}
+
+\end{fulllineitems}
+
+\index{nstd\_f0\_frq() (Hvsr method)@\spxentry{nstd\_f0\_frq()}\spxextra{Hvsr method}}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.nstd_f0_frq}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{nstd\_f0\_frq}}}{\emph{n}, \emph{distribution}}{}
 Return nth standard deviation of \sphinxtitleref{f0}.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
@@ -539,6 +617,14 @@ Return valid peaks amplitude vector.
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.peak_frq}}\pysigline{\sphinxbfcode{\sphinxupquote{property }}\sphinxbfcode{\sphinxupquote{peak\_frq}}}
 Return valid peaks frequency vector.
+
+\end{fulllineitems}
+
+\index{print\_stats() (Hvsr method)@\spxentry{print\_stats()}\spxextra{Hvsr method}}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.print_stats}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{print\_stats}}}{\emph{distribution\_f0}}{}
+Print the basic statistics of Hvsr object to stdout.
 
 \end{fulllineitems}
 
@@ -578,6 +664,14 @@ Number of iterations required for convergence.
 
 \end{fulllineitems}
 
+\index{rejected\_window\_indices() (Hvsr property)@\spxentry{rejected\_window\_indices()}\spxextra{Hvsr property}}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.rejected_window_indices}}\pysigline{\sphinxbfcode{\sphinxupquote{property }}\sphinxbfcode{\sphinxupquote{rejected\_window\_indices}}}
+Return rejected window indices.
+
+\end{fulllineitems}
+
 \index{std\_curve() (Hvsr method)@\spxentry{std\_curve()}\spxextra{Hvsr method}}
 
 \begin{fulllineitems}
@@ -608,11 +702,11 @@ If \sphinxtitleref{distribution} does not match the available options.
 
 \end{fulllineitems}
 
-\index{std\_f0() (Hvsr method)@\spxentry{std\_f0()}\spxextra{Hvsr method}}
+\index{std\_f0\_amp() (Hvsr method)@\spxentry{std\_f0\_amp()}\spxextra{Hvsr method}}
 
 \begin{fulllineitems}
-\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.std_f0}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{std\_f0}}}{\emph{distribution='log-normal'}}{}
-Return sample standard deviation of \sphinxtitleref{f0} of valid
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.std_f0_amp}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{std\_f0\_amp}}}{\emph{distribution='log-normal'}}{}
+Sample standard deviation of amplitude of \sphinxtitleref{f0} of valid
 timewindows.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
@@ -621,12 +715,35 @@ Assumed distribution of \sphinxtitleref{f0}, default is \sphinxtitleref{log-norm
 
 \end{description}
 
-\item[{Returns:}] \leavevmode\begin{description}
-\item[{std}] \leavevmode{[}float{]}
-Sample standard deviation value according to the
-distribution specified.
+\item[{Returns:}] \leavevmode
+Sample standard deviation of the amplitude of f0 according
+to the distribution specified.
+
+\item[{Raises:}] \leavevmode\begin{description}
+\item[{KeyError:}] \leavevmode
+If \sphinxtitleref{distribution} does not match the available options.
 
 \end{description}
+
+\end{description}
+
+\end{fulllineitems}
+
+\index{std\_f0\_frq() (Hvsr method)@\spxentry{std\_f0\_frq()}\spxextra{Hvsr method}}
+
+\begin{fulllineitems}
+\phantomsection\label{\detokenize{index:hvsrpy.Hvsr.std_f0_frq}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{std\_f0\_frq}}}{\emph{distribution='log-normal'}}{}
+Sample standard deviation of \sphinxtitleref{f0} of valid timewindows.
+\begin{description}
+\item[{Args:}] \leavevmode\begin{description}
+\item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
+Assumed distribution of \sphinxtitleref{f0}, default is \sphinxtitleref{log-normal}.
+
+\end{description}
+
+\item[{Returns:}] \leavevmode
+Sample standard deviation of \sphinxtitleref{f0} according to the 
+distribution specified.
 
 \item[{Raises:}] \leavevmode\begin{description}
 \item[{KeyError:}] \leavevmode
