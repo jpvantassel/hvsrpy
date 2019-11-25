@@ -5,17 +5,27 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="hvsrpy",
-    version="0.0.1",
-    author="Joseh P Vantassel",
+    version="0.1.0",
+    author="Joseh P. Vantassel",
     author_email="jvantassel@utexas.edu",
-    description="Tools for Horizontal-to-Vertical Spectral Ratio (H/V, HVSR) processing.",
+    description="A Python module for horizontal-to-vertical spectra ratio processing",
     long_description=long_description,
     long_description_content_type="text/markdown.-",
     url="https://github.com/jpvantassel/hvsr",
     packages=setuptools.find_packages(),
     classifiers=[
-        "Programming Language :: Python :: 3",
-        "Liscence :: GNU GPLv3",
-        "Operating System :: OS Independent",
+        "Development Status :: 4 - Beta",
+
+        "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "Intended Audience :: Science/Research",
+
+        "Topic :: Education",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Physics",
+
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+
+        'Programming Language :: Python :: 3.7',
     ],
 )
