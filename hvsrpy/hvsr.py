@@ -503,6 +503,28 @@ class Hvsr():
         else:
             raise KeyError(f"distribution type {distribution} not recognized.")
 
+    def print_stats(self, distribution_f0):
+        """Print the basic statistics of Hvsr object to stdout."""
+
+        if distribution_f0 == "log-normal":
+            f0 = f"|    f0     |  Log-normal  |    -    | {str(self.mean_f0_frq(distribution_f0))[:4]} Hz |        {str(self.std_f0_frq(distribution_f0))[:4]}        |"            
+        else:
+            f0 = f"|    f0     |    Normal    | {str(self.std_f0_frq(distribution_f0))[:4]} Hz |    -    |      {str(self.std_f0_frq(distribution_f0))[:4]} Hz       |"
+
+        if distribution_f0 == "log-normal":
+            T0 = f"|    T0     |  Log-normal  |    -    | {str(1/self.mean_f0_frq(distribution_f0))[:4]} s  |       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |"            
+        else:
+            T0 = f"|    T0     |    Normal    |    -    |    -    |         -          |"
+
+        stats = [
+            "| Parameter | Distribution |   Mean  |  Median | Standard Deviation |",
+            "|-----------+--------------+---------+---------+--------------------|",
+            f0,
+            T0
+        ]
+        for stat in stats:
+            print(stat)
+
     def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):
         """Save H/V data to file following the Geopsy format.
 
