@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python module for horizontal-to-vertical 
+# This file is part of hvsrpy a Python module for horizontal-to-vertical
 # spectral ratio processing.
 # Copyright (C) 2019 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -32,12 +32,17 @@ class Hvsr():
             Array of H/V amplitudes. Each row represents an individual
             curve and each column a frequency.
         frq : ndarray
-            Vector of frequencies, corresponding to each column.
+            Vector of frequencies corresponds to each column.
         n_windows : int
-            Number of windows in Hvsr object.
+            Number of windows in `Hvsr` object.
         valid_window_indices : ndarray
             Array of indices indicating valid windows.
-
+        rejected_window_indices : ndarray
+            Array of indices indicating rejected windows.
+        peak_frq : ndarray
+            Frequency peaks, one per valid time window.
+        peak_amp : ndarray
+            Amplitude(s) which correspond to `peak_frq`.
     """
     @staticmethod
     def _check_input(name, value):
@@ -75,7 +80,7 @@ class Hvsr():
         return value
 
     def __init__(self, amplitude, frequency, find_peaks=True):
-        """Initialize a Hvsr oject from an amplitude and frequency
+        """Initialize a `Hvsr` oject from an amplitude and frequency
         vector.
 
         Args:
@@ -86,7 +91,7 @@ class Hvsr():
                 Vector of frequencies, corresponding to each column.
 
         Returns:
-            Initialized Hvsr object.
+            Initialized `Hvsr` object.
         """
         self.amp = self._check_input("amplitude", amplitude)
         self.frq = self._check_input("frequency", frequency)
@@ -100,26 +105,26 @@ class Hvsr():
 
     @property
     def rejected_window_indices(self):
-        """Return rejected window indices."""
+        """Rejected window indices."""
         return np.array([cwindow for cwindow in range(self.n_windows) if cwindow not in self.valid_window_indices])
 
     @property
     def peak_frq(self):
-        """Return valid peaks frequency vector."""
+        """Valid peak frequency vector."""
         if not self._initialized_peaks:
             self.update_peaks()
         return self._master_peak_frq[self.valid_window_indices]
 
     @property
     def peak_amp(self):
-        """Return valid peaks amplitude vector."""
+        """Valid peak amplitude vector."""
         if not self._initialized_peaks:
             self.update_peaks()
         return self._master_peak_amp[self.valid_window_indices]
 
     @staticmethod
     def find_peaks(amp, **kwargs):
-        """Returns the indices of all peaks in `amp`.
+        """Indices of all peaks in `amp`.
 
         Wrapper method for scipy.signal.find_peaks function.
 
@@ -128,8 +133,9 @@ class Hvsr():
                 Vector or array of amplitudes. See `amp` attribute for 
                 details.
             **kwargs : dict
-                Refer to `scipy.signal.find_peaks` documentation
-                `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_.
+                Refer to
+                `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_ 
+                documentation.
 
         Returns:
             peaks : ndarray or list
@@ -137,7 +143,9 @@ class Hvsr():
                 peak indices.
 
             properties : dict
-                Refer to `scipy.signal.find_peaks` documentation.
+                Refer to
+                `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_ 
+                documentation.
         """
         if len(amp.shape) == 1:
             peaks, settings = sg.find_peaks(amp, **kwargs)
@@ -155,7 +163,8 @@ class Hvsr():
 
         Args:
             **kwargs:
-                Refer to static method `find_peaks` documentation.
+                Refer to :meth:`find_peaks <Hvsr.find_peaks>`
+                documentation.
 
         Returns:
             `None`, update `peaks` attribute.
@@ -186,11 +195,11 @@ class Hvsr():
         self.valid_window_indices = np.array(valid_indices)
 
     def mean_f0_frq(self, distribution='log-normal'):
-        """Mean `f0` of valid timewindows.
+        """Mean `f0` of valid time windows.
 
         Args:
             distribution : {'normal', 'log-normal'}
-                Assumed distribution of `f0`, default is `log-normal`.
+                Assumed distribution of `f0`, default is 'log-normal'.
 
         Returns:
             Mean value of `f0` according to the distribution specified.
@@ -208,11 +217,11 @@ class Hvsr():
             raise KeyError(msg)
 
     def mean_f0_amp(self, distribution='log-normal'):
-        """Mean amplitude of `f0` of valid timewindows.
+        """Mean amplitude of `f0` of valid time windows.
 
         Args:
             distribution : {'normal', 'log-normal'}
-                Assumed distribution of `f0`, default is `log-normal`.
+                Assumed distribution of `f0`, default is 'log-normal'.
 
         Returns:
             Mean amplitude of `f0` according to the distribution
@@ -231,11 +240,11 @@ class Hvsr():
             raise KeyError(msg)
 
     def std_f0_frq(self, distribution='log-normal'):
-        """Sample standard deviation of `f0` of valid timewindows.
+        """Sample standard deviation of `f0` of valid time windows.
 
         Args:
             distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of `f0`, default is `log-normal`.
+                Assumed distribution of `f0`, default is 'log-normal'.
 
         Returns:
             Sample standard deviation of `f0` according to the 
@@ -254,11 +263,11 @@ class Hvsr():
 
     def std_f0_amp(self, distribution='log-normal'):
         """Sample standard deviation of amplitude of `f0` of valid
-        timewindows.
+        time windows.
 
         Args:
             distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of `f0`, default is `log-normal`.
+                Assumed distribution of `f0`, default is 'log-normal'.
 
         Returns:
             Sample standard deviation of the amplitude of f0 according
@@ -281,7 +290,7 @@ class Hvsr():
         Args:
             distribution : {'normal', 'log-normal'}, optional
                 Assumed distribution of mean curve, default is 
-                `log-normal`.
+                'log-normal'.
 
         Returns:
             Mean H/V curve as `ndarray` according to the distribution
@@ -302,12 +311,12 @@ class Hvsr():
             raise KeyError(f"distribution type {distribution} not recognized.")
 
     def std_curve(self, distribution='log-normal'):
-        """Sample standard deviation associate with the mean H/V curve.
+        """Sample standard deviation associated with the mean H/V curve.
 
         Args:
             distribution : {'normal', 'log-normal'}, optional
                 Assumed distribution of H/V curve, default is
-                `log-normal`.
+                'log-normal'.
 
         Returns:
             Sample standard deviation of H/V curve as `ndarray`
@@ -335,7 +344,7 @@ class Hvsr():
 
         Args:
             distribution : {'normal', 'log-normal'}, optional
-                Refer to method `mean_curve` for details.
+                Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
 
         Returns:
             Frequency associated with the peak of the mean H/V curve.
@@ -348,7 +357,7 @@ class Hvsr():
 
         Args:
             distribution : {'normal', 'log-normal'}, optional
-                Refer to method `mean_curve` for details.
+                Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
 
         Returns:
             Ampltiude associated with the peak of the mean H/V curve.
@@ -362,11 +371,11 @@ class Hvsr():
 
         Args:
             n : float, optional
-                Number of standard deviations from the mean (default
-                value is 2).
+                Number of standard deviations from the mean, default
+                value is 2.
             max_iterations : int, optional
-                Maximum number of rejection iterations (default value is
-                50).
+                Maximum number of rejection iterations, default value is
+                50.
             distribution_f0 : {'log-normal', 'normal'}, optional
                 Assumed distribution of `f0` from time windows, the
                 default is 'log-normal'.
@@ -380,21 +389,6 @@ class Hvsr():
         """
         if not self._initialized_peaks:
             self.update_peaks()
-
-        # TODO (jpv): Remove this section and use new nstd method.
-        if distribution_f0 == 'log-normal':
-            def calulate_range(mean, std, n):
-                upper = np.exp(np.log(mean)+n*std)
-                lower = np.exp(np.log(mean)-n*std)
-                return (lower, upper)
-        elif distribution_f0 == 'normal':
-            def calulate_range(mean, std, n):
-                upper = mean+n*std
-                lower = mean-n*std
-                return (lower, upper)
-        else:
-            msg = f"distribution type {distribution_f0} not recognized."
-            raise KeyError(msg)
 
         for c_iteration in range(max_iterations):
 
@@ -410,7 +404,8 @@ class Hvsr():
 
             d_before = abs(mean_f0 - mc_peak_frq)
 
-            lower_bound, upper_bound = calulate_range(mean_f0, std_f0, n)
+            lower_bound = self.nstd_f0_frq(-n, distribution_f0)
+            upper_bound = self.nstd_f0_frq(+n, distribution_f0)
             rejected_windows = 0
             keep_indices = []
             for c_window, c_peak in zip(self.valid_window_indices, self.peak_frq):
@@ -431,10 +426,10 @@ class Hvsr():
                 logging.warning(msg)
                 return c_iteration
 
-            logging.debug(
-                f"d relative difference: {(abs(d_after - d_before)/d_before)}")
-            logging.debug(
-                f"std relative difference: {(abs(std_f0 - new_std_f0)/std_f0)}")
+            msg = f"d relative difference: {(abs(d_after - d_before)/d_before)}"
+            logging.debug(msg)
+            msg = f"std relative difference: {(abs(std_f0 - new_std_f0)/std_f0)}"
+            logging.debug(msg)
 
             if ((abs(d_after - d_before)/d_before) < 0.01) and ((abs(std_f0 - new_std_f0)/std_f0) < 0.01):
                 msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
@@ -446,7 +441,8 @@ class Hvsr():
 
         Args:
             n : float
-                Number of standard deviations away from the mean `f0`.
+                Number of standard deviations away from the mean `f0`
+                from the valid time windows.
             distribution : {'log-normal', 'normal'}, optional
                 Assumed distribution of `f0`, the default is
                 'log-normal'.
@@ -468,7 +464,7 @@ class Hvsr():
         Args:
             n : float
                 Number of standard deviations away from the mean
-                amplitude of `f0` from time windows.
+                amplitude of `f0` from valid time windows.
             distribution : {'log-normal', 'normal'}, optional
                 Assumed distribution of `f0`, the default is
                 'log-normal'.
@@ -504,15 +500,15 @@ class Hvsr():
             raise KeyError(f"distribution type {distribution} not recognized.")
 
     def print_stats(self, distribution_f0):
-        """Print the basic statistics of Hvsr object to stdout."""
+        """Print basic statistics of `Hvsr` instance."""
 
         if distribution_f0 == "log-normal":
-            f0 = f"|    f0     |  Log-normal  |    -    | {str(self.mean_f0_frq(distribution_f0))[:4]} Hz |        {str(self.std_f0_frq(distribution_f0))[:4]}        |"            
+            f0 = f"|    f0     |  Log-normal  |    -    | {str(self.mean_f0_frq(distribution_f0))[:4]} Hz |        {str(self.std_f0_frq(distribution_f0))[:4]}        |"
         else:
             f0 = f"|    f0     |    Normal    | {str(self.std_f0_frq(distribution_f0))[:4]} Hz |    -    |      {str(self.std_f0_frq(distribution_f0))[:4]} Hz       |"
 
         if distribution_f0 == "log-normal":
-            T0 = f"|    T0     |  Log-normal  |    -    | {str(1/self.mean_f0_frq(distribution_f0))[:4]} s  |       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |"            
+            T0 = f"|    T0     |  Log-normal  |    -    | {str(1/self.mean_f0_frq(distribution_f0))[:4]} s  |       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |"
         else:
             T0 = f"|    T0     |    Normal    |    -    |    -    |         -          |"
 

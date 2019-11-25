@@ -15,7 +15,7 @@
 \indexentry{\_\_init\_\_() (Hvsr method)@\spxentry{\_\_init\_\_()}\spxextra{Hvsr method}|hyperpage}{5}
 \indexentry{find\_peaks() (Hvsr static method)@\spxentry{find\_peaks()}\spxextra{Hvsr static method}|hyperpage}{5}
 \indexentry{mc\_peak\_amp() (Hvsr method)@\spxentry{mc\_peak\_amp()}\spxextra{Hvsr method}|hyperpage}{5}
-\indexentry{mc\_peak\_frq() (Hvsr method)@\spxentry{mc\_peak\_frq()}\spxextra{Hvsr method}|hyperpage}{5}
+\indexentry{mc\_peak\_frq() (Hvsr method)@\spxentry{mc\_peak\_frq()}\spxextra{Hvsr method}|hyperpage}{6}
 \indexentry{mean\_curve() (Hvsr method)@\spxentry{mean\_curve()}\spxextra{Hvsr method}|hyperpage}{6}
 \indexentry{mean\_f0\_amp() (Hvsr method)@\spxentry{mean\_f0\_amp()}\spxextra{Hvsr method}|hyperpage}{6}
 \indexentry{mean\_f0\_frq() (Hvsr method)@\spxentry{mean\_f0\_frq()}\spxextra{Hvsr method}|hyperpage}{6}
@@ -28,7 +28,7 @@
 \indexentry{reject\_windows() (Hvsr method)@\spxentry{reject\_windows()}\spxextra{Hvsr method}|hyperpage}{7}
 \indexentry{rejected\_window\_indices() (Hvsr property)@\spxentry{rejected\_window\_indices()}\spxextra{Hvsr property}|hyperpage}{7}
 \indexentry{std\_curve() (Hvsr method)@\spxentry{std\_curve()}\spxextra{Hvsr method}|hyperpage}{7}
-\indexentry{std\_f0\_amp() (Hvsr method)@\spxentry{std\_f0\_amp()}\spxextra{Hvsr method}|hyperpage}{7}
+\indexentry{std\_f0\_amp() (Hvsr method)@\spxentry{std\_f0\_amp()}\spxextra{Hvsr method}|hyperpage}{8}
 \indexentry{std\_f0\_frq() (Hvsr method)@\spxentry{std\_f0\_frq()}\spxextra{Hvsr method}|hyperpage}{8}
 \indexentry{to\_file\_like\_geopsy() (Hvsr method)@\spxentry{to\_file\_like\_geopsy()}\spxextra{Hvsr method}|hyperpage}{8}
 \indexentry{update\_peaks() (Hvsr method)@\spxentry{update\_peaks()}\spxextra{Hvsr method}|hyperpage}{8}

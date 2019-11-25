@@ -31,9 +31,13 @@ class Sensor3c():
 
     Attributes:
         ns, ew, vt : Timeseries
-            TimeSeries object for each component.
+            `TimeSeries` object for each component.
         ns_f, ew_f, vt_f : FourierTransform
-            FourierTransform object for each component.
+            `FourierTransform` object for each component.
+        normalization_factor : float
+            Maximum value of `ns`, `ew`, and `vt` amplitude used for
+            normalization when plotting.
+        
     """
 
     @staticmethod
@@ -41,7 +45,7 @@ class Sensor3c():
         """Perform checks on inputs
 
         Specifically:
-            1. Ensure all components are TimeSeries objects.
+            1. Ensure all components are `TimeSeries` objects.
             2. Ensure all components have equal `dt`.
             3. Ensure all components have same `n_samples`. If not trim
             components to a common length.
@@ -49,13 +53,13 @@ class Sensor3c():
         Args:
             values_dict : dict
                 Key is human readable component name {'ns', 'ew', 'vt'}.
-                Value is corresponding TimeSeries object.
+                Value is corresponding `TimeSeries` object.
 
         Returns:
             Tuple of checked components.
         """
         if not isinstance(values_dict["ns"], TimeSeries):
-            msg = f"'ns' must be a TimeSeries, not {type(values_dict['ns'])}."
+            msg = f"'ns' must be a `TimeSeries`, not {type(values_dict['ns'])}."
             raise TypeError(msg)
         dt = values_dict["ns"].dt
         delay = values_dict["ns"].delay
@@ -63,13 +67,13 @@ class Sensor3c():
         flag_cut = False
         for key, value in values_dict.items():
             if not isinstance(value, TimeSeries):
-                msg = f"{key} must be a TimeSeries, not {type(value)}."
+                msg = f"{key} must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
             if value.dt != dt:
-                msg = f"All components must have equal dt."
+                msg = f"All components must have equal `dt`."
                 raise ValueError(msg)
             if value.delay != delay:
-                msg = f"All components must have equal dt."
+                msg = f"All components must have equal `dt`."
                 raise ValueError(msg)
 
             if value.n_samples != n_samples:
@@ -93,10 +97,10 @@ class Sensor3c():
 
         Args:
             ns, ew, vt : timeseries
-                Timeseries object for each component.
+                `TimeSeries` object for each component.
 
         Returns:
-            Initialized 3-component sensor (Sensor3c) object.
+            Initialized 3-component sensor (`Sensor3c`) object.
         """
         self.ns, self.ew, self.vt = self._check_input({"ns": ns,
                                                        "ew": ew,
@@ -124,7 +128,7 @@ class Sensor3c():
                 for specifics.
 
         Returns:
-            Initialized 3-component sensor (Sensor3c) object.
+            Initialized 3-component sensor (`Sensor3c`) object.
         """
         traces = obspy.read(fname)
 
@@ -150,7 +154,7 @@ class Sensor3c():
         return cls(ns, ew, vt)
 
     def split(self, windowlength):
-        """Split component TimeSeries.
+        """Split component `TimeSeries`.
 
         Refer to `SigProPy` documentation for details.
         """
@@ -158,7 +162,7 @@ class Sensor3c():
             comp.split(windowlength)
 
     def detrend(self):
-        """Detrend component TimeSeries.
+        """Detrend component `TimeSeries`.
 
         Refer to `SigProPy` documentation for details.
         """
@@ -166,7 +170,7 @@ class Sensor3c():
             comp.detrend()
 
     def bandpassfilter(self, flow, fhigh, order):
-        """Bandpassfilter component TimeSeries.
+        """Bandpassfilter component `TimeSeries`.
 
         Refer to `SigProPy` documentation for details.
         """
@@ -174,7 +178,7 @@ class Sensor3c():
             comp.bandpassfilter(flow, fhigh, order)
 
     def cosine_taper(self, width):
-        """Cosine taper component TimeSeries.
+        """Cosine taper component `TimeSeries`.
 
         Refer to `SigProPy` documentation for details.
         """
@@ -182,18 +186,18 @@ class Sensor3c():
             comp.cosine_taper(width)
 
     def transform(self):
-        """Perform Fourier transform on components.
+        """Perform Fourier transform on component `TimeSeries`.
 
         Returns:
             `None`, redefines attributes `ew_f`, `ns_f`, and `vt_f` as 
-            FourierTransform objects for each component.
+            `FourierTransform` objects for each component.
         """
         self.ew_f = FourierTransform.from_timeseries(self.ew)
         self.ns_f = FourierTransform.from_timeseries(self.ns)
         self.vt_f = FourierTransform.from_timeseries(self.vt)
 
     def smooth(self, bandwidth):
-        """Smooth component FourierTransforms.
+        """Smooth component `FourierTransforms`.
 
         Refer to `SigProPy` documentation for details.
         """
@@ -201,7 +205,7 @@ class Sensor3c():
             comp.smooth_konno_ohmachi(bandwidth)
 
     def resample(self, fmin, fmax, fn, res_type, inplace):
-        """Resample component FourierTransforms.
+        """Resample component `FourierTransforms`.
 
         Refer to `SigProPy` documentation for details.
         """
@@ -212,14 +216,14 @@ class Sensor3c():
         """Combine two horizontal components (`ns` and `ew`).
 
         Args:
-            ratio_type : {'squared-averge', 'geometric-mean'}, optional
+            method : {'squared-averge', 'geometric-mean'}, optional
                 Defines how the two horizontal components are combined 
-                to represent a single horizontal component. By default
-                the 'squared-average' approach is used.
+                to represent a single horizontal component, the default
+                is 'squared-average'.
 
-        Return:
-            A FourierTransform object representing the combined
-            horizontal component.
+        Returns:
+            A `FourierTransform` object representing the combined
+            horizontal components.
         """
         if method == 'squared-average':
             horizontal = np.sqrt(
@@ -227,12 +231,12 @@ class Sensor3c():
         elif method == 'geometric-mean':
             horizontal = np.sqrt(self.ns_f.amp * self.ew_f.amp)
         else:
-            raise NotImplementedError(
-                f"ratio_type {method} has not been implemented.")
+            msg = f"ratio_type {method} has not been implemented."
+            raise NotImplementedError(msg)
         return FourierTransform(horizontal, self.ns_f.frq)
 
     def hv(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
-        """Prepare time series and fourier transforms then compute H/V.
+        """Prepare time series and Fourier transforms then compute H/V.
 
         Args:
             windowlength : float
@@ -250,10 +254,10 @@ class Sensor3c():
                 {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
                 'res_type':`str`}.
             method : {'squared-averge', 'geometric-mean'}
-                Refer to method `combine_horizontals` for details.
+                Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
 
         Returns:
-            Initialized Hvsr object.
+            Initialized `Hvsr` object.
 
         Notes:
             More information for the above arguements can be found in

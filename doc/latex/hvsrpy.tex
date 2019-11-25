@@ -91,7 +91,7 @@
 
 \chapter{Summary}
 \label{\detokenize{index:summary}}
-hvsrpy is a Python module for performing horizontal-to-vertical spectral ratio
+hvsrpy is a Python module for horizontal-to-vertical spectral ratio
 processing. hvsrpy was developed by Joseph P. Vantassel with contributions
 from Dana M. Brannon under the supervision of Professor Brady R. Cox at the
 University of Texas at Austin. The fully-automated frequency-domain rejection
@@ -101,7 +101,7 @@ detailed in Cox et al. (in review).
 
 The module includes two main class definitons \sphinxtitleref{Sensor3c} and \sphinxtitleref{Hvsr}. These
 classes include various methods for creating and manipulating 3-component
-sensor and horizontal-to-vertical spectral ratio objects.
+sensor and horizontal-to-vertical spectral ratio objects, respectively.
 
 
 \chapter{License Information}
@@ -133,10 +133,14 @@ Class for creating and manipulating 3-component sensor objects.
 \begin{description}
 \item[{Attributes:}] \leavevmode\begin{description}
 \item[{ns, ew, vt}] \leavevmode{[}Timeseries{]}
-TimeSeries object for each component.
+\sphinxtitleref{TimeSeries} object for each component.
 
 \item[{ns\_f, ew\_f, vt\_f}] \leavevmode{[}FourierTransform{]}
-FourierTransform object for each component.
+\sphinxtitleref{FourierTransform} object for each component.
+
+\item[{normalization\_factor}] \leavevmode{[}float{]}
+Maximum value of \sphinxtitleref{ns}, \sphinxtitleref{ew}, and \sphinxtitleref{vt} amplitude used for
+normalization when plotting.
 
 \end{description}
 
@@ -149,12 +153,12 @@ Initalize a 3-component sensor (Sensor3c) object.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{ns, ew, vt}] \leavevmode{[}timeseries{]}
-Timeseries object for each component.
+\sphinxtitleref{TimeSeries} object for each component.
 
 \end{description}
 
 \item[{Returns:}] \leavevmode
-Initialized 3-component sensor (Sensor3c) object.
+Initialized 3-component sensor (\sphinxtitleref{Sensor3c}) object.
 
 \end{description}
 
@@ -164,7 +168,7 @@ Initialized 3-component sensor (Sensor3c) object.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.bandpassfilter}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{bandpassfilter}}}{\emph{flow}, \emph{fhigh}, \emph{order}}{}
-Bandpassfilter component TimeSeries.
+Bandpassfilter component \sphinxtitleref{TimeSeries}.
 
 Refer to \sphinxtitleref{SigProPy} documentation for details.
 
@@ -177,16 +181,16 @@ Refer to \sphinxtitleref{SigProPy} documentation for details.
 Combine two horizontal components (\sphinxtitleref{ns} and \sphinxtitleref{ew}).
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
-\item[{ratio\_type}] \leavevmode{[}\{‘squared-averge’, ‘geometric-mean’\}, optional{]}
+\item[{method}] \leavevmode{[}\{‘squared-averge’, ‘geometric-mean’\}, optional{]}
 Defines how the two horizontal components are combined 
-to represent a single horizontal component. By default
-the ‘squared-average’ approach is used.
+to represent a single horizontal component, the default
+is ‘squared-average’.
 
 \end{description}
 
-\item[{Return:}] \leavevmode
-A FourierTransform object representing the combined
-horizontal component.
+\item[{Returns:}] \leavevmode
+A \sphinxtitleref{FourierTransform} object representing the combined
+horizontal components.
 
 \end{description}
 
@@ -196,7 +200,7 @@ horizontal component.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.cosine_taper}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{cosine\_taper}}}{\emph{width}}{}
-Cosine taper component TimeSeries.
+Cosine taper component \sphinxtitleref{TimeSeries}.
 
 Refer to \sphinxtitleref{SigProPy} documentation for details.
 
@@ -206,7 +210,7 @@ Refer to \sphinxtitleref{SigProPy} documentation for details.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.detrend}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{detrend}}}{}{}
-Detrend component TimeSeries.
+Detrend component \sphinxtitleref{TimeSeries}.
 
 Refer to \sphinxtitleref{SigProPy} documentation for details.
 
@@ -230,7 +234,7 @@ for specifics.
 \end{description}
 
 \item[{Returns:}] \leavevmode
-Initialized 3-component sensor (Sensor3c) object.
+Initialized 3-component sensor (\sphinxtitleref{Sensor3c}) object.
 
 \end{description}
 
@@ -240,7 +244,7 @@ Initialized 3-component sensor (Sensor3c) object.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.hv}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{hv}}}{\emph{windowlength}, \emph{bp\_filter}, \emph{taper\_width}, \emph{bandwidth}, \emph{resampling}, \emph{method}}{}
-Prepare time series and fourier transforms then compute H/V.
+Prepare time series and Fourier transforms then compute H/V.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{windowlength}] \leavevmode{[}float{]}
@@ -263,12 +267,12 @@ Resampling settings, of the form
 ‘res\_type’:\sphinxtitleref{str}\}.
 
 \item[{method}] \leavevmode{[}\{‘squared-averge’, ‘geometric-mean’\}{]}
-Refer to method \sphinxtitleref{combine\_horizontals} for details.
+Refer to {\hyperref[\detokenize{index:hvsrpy.Sensor3c.combine_horizontals}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{combine\_horizontals}}}}} for details.
 
 \end{description}
 
 \item[{Returns:}] \leavevmode
-Initialized Hvsr object.
+Initialized \sphinxtitleref{Hvsr} object.
 
 \item[{Notes:}] \leavevmode
 More information for the above arguements can be found in
@@ -290,7 +294,7 @@ Return sensor time history normalization factor.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.resample}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{resample}}}{\emph{fmin}, \emph{fmax}, \emph{fn}, \emph{res\_type}, \emph{inplace}}{}
-Resample component FourierTransforms.
+Resample component \sphinxtitleref{FourierTransforms}.
 
 Refer to \sphinxtitleref{SigProPy} documentation for details.
 
@@ -300,7 +304,7 @@ Refer to \sphinxtitleref{SigProPy} documentation for details.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.smooth}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{smooth}}}{\emph{bandwidth}}{}
-Smooth component FourierTransforms.
+Smooth component \sphinxtitleref{FourierTransforms}.
 
 Refer to \sphinxtitleref{SigProPy} documentation for details.
 
@@ -310,7 +314,7 @@ Refer to \sphinxtitleref{SigProPy} documentation for details.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.split}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{split}}}{\emph{windowlength}}{}
-Split component TimeSeries.
+Split component \sphinxtitleref{TimeSeries}.
 
 Refer to \sphinxtitleref{SigProPy} documentation for details.
 
@@ -320,11 +324,11 @@ Refer to \sphinxtitleref{SigProPy} documentation for details.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Sensor3c.transform}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{transform}}}{}{}
-Perform Fourier transform on components.
+Perform Fourier transform on component \sphinxtitleref{TimeSeries}.
 \begin{description}
 \item[{Returns:}] \leavevmode
 \sphinxtitleref{None}, redefines attributes \sphinxtitleref{ew\_f}, \sphinxtitleref{ns\_f}, and \sphinxtitleref{vt\_f} as 
-FourierTransform objects for each component.
+\sphinxtitleref{FourierTransform} objects for each component.
 
 \end{description}
 
@@ -349,13 +353,22 @@ Array of H/V amplitudes. Each row represents an individual
 curve and each column a frequency.
 
 \item[{frq}] \leavevmode{[}ndarray{]}
-Vector of frequencies, corresponding to each column.
+Vector of frequencies corresponds to each column.
 
 \item[{n\_windows}] \leavevmode{[}int{]}
-Number of windows in Hvsr object.
+Number of windows in \sphinxtitleref{Hvsr} object.
 
 \item[{valid\_window\_indices}] \leavevmode{[}ndarray{]}
 Array of indices indicating valid windows.
+
+\item[{rejected\_window\_indices}] \leavevmode{[}ndarray{]}
+Array of indices indicating rejected windows.
+
+\item[{peak\_frq}] \leavevmode{[}ndarray{]}
+Frequency peaks, one per valid time window.
+
+\item[{peak\_amp}] \leavevmode{[}ndarray{]}
+Amplitude(s) which correspond to \sphinxtitleref{peak\_frq}.
 
 \end{description}
 
@@ -364,7 +377,7 @@ Array of indices indicating valid windows.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.__init__}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{\_\_init\_\_}}}{\emph{amplitude}, \emph{frequency}, \emph{find\_peaks=True}}{}
-Initialize a Hvsr oject from an amplitude and frequency
+Initialize a \sphinxtitleref{Hvsr} oject from an amplitude and frequency
 vector.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
@@ -378,7 +391,7 @@ Vector of frequencies, corresponding to each column.
 \end{description}
 
 \item[{Returns:}] \leavevmode
-Initialized Hvsr object.
+Initialized \sphinxtitleref{Hvsr} object.
 
 \end{description}
 
@@ -388,7 +401,7 @@ Initialized Hvsr object.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.find_peaks}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{static }}\sphinxbfcode{\sphinxupquote{find\_peaks}}}{\emph{amp}, \emph{**kwargs}}{}
-Returns the indices of all peaks in \sphinxtitleref{amp}.
+Indices of all peaks in \sphinxtitleref{amp}.
 
 Wrapper method for scipy.signal.find\_peaks function.
 \begin{description}
@@ -398,8 +411,9 @@ Vector or array of amplitudes. See \sphinxtitleref{amp} attribute for
 details.
 
 \item[{{\color{red}\bfseries{}**}kwargs}] \leavevmode{[}dict{]}
-Refer to \sphinxtitleref{scipy.signal.find\_peaks} documentation
-\sphinxhref{https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find\_peaks.html}{here}.
+Refer to
+\sphinxhref{https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find\_peaks.html}{scipy.signal.find\_peaks} 
+documentation.
 
 \end{description}
 
@@ -409,7 +423,9 @@ Refer to \sphinxtitleref{scipy.signal.find\_peaks} documentation
 peak indices.
 
 \item[{properties}] \leavevmode{[}dict{]}
-Refer to \sphinxtitleref{scipy.signal.find\_peaks} documentation.
+Refer to
+\sphinxhref{https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find\_peaks.html}{scipy.signal.find\_peaks} 
+documentation.
 
 \end{description}
 
@@ -425,7 +441,7 @@ Amplitude of the peak of the mean H/V curve.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
-Refer to method \sphinxtitleref{mean\_curve} for details.
+Refer to {\hyperref[\detokenize{index:hvsrpy.Hvsr.mean_curve}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{mean\_curve}}}}} for details.
 
 \end{description}
 
@@ -444,7 +460,7 @@ Frequency of the peak of the mean H/V curve.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
-Refer to method \sphinxtitleref{mean\_curve} for details.
+Refer to {\hyperref[\detokenize{index:hvsrpy.Hvsr.mean_curve}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{mean\_curve}}}}} for details.
 
 \end{description}
 
@@ -464,7 +480,7 @@ Return mean H/V curve.
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
 Assumed distribution of mean curve, default is 
-\sphinxtitleref{log-normal}.
+‘log-normal’.
 
 \end{description}
 
@@ -486,11 +502,11 @@ If \sphinxtitleref{distribution} does not match the available options.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.mean_f0_amp}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{mean\_f0\_amp}}}{\emph{distribution='log-normal'}}{}
-Mean amplitude of \sphinxtitleref{f0} of valid timewindows.
+Mean amplitude of \sphinxtitleref{f0} of valid time windows.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}{]}
-Assumed distribution of \sphinxtitleref{f0}, default is \sphinxtitleref{log-normal}.
+Assumed distribution of \sphinxtitleref{f0}, default is ‘log-normal’.
 
 \end{description}
 
@@ -512,11 +528,11 @@ If \sphinxtitleref{distribution} does not match the available options.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.mean_f0_frq}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{mean\_f0\_frq}}}{\emph{distribution='log-normal'}}{}
-Mean \sphinxtitleref{f0} of valid timewindows.
+Mean \sphinxtitleref{f0} of valid time windows.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}{]}
-Assumed distribution of \sphinxtitleref{f0}, default is \sphinxtitleref{log-normal}.
+Assumed distribution of \sphinxtitleref{f0}, default is ‘log-normal’.
 
 \end{description}
 
@@ -566,7 +582,7 @@ windows.
 \item[{Args:}] \leavevmode\begin{description}
 \item[{n}] \leavevmode{[}float{]}
 Number of standard deviations away from the mean
-amplitude of \sphinxtitleref{f0} from time windows.
+amplitude of \sphinxtitleref{f0} from valid time windows.
 
 \item[{distribution}] \leavevmode{[}\{‘log-normal’, ‘normal’\}, optional{]}
 Assumed distribution of \sphinxtitleref{f0}, the default is
@@ -589,7 +605,8 @@ Return nth standard deviation of \sphinxtitleref{f0}.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{n}] \leavevmode{[}float{]}
-Number of standard deviations away from the mean \sphinxtitleref{f0}.
+Number of standard deviations away from the mean \sphinxtitleref{f0}
+from the valid time windows.
 
 \item[{distribution}] \leavevmode{[}\{‘log-normal’, ‘normal’\}, optional{]}
 Assumed distribution of \sphinxtitleref{f0}, the default is
@@ -608,7 +625,7 @@ nth standard deviation of \sphinxtitleref{f0} as \sphinxtitleref{float}.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.peak_amp}}\pysigline{\sphinxbfcode{\sphinxupquote{property }}\sphinxbfcode{\sphinxupquote{peak\_amp}}}
-Return valid peaks amplitude vector.
+Valid peak amplitude vector.
 
 \end{fulllineitems}
 
@@ -616,7 +633,7 @@ Return valid peaks amplitude vector.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.peak_frq}}\pysigline{\sphinxbfcode{\sphinxupquote{property }}\sphinxbfcode{\sphinxupquote{peak\_frq}}}
-Return valid peaks frequency vector.
+Valid peak frequency vector.
 
 \end{fulllineitems}
 
@@ -624,7 +641,7 @@ Return valid peaks frequency vector.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.print_stats}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{print\_stats}}}{\emph{distribution\_f0}}{}
-Print the basic statistics of Hvsr object to stdout.
+Print basic statistics of \sphinxtitleref{Hvsr} instance.
 
 \end{fulllineitems}
 
@@ -637,12 +654,12 @@ Cox et al. (in review).
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{n}] \leavevmode{[}float, optional{]}
-Number of standard deviations from the mean (default
-value is 2).
+Number of standard deviations from the mean, default
+value is 2.
 
 \item[{max\_iterations}] \leavevmode{[}int, optional{]}
-Maximum number of rejection iterations (default value is
-50).
+Maximum number of rejection iterations, default value is
+50.
 
 \item[{distribution\_f0}] \leavevmode{[}\{‘log-normal’, ‘normal’\}, optional{]}
 Assumed distribution of \sphinxtitleref{f0} from time windows, the
@@ -668,7 +685,7 @@ Number of iterations required for convergence.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.rejected_window_indices}}\pysigline{\sphinxbfcode{\sphinxupquote{property }}\sphinxbfcode{\sphinxupquote{rejected\_window\_indices}}}
-Return rejected window indices.
+Rejected window indices.
 
 \end{fulllineitems}
 
@@ -676,12 +693,12 @@ Return rejected window indices.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.std_curve}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{std\_curve}}}{\emph{distribution='log-normal'}}{}
-Sample standard deviation associate with the mean H/V curve.
+Sample standard deviation associated with the mean H/V curve.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
 Assumed distribution of H/V curve, default is
-\sphinxtitleref{log-normal}.
+‘log-normal’.
 
 \end{description}
 
@@ -707,11 +724,11 @@ If \sphinxtitleref{distribution} does not match the available options.
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.std_f0_amp}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{std\_f0\_amp}}}{\emph{distribution='log-normal'}}{}
 Sample standard deviation of amplitude of \sphinxtitleref{f0} of valid
-timewindows.
+time windows.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
-Assumed distribution of \sphinxtitleref{f0}, default is \sphinxtitleref{log-normal}.
+Assumed distribution of \sphinxtitleref{f0}, default is ‘log-normal’.
 
 \end{description}
 
@@ -733,11 +750,11 @@ If \sphinxtitleref{distribution} does not match the available options.
 
 \begin{fulllineitems}
 \phantomsection\label{\detokenize{index:hvsrpy.Hvsr.std_f0_frq}}\pysiglinewithargsret{\sphinxbfcode{\sphinxupquote{std\_f0\_frq}}}{\emph{distribution='log-normal'}}{}
-Sample standard deviation of \sphinxtitleref{f0} of valid timewindows.
+Sample standard deviation of \sphinxtitleref{f0} of valid time windows.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{distribution}] \leavevmode{[}\{‘normal’, ‘log-normal’\}, optional{]}
-Assumed distribution of \sphinxtitleref{f0}, default is \sphinxtitleref{log-normal}.
+Assumed distribution of \sphinxtitleref{f0}, default is ‘log-normal’.
 
 \end{description}
 
@@ -792,7 +809,8 @@ amplitude peak.
 \begin{description}
 \item[{Args:}] \leavevmode\begin{description}
 \item[{{\color{red}\bfseries{}**}kwargs:}] \leavevmode
-Refer to static method \sphinxtitleref{find\_peaks} documentation.
+Refer to {\hyperref[\detokenize{index:hvsrpy.Hvsr.find_peaks}]{\sphinxcrossref{\sphinxcode{\sphinxupquote{find\_peaks}}}}}
+documentation.
 
 \end{description}
 
