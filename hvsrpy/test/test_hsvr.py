@@ -76,19 +76,34 @@ class Test(unittest.TestCase):
         myhv = hv.Hvsr(amp, frq)
         self.assertListEqual(myhv.peak_frq.tolist(), frq[col[:-1]].tolist())
 
-    def test_mean_std_f0(self):
+    def test_mean_std_f0_frq(self):
         frq = np.arange(0, 10, 1)
         amp = np.zeros((10, 10))
         col = np.array([1, 2, 4, 6, 8, 1, 3, 5, 7, 6])
         amp[np.arange(10), col] = 1
         myhv = hv.Hvsr(amp, frq)
-        self.assertEqual(myhv.mean_f0(distribution='log-normal'),
+        self.assertEqual(myhv.mean_f0_frq(distribution='log-normal'),
                          np.exp(np.mean(np.log(col))))
-        self.assertEqual(myhv.mean_f0(distribution='normal'), np.mean(col))
-        self.assertEqual(myhv.std_f0(distribution='log-normal'),
+        self.assertEqual(myhv.mean_f0_frq(distribution='normal'), np.mean(col))
+        self.assertEqual(myhv.std_f0_frq(distribution='log-normal'),
                          np.std(np.log(col), ddof=1))
-        self.assertEqual(myhv.std_f0(distribution='normal'),
+        self.assertEqual(myhv.std_f0_frq(distribution='normal'),
                          np.std(col, ddof=1))
+
+    def test_mean_std_f0_amp(self):
+        frq = np.arange(0, 10, 1)
+        amp = np.zeros((10, 10))
+        col = np.array([1,1,1,1,1,1,1,1,1,1])
+        peak_amp = np.array([1, 2, 4, 6, 8, 1, 3, 5, 7, 6])
+        amp[np.arange(10), col] = peak_amp
+        myhv = hv.Hvsr(amp, frq)
+        self.assertEqual(myhv.mean_f0_amp(distribution='log-normal'),
+                         np.exp(np.mean(np.log(peak_amp))))
+        self.assertEqual(myhv.mean_f0_amp(distribution='normal'), np.mean(peak_amp))
+        self.assertEqual(myhv.std_f0_amp(distribution='log-normal'),
+                         np.std(np.log(peak_amp), ddof=1))
+        self.assertEqual(myhv.std_f0_amp(distribution='normal'),
+                         np.std(peak_amp, ddof=1))
 
     def test_mean_std_curve(self):
         frq = np.array([0, 1])
@@ -113,13 +128,13 @@ class Test(unittest.TestCase):
             self.assertEqual(np.mean(amp[:, col]), mean_curve[col])
             self.assertEqual(np.std(amp[:, col], ddof=1), std_curve[col])
 
-    def test_mc_peak(self):
+    def test_mc_peak_frq(self):
         frq = np.arange(0, 10, 1)
         amp = np.ones((10, 10))
         col = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 7])
         amp[np.arange(10), col] = 2
         myhv = hv.Hvsr(amp, frq)
-        self.assertEqual(1., myhv.mc_peak())
+        self.assertEqual(1., myhv.mc_peak_frq())
 
     def test_reject_windows(self):
         # Reject single window, end due to zero stdev
@@ -129,7 +144,7 @@ class Test(unittest.TestCase):
         amp[np.arange(10), col] = 2
         myhv = hv.Hvsr(amp, frq)
         myhv.reject_windows(n=2)
-        self.assertEqual(myhv.mean_f0(), 1.0)
+        self.assertEqual(myhv.mean_f0_frq(), 1.0)
 
         # Reject single window, end due to convergence criteria
         frq = np.arange(0, 10, 1)

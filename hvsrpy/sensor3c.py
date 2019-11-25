@@ -105,6 +105,11 @@ class Sensor3c():
         self.ew_f = None
         self.vt_f = None
 
+    @property
+    def normalization_factor(self):
+        """Return sensor time history normalization factor."""
+        return max(max(self.ns.amp.flatten()), max(self.ew.amp.flatten()), max(self.vt.amp.flatten()))
+        
     @classmethod
     def from_mseed(cls, fname):
         """Initialize a 3-component sensor (Sensor3c) object from a
