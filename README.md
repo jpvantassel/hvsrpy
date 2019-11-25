@@ -1,6 +1,18 @@
-# _hvsrpy_ - A Python module for horizontal-to-vertical spectral ratio calculations
+# _hvsrpy_ - A Python module for horizontal-to-vertical spectral ratio processing
 
-> Joseph Vantassel, University of Texas at Austin
+> Joseph P. Vantassel, The University of Texas at Austin (jvantassel@utexas.edu)
+
+## Table of Contents
+
+---
+
+- [About _hvsrpy_](#About-_hvsrpy_)
+- [Why use _hvsrpy_](#Why-use-_hvsrpy_)
+- [A Comparison of _hvsrpy_ with _Geopsy_](#A-comparison-of-_hvsrpy_-with-_Geopsy_)
+- [Getting Started](#Getting-Started)
+- [Additional Comparisons between _hvsrpy_ and _Geopsy_](#Additional-Comparisons-between-_hvsrpy_-and-_Geopsy_)
+  - [Multiple Windows](#Multiple-Windows)
+  - [Single Window](#Single-Window)
 
 ## About _hvsrpy_
 
@@ -9,44 +21,39 @@
 `hvsrpy` is a Python module for performing horizontal-to-vertical spectral ratio
 (H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
-Cox at the University of Texas at Austin. The fully-automated frequency-domain
+Cox at The University of Texas at Austin. The fully-automated frequency-domain
 rejection algorithm implemented in `hvsrpy` was developed by Tianjian Cheng
-under the supervision of Professor Brady R. Cox at the University of Texas at
+under the supervision of Professor Brady R. Cox at The University of Texas at
 Austin and detailed in Cox et al. (in review).
 
-## Comparison of _hvsrpy_ with _geopsy_
+## Why use _hvsrpy_
 
 ---
 
-`hvsrpy` contains many additional features not available in other programs for
-example the popular open-source software Geopsy [](www.geopsy.org).
-These additional features include:
+`hvsrpy` contains features not currently available in any other commercial or
+open-source software, including:
 
-- A fully-automated frequency-domain rejection algorithm. No need to reject
-time windows manually.
-- The option to use a log-normal distribution for the mean `f0` from the time
-windows allowing H/V uncertainty to be represented consistently in terms of
-frequency and period.
-- The option to combine the two horizontal components using the geometric mean.
-- Direct access to the H/V data from each time window, not only the
+- A fully-automated frequency-domain rejection algorithm, which allows spurious
+time windows to be removed in a repeatable and expedient manner.
+- A log-normal distribution for the fundemental site frequency (`f0`) so the
+uncertainty in `f0` can be represented consistently regardless of whether it is
+described in terms of frequency or period.
+- Combining the two horizontal components using the geometric mean.
+- Access to the H/V data from each time window, not only the
 mean/median curve.
 - A performant framework for batch-style processing.
 
-After completing the __Getting Started__ section below, use the provided
-examples to explore all of these new features.
+## A comparison of _hvsrpy_ with _Geopsy_
 
-To illustrate that `hvsrpy` can, if desired, exactly reproduce the results from
-Geopsy two comparisons are shown below. One for a single time window and one
-for multiple time windows. More examples and the necessary information to
-reproduce them are provided at the end of this document.
+---
 
-### Single Time Window
+To illustrate that `hvsrpy` can exactly reproduce the results from the popular
+open-source software `Geopsy` two comparisons are shown below. One for a single
+time window (left) and one for multiple time windows (right). Additional
+examples and the information necessary to reproduce them are provided at the end
+of this document.
 
-!["single_time_window"](figs/singlewindow_a.png)
-
-### Multiple Time Windows
-
-!["multiple_time_window"](figs/multiwindow_STN11_c050.png)
+!["single_time_window"](figs/singlewindow_a.png) !["multiple_time_window"](figs/multiwindow_STN11_c050.png)
 
 ## Getting Started
 
@@ -54,7 +61,7 @@ reproduce them are provided at the end of this document.
 
 ### Installing _sigpropy_ (a dependency of _hvsrpy_)
 
-1. Download and unzip the provided zip file named `hvsrpy_v0.0.1`.
+1. Download and unzip the provided zip file named `hvsrpy_v0.1.0`.
 
 2. Move the directory `sigpropy` and its contents to the root directory of
   your main hardrive, this is typically the `C` drive on Windows.
@@ -111,15 +118,16 @@ lines printed to the console.
 3. Follow the instructions in the notebook for a no-coding-required introduction
   to the `hvsrpy` module.
 
-## Reproducible Comparisons between _hvsrpy_ and _Geopsy_
+## Additional Comparisons between _hvsrpy_ and _Geopsy_
+
+---
 
 ### Multiple Windows
 
-All of the following examples utilize the same settings applied to different
-noise records. The settings are
-provided in the __Settings__ section and the name of each file is provided above
-the corresponding figure in the __Results__ section. The noise records
-(i.e., _.miniseed_ files) are provided in the
+The examples in this section use the same settings applied to different
+noise records. The settings are provided in the __Settings__ section and the
+name of each file is provided above the corresponding figure in the __Results__
+section. The noise records (i.e., _.miniseed_ files) are provided in the
 `examples` directory included as part of this module or can be found
 [here](https://www.designsafe-ci.org/data/browser/public/designsafe.storage.published//PRJ-2075/Thorndon%20Warf%20(A2)/Unprocessed%20Data/Microtremor%20Array%20Measurements%20(MAM)).
 
@@ -158,10 +166,10 @@ __File Name:__ _UT.STN12.A2_C150.miniseed_
 
 ### Single Window
 
-The following examples apply different settings to the same noise
+The examples in this section apply different settings to the same noise
 record (_UT.STN11.A2_C50.miniseed_). For brevity, the default settings are
-listed in the __Default Settings__ section, and only the differences from
-these settings are noted for each example.
+listed in the __Default Settings__ section, with only the variations from
+these settings noted for each example.
 
 #### Default Settings
 
@@ -180,7 +188,7 @@ these settings are noted for each example.
 
 #### Results
 
-__Default Case:__ No deviation from those settings listed above.
+__Default Case:__ No variation from those settings listed above.
 
 !["s1"](figs/singlewindow_a.png)
 
@@ -188,11 +196,11 @@ __Window Length:__ 120 seconds.
 
 !["s2"](figs/singlewindow_b.png)
 
-__Cosine Taper Width:__ 20 % (i.e., 10% in Geopsy)
+__Cosine Taper Width:__ 20 % (i.e., 10 % in Geopsy)
 
 !["s3"](figs/singlewindow_e.png)
 
-__Cosine Taper Width:__ 0.2 % (i.e., 0.1% in Geopsy)
+__Cosine Taper Width:__ 0.2 % (i.e., 0.1 % in Geopsy)
 
 !["s4"](figs/singlewindow_f.png)
 

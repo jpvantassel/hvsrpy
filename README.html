@@ -445,51 +445,62 @@ void 0!==arguments[0]&&(br.sequenceConfig=arguments[0]),e=arguments[1]):e=argume
           : 'default'
     });
   </script>
-<h1 id="hvsrpy---a-python-module-for-horizontal-to-vertical-spectral-ratio-calculations"><em>hvsrpy</em> - A Python module for horizontal-to-vertical spectral ratio calculations</h1>
+<h1 id="hvsrpy---a-python-module-for-horizontal-to-vertical-spectral-ratio-processing"><em>hvsrpy</em> - A Python module for horizontal-to-vertical spectral ratio processing</h1>
 <blockquote>
-<p>Joseph Vantassel, University of Texas at Austin</p>
+<p>Joseph P. Vantassel, The University of Texas at Austin (jvantassel@utexas.edu)</p>
 </blockquote>
+<h2 id="table-of-contents">Table of Contents</h2>
+<hr>
+<ul>
+<li><a href="#About-_hvsrpy_">About <em>hvsrpy</em></a></li>
+<li><a href="#Why-use-_hvsrpy_">Why use <em>hvsrpy</em></a></li>
+<li><a href="#A-comparison-of-_hvsrpy_-with-_Geopsy_">A Comparison of <em>hvsrpy</em> with <em>Geopsy</em></a></li>
+<li><a href="#Getting-Started">Getting Started</a></li>
+<li><a href="#Additional-Comparisons-between-_hvsrpy_-and-_Geopsy_">Additional Comparisons between <em>hvsrpy</em> and <em>Geopsy</em></a>
+<ul>
+<li><a href="#Multiple-Windows">Multiple Windows</a></li>
+<li><a href="#Single-Window">Single Window</a></li>
+</ul>
+</li>
+</ul>
 <h2 id="about-hvsrpy">About <em>hvsrpy</em></h2>
 <hr>
 <p><code>hvsrpy</code> is a Python module for performing horizontal-to-vertical spectral ratio
 (H/V) processing. <code>hvsrpy</code> was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
-Cox at the University of Texas at Austin. The fully-automated frequency-domain
+Cox at The University of Texas at Austin. The fully-automated frequency-domain
 rejection algorithm implemented in <code>hvsrpy</code> was developed by Tianjian Cheng
-under the supervision of Professor Brady R. Cox at the University of Texas at
+under the supervision of Professor Brady R. Cox at The University of Texas at
 Austin and detailed in Cox et al. (in review).</p>
-<h2 id="comparison-of-hvsrpy-with-geopsy">Comparison of <em>hvsrpy</em> with <em>geopsy</em></h2>
+<h2 id="why-use-hvsrpy">Why use <em>hvsrpy</em></h2>
 <hr>
-<p><code>hvsrpy</code> contains many additional features not available in other programs for
-example the popular open-source software Geopsy <a href="www.geopsy.org"></a>.
-These additional features include:</p>
+<p><code>hvsrpy</code> contains features not currently available in any other commercial or
+open-source software, including:</p>
 <ul>
-<li>A fully-automated frequency-domain rejection algorithm. No need to reject
-time windows manually.</li>
-<li>The option to use a log-normal distribution for the mean <code>f0</code> from the time
-windows allowing H/V uncertainty to be represented consistently in terms of
-frequency and period.</li>
-<li>The option to combine the two horizontal components using the geometric mean.</li>
-<li>Direct access to the H/V data from each time window, not only the
+<li>A fully-automated frequency-domain rejection algorithm, which allows spurious
+time windows to be removed in a repeatable and expedient manner.</li>
+<li>A log-normal distribution for the fundemental site frequency (<code>f0</code>) so the
+uncertainty in <code>f0</code> can be represented consistently regardless of whether it is
+described in terms of frequency or period.</li>
+<li>Combining the two horizontal components using the geometric mean.</li>
+<li>Access to the H/V data from each time window, not only the
 mean/median curve.</li>
 <li>A performant framework for batch-style processing.</li>
 </ul>
-<p>After completing the <strong>Getting Started</strong> section below, use the provided
-examples to explore all of these new features.</p>
-<p>To illustrate that <code>hvsrpy</code> can, if desired, exactly reproduce the results from
-Geopsy two comparisons are shown below. One for a single time window and one
-for multiple time windows. More examples and the necessary information to
-reproduce them are provided at the end of this document.</p>
-<h3 id="single-time-window">Single Time Window</h3>
-<p><img src="figs/singlewindow_a.png" alt="&quot;single_time_window&quot;"></p>
-<h3 id="multiple-time-windows">Multiple Time Windows</h3>
-<p><img src="figs/multiwindow_STN11_c050.png" alt="&quot;multiple_time_window&quot;"></p>
+<h2 id="a-comparison-of-hvsrpy-with-geopsy">A comparison of <em>hvsrpy</em> with <em>Geopsy</em></h2>
+<hr>
+<p>To illustrate that <code>hvsrpy</code> can exactly reproduce the results from the popular
+open-source software <code>Geopsy</code> two comparisons are shown below. One for a single
+time window (left) and one for multiple time windows (right). Additional
+examples and the information necessary to reproduce them are provided at the end
+of this document.</p>
+<p><img src="figs/singlewindow_a.png" alt="&quot;single_time_window&quot;"> <img src="figs/multiwindow_STN11_c050.png" alt="&quot;multiple_time_window&quot;"></p>
 <h2 id="getting-started">Getting Started</h2>
 <hr>
 <h3 id="installing-sigpropy-a-dependency-of-hvsrpy">Installing <em>sigpropy</em> (a dependency of <em>hvsrpy</em>)</h3>
 <ol>
 <li>
-<p>Download and unzip the provided zip file named <code>hvsrpy_v0.0.1</code>.</p>
+<p>Download and unzip the provided zip file named <code>hvsrpy_v0.1.0</code>.</p>
 </li>
 <li>
 <p>Move the directory <code>sigpropy</code> and its contents to the root directory of
@@ -564,13 +575,13 @@ notebook titled <code>simple_hvsrpy_interface.ipynb</code>.</p>
 to the <code>hvsrpy</code> module.</p>
 </li>
 </ol>
-<h2 id="reproducible-comparisons-between-hvsrpy-and-geopsy">Reproducible Comparisons between <em>hvsrpy</em> and <em>Geopsy</em></h2>
+<h2 id="additional-comparisons-between-hvsrpy-and-geopsy">Additional Comparisons between <em>hvsrpy</em> and <em>Geopsy</em></h2>
+<hr>
 <h3 id="multiple-windows">Multiple Windows</h3>
-<p>All of the following examples utilize the same settings applied to different
-noise records. The settings are
-provided in the <strong>Settings</strong> section and the name of each file is provided above
-the corresponding figure in the <strong>Results</strong> section. The noise records
-(i.e., <em>.miniseed</em> files) are provided in the
+<p>The examples in this section use the same settings applied to different
+noise records. The settings are provided in the <strong>Settings</strong> section and the
+name of each file is provided above the corresponding figure in the <strong>Results</strong>
+section. The noise records (i.e., <em>.miniseed</em> files) are provided in the
 <code>examples</code> directory included as part of this module or can be found
 <a href="https://www.designsafe-ci.org/data/browser/public/designsafe.storage.published//PRJ-2075/Thorndon%20Warf%20(A2)/Unprocessed%20Data/Microtremor%20Array%20Measurements%20(MAM)">here</a>.</p>
 <h4 id="settings">Settings</h4>
@@ -601,10 +612,10 @@ the corresponding figure in the <strong>Results</strong> section. The noise reco
 <p><strong>File Name:</strong> <em>UT.STN12.A2_C150.miniseed</em></p>
 <p><img src="figs/multiwindow_STN12_c150.png" alt="&quot;m4&quot;"></p>
 <h3 id="single-window">Single Window</h3>
-<p>The following examples apply different settings to the same noise
+<p>The examples in this section apply different settings to the same noise
 record (<em>UT.STN11.A2_C50.miniseed</em>). For brevity, the default settings are
-listed in the <strong>Default Settings</strong> section, and only the differences from
-these settings are noted for each example.</p>
+listed in the <strong>Default Settings</strong> section, with only the variations from
+these settings noted for each example.</p>
 <h4 id="default-settings">Default Settings</h4>
 <ul>
 <li><strong>Window Length:</strong> 60 seconds</li>
@@ -624,13 +635,13 @@ these settings are noted for each example.</p>
 <li><strong>Distribution for Mean Curve:</strong> 'log-normal'</li>
 </ul>
 <h4 id="results">Results</h4>
-<p><strong>Default Case:</strong> No deviation from those settings listed above.</p>
+<p><strong>Default Case:</strong> No variation from those settings listed above.</p>
 <p><img src="figs/singlewindow_a.png" alt="&quot;s1&quot;"></p>
 <p><strong>Window Length:</strong> 120 seconds.</p>
 <p><img src="figs/singlewindow_b.png" alt="&quot;s2&quot;"></p>
-<p><strong>Cosine Taper Width:</strong> 20 % (i.e., 10% in Geopsy)</p>
+<p><strong>Cosine Taper Width:</strong> 20 % (i.e., 10 % in Geopsy)</p>
 <p><img src="figs/singlewindow_e.png" alt="&quot;s3&quot;"></p>
-<p><strong>Cosine Taper Width:</strong> 0.2 % (i.e., 0.1% in Geopsy)</p>
+<p><strong>Cosine Taper Width:</strong> 0.2 % (i.e., 0.1 % in Geopsy)</p>
 <p><img src="figs/singlewindow_f.png" alt="&quot;s4&quot;"></p>
 <p><strong>Konno and Ohmachi Smoothing Coefficient:</strong> 10</p>
 <p><img src="figs/singlewindow_c.png" alt="&quot;s5&quot;"></p>
