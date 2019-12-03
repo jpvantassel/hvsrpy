@@ -15,8 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""This file contains a class for creating and manipulating 3-component
-sensor objects (Sensor3c)."""
+"""This file contains the 3-component sensor (Sensor3c) class."""
 
 import numpy as np
 from hvsrpy import Hvsr
