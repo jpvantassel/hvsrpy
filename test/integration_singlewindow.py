@@ -22,26 +22,29 @@ import hvsrpy as hv
 import pandas as pd
 import matplotlib.pyplot as plt
 
+file_name = __file__.split("/")[-1]
+full_path = __file__[:-len(file_name)]
+
 timerecords = [
-    "test/data/a2/UT.STN11.A2_C50.miniseed",
-    "test/data/a2/UT.STN11.A2_C50.miniseed",
-    "test/data/a2/UT.STN11.A2_C50.miniseed",
-    "test/data/a2/UT.STN11.A2_C50.miniseed",
-    "test/data/a2/UT.STN11.A2_C50.miniseed",
-    "test/data/a2/UT.STN11.A2_C50.miniseed",
-    "test/data/a2/UT.STN11.A2_C50.miniseed",
-    "test/data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
 ]
 
 known_solutions = [
-    "test/data/integration/UT_STN11_c50_single_a.hv",
-    "test/data/integration/UT_STN11_c50_single_b.hv",
-    "test/data/integration/UT_STN11_c50_single_c.hv",
-    "test/data/integration/UT_STN11_c50_single_d.hv",
-    "test/data/integration/UT_STN11_c50_single_e.hv",
-    "test/data/integration/UT_STN11_c50_single_f.hv",
-    "test/data/integration/UT_STN11_c50_single_g.hv",
-    "test/data/integration/UT_STN11_c50_single_h.hv",
+    "data/integration/UT_STN11_c50_single_a.hv",
+    "data/integration/UT_STN11_c50_single_b.hv",
+    "data/integration/UT_STN11_c50_single_c.hv",
+    "data/integration/UT_STN11_c50_single_d.hv",
+    "data/integration/UT_STN11_c50_single_e.hv",
+    "data/integration/UT_STN11_c50_single_f.hv",
+    "data/integration/UT_STN11_c50_single_g.hv",
+    "data/integration/UT_STN11_c50_single_h.hv",
 ]
 
 settings = [
@@ -70,12 +73,12 @@ distribution_type = 'log-normal'
 for setting, fname, fname_geopsy in zip(settings, timerecords, known_solutions):
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3, 2))
 
-    sensor = hv.Sensor3c.from_mseed(fname)
+    sensor = hv.Sensor3c.from_mseed(full_path+fname)
     my_hv = sensor.hv(setting["length"], bp_filter, setting["width"],
                       setting["b"], setting["resampling"], ratio_type)
     ax.plot(my_hv.frq, my_hv.amp[0], color='#aaaaaa', label="hvsrpy")
 
-    geopsy_hv = pd.read_csv(fname_geopsy, delimiter="\t", comment="#", names=[
+    geopsy_hv = pd.read_csv(full_path+fname_geopsy, delimiter="\t", comment="#", names=[
                             "frq", "avg", "min", "max"])
     ax.plot(geopsy_hv.frq, geopsy_hv["avg"], color='r', linestyle="--", label="Geopsy")
 
@@ -83,4 +86,4 @@ for setting, fname, fname_geopsy in zip(settings, timerecords, known_solutions):
     ax.set_ylabel("H/V Ampltidue (#)")
     ax.set_xscale('log')
     ax.legend()
-    plt.savefig(f"../figs/singlewindow_{fname_geopsy[-4]}.png", dpi=200, bbox_inches='tight')
+    plt.savefig(full_path+f"../figs/singlewindow_{fname_geopsy[-4]}.png", dpi=200, bbox_inches='tight')

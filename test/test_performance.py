@@ -21,6 +21,9 @@ import hvsrpy
 import cProfile
 import pstats
 
+file_name = __file__.split("/")[-1]
+full_path = __file__[:-len(file_name)]
+
 def main():
     windowlength = 60
     bp_filter = {"flag": True, "flow": 0.1, "fhigh": 45, "order": 5}    
@@ -31,11 +34,11 @@ def main():
     n = 2
     max_iter = 10
 
-    sensor = hvsrpy.Sensor3c.from_mseed("test/data/a2/UT.STN11.A2_C50.miniseed")
+    sensor = hvsrpy.Sensor3c.from_mseed(full_path+"data/a2/UT.STN11.A2_C50.miniseed")
     hv = sensor.hv(windowlength, bp_filter, width, bandwidth, resampling, method)
     hv.reject_windows(n, max_iter)
     
-fname = "test/.tmp_profiler_run"
+fname = full_path+"data/.tmp_profiler_run"
 data = cProfile.run('main()', filename=fname)
 stat = pstats.Stats(fname)
 stat.sort_stats('tottime')

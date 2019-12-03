@@ -6,3 +6,6 @@
 # Folders
 .ipynb_checkpoints
 __pycache__
+dist
+build
+.tox
