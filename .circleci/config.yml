@@ -28,7 +28,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install sigpropy>=0.1.0
+            pip install git+git@github.com:jpvantassel/signal-processing.git@master
       - run:
           name: Install remaining dependencies
           command: |
