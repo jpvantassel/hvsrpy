@@ -51,7 +51,7 @@ class Hvsr():
         Specifically;
             1. `value` must be of type `list`, `tuple`, `ndarray`.
             2. If `value` is not `ndarray`, convert to `ndarray`.
-            3. `value` must be >=0. 
+            3. `value` must be >=0.
 
         Args:
             name : str
@@ -130,11 +130,11 @@ class Hvsr():
 
         Args:
             amp : ndarray
-                Vector or array of amplitudes. See `amp` attribute for 
+                Vector or array of amplitudes. See `amp` attribute for
                 details.
             **kwargs : dict
                 Refer to
-                `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_ 
+                `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
                 documentation.
 
         Returns:
@@ -144,7 +144,7 @@ class Hvsr():
 
             properties : dict
                 Refer to
-                `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_ 
+                `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
                 documentation.
         """
         if len(amp.shape) == 1:
@@ -247,7 +247,7 @@ class Hvsr():
                 Assumed distribution of `f0`, default is 'log-normal'.
 
         Returns:
-            Sample standard deviation of `f0` according to the 
+            Sample standard deviation of `f0` according to the
             distribution specified.
 
         Raises:
@@ -289,7 +289,7 @@ class Hvsr():
 
         Args:
             distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of mean curve, default is 
+                Assumed distribution of mean curve, default is
                 'log-normal'.
 
         Returns:
@@ -499,27 +499,62 @@ class Hvsr():
         else:
             raise KeyError(f"distribution type {distribution} not recognized.")
 
+    # def print_stats(self, distribution_f0):
+    #     """Print basic statistics of `Hvsr` instance."""
+
+    #     if distribution_f0 == "log-normal":
+    #         f0 = f"|    f0     |  Log-normal  |    -    | {str(self.mean_f0_frq(distribution_f0))[:4]} Hz |        {str(self.std_f0_frq(distribution_f0))[:4]}        |"
+    #     else:
+    #         f0 = f"|    f0     |    Normal    | {str(self.std_f0_frq(distribution_f0))[:4]} Hz |    -    |      {str(self.std_f0_frq(distribution_f0))[:4]} Hz       |"
+
+    #     if distribution_f0 == "log-normal":
+    #         T0 = f"|    T0     |  Log-normal  |    -    | {str(1/self.mean_f0_frq(distribution_f0))[:4]} s  |       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |"
+    #     else:
+    #         T0 = f"|    T0     |    Normal    |    -    |    -    |         -          |"
+
+    #     stats = [
+    #         "| Parameter | Distribution |   Mean  |  Median | Standard Deviation |",
+    #         "|-----------+--------------+---------+---------+--------------------|",
+    #         f0,
+    #         T0
+    #     ]
+    #     for stat in stats:
+    #         print(stat)
+
     def print_stats(self, distribution_f0):
         """Print basic statistics of `Hvsr` instance."""
 
         if distribution_f0 == "log-normal":
-            f0 = f"|    f0     |  Log-normal  |    -    | {str(self.mean_f0_frq(distribution_f0))[:4]} Hz |        {str(self.std_f0_frq(distribution_f0))[:4]}        |"
-        else:
-            f0 = f"|    f0     |    Normal    | {str(self.std_f0_frq(distribution_f0))[:4]} Hz |    -    |      {str(self.std_f0_frq(distribution_f0))[:4]} Hz       |"
+            upper="                                 | Log-Normal |     Log-Normal     |"
+            lower="|              Name              |   Median   | Standard Deviation |"
 
-        if distribution_f0 == "log-normal":
-            T0 = f"|    T0     |  Log-normal  |    -    | {str(1/self.mean_f0_frq(distribution_f0))[:4]} s  |       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |"
+            f0 = (f"|   {str(self.mean_f0_frq(distribution_f0))[:4]} Hz  " +
+                  f"|        {str(self.std_f0_frq(distribution_f0))[:4]}        |")
+            T0 = (f"|   {str(1/self.mean_f0_frq(distribution_f0))[:4]} s   " +
+                  f"|       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |")
+
+        elif distribution_f0 == "normal":
+            upper=""
+            lower="|              Name              |    Mean    | Standard Deviation |"
+
+            f0 = (f"|   {str(self.mean_f0_frq(distribution_f0))[:4]} Hz  " +
+                  f"|      {str(self.std_f0_frq(distribution_f0))[:4]} Hz       |")
+            T0 = (f"|     -      |         -          |")
+        
         else:
-            T0 = f"|    T0     |    Normal    |    -    |    -    |         -          |"
+            msg = f"`distribution_f0` of {distribution_f0} is not implemented."
+            raise NotImplementedError(msg)
 
         stats = [
-            "| Parameter | Distribution |   Mean  |  Median | Standard Deviation |",
-            "|-----------+--------------+---------+---------+--------------------|",
-            f0,
-            T0
+            upper,
+            lower,
+            "|--------------------------------+------------+--------------------|",
+            "| Fundemental Site Frequency, f0 "+f0,
+            "|   Fundemental Site Period, T0  "+T0
         ]
         for stat in stats:
-            print(stat)
+            if stat!="":
+                print(stat)
 
     def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):
         """Save H/V data to file following the Geopsy format.
