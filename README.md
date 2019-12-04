@@ -74,18 +74,15 @@ the `sigpropy` directory. If using Windows Powershell you can do this with
 `open PowerShell window here`. If using Command Prompt you will need to
 navigate to that directory using the console.
 
-4. Ensure you are in the correct directory by confirming it contains a
-sub-directory call `sigpropy` and a file named `setup.py`. You can see the
-contents of the current directory by using the command `ls` in Windows
-Powershell or `dir` in Command Prompt.
+4. Ensure you are in the correct directory by confirming it contains a file
+called `sigpropy-0.1.0-py3-none-any.whl`. You can view the contents of the
+current directory by using the command `ls` in Windows Powershell or `dir` in
+Command Prompt.
 
-5. If in the correct directory, install the module's dependencies with
-`pip install -r requirements.txt`. Note that an internet connection is required
-for the installation to be successful.
+5. Install the module by entering `pip install sigpropy-0.1.0-py3-none-any.whl`
+into Windows Powershell or Command Prompt.
 
-6. And install the module with `pip install .`. Note the period.
-
-7. Confirm that `sigpropy` was built successfully by reading the last few
+6. Confirm that `sigpropy` was built successfully by reading the last few
 lines printed to the console.
 
 ### Installing _hvsrpy_ and its dependencies
@@ -96,29 +93,25 @@ lines printed to the console.
 2. Open a Windows Powershell (recommended) or Command Prompt window inside
 the `hvsrpy` directory.
 
-3. Ensure you are in the correct directory by confirming it contains a
-sub-directory call `hvsrpy` and a file named `setup.py`.
+3. Ensure you are in the correct directory by confirming it contains a file
+called `hvsrpy-0.1.0-py3-none-any.whl`.
 
-4. If in the correct directory, install the module's dependencies with
-`pip install -r requirements.txt`.
+4. Install the module by entering `pip install hvsrpy-0.1.0-py3-none-any.whl`
+into Windows Powershell or Command Prompt.
 
-5. And install the module with `pip install .`. Note the period.
-
-6. Confirm that `hvsrpy` was built successfully by reading the last few
+5. Confirm that `hvsrpy` was built successfully by reading the last few
 lines printed to the console.
 
 ### Begin using _hvsrpy_
 
-1. Copy the directory `examples` and its contents out of the directory `hvsrpy`
-  which is now located on your main hard drive (recall _Step 1._ of the section
-  __Installing _hvsrpy_ and its dependencies__) and move to a location of your
+1. Move the directory `examples` and its contents to any location of your
   choice.
 
-2. Navigate to the copy of the `examples` directory and open the Jupyter
+2. Navigate to the `examples` directory and open the Jupyter
   notebook titled `simple_hvsrpy_interface.ipynb`.
 
 3. Follow the instructions in the notebook for a no-coding-required introduction
-  to the `hvsrpy` module.
+  to the `hvsrpy` package.
 
 ## Additional Comparisons between _hvsrpy_ and _Geopsy_
 
