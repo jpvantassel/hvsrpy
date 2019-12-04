@@ -43,7 +43,7 @@ described in terms of frequency or period.
 mean/median curve.
 - A performant framework for batch-style processing.
 
-<img src="figs/example_hvsr_figure.png" width="900">
+<img src="figs/example_hvsr_figure.png" width="775">
 
 ## A comparison of _hvsrpy_ with _Geopsy_
 
@@ -55,7 +55,7 @@ time window (left) and one for multiple time windows (right). Additional
 examples and the information necessary to reproduce them are provided at the end
 of this document.
 
-<img src="figs/singlewindow_a.png" width="450"> <img src="figs/multiwindow_STN11_c050.png" width="450">
+<img src="figs/singlewindow_a.png" width="425"> <img src="figs/multiwindow_STN11_c050.png" width="425">
 
 ## Getting Started
 
@@ -152,19 +152,19 @@ section. The noise records (i.e., _.miniseed_ files) are provided in the
 
 __File Name:__ _UT.STN11.A2_C50.miniseed_
 
-<img src="figs/multiwindow_STN11_c050.png" width="450">
+<img src="figs/multiwindow_STN11_c050.png" width="425">
 
 __File Name:__ _UT.STN11.A2_C150.miniseed_
 
-<img src="figs/multiwindow_STN11_c150.png" width="450">
+<img src="figs/multiwindow_STN11_c150.png" width="425">
 
 __File Name:__ _UT.STN12.A2_C50.miniseed_
 
-<img src="figs/multiwindow_STN12_c050.png" width="450">
+<img src="figs/multiwindow_STN12_c050.png" width="425">
 
 __File Name:__ _UT.STN12.A2_C150.miniseed_
 
-<img src="figs/multiwindow_STN12_c150.png" width="450">
+<img src="figs/multiwindow_STN12_c150.png" width="425">
 
 ### Single Window
 
@@ -192,32 +192,32 @@ these settings noted for each example.
 
 __Default Case:__ No variation from those settings listed above.
 
-<img src="figs/singlewindow_a.png" width="450">
+<img src="figs/singlewindow_a.png" width="425">
 
 __Window Length:__ 120 seconds.
 
-<img src="figs/singlewindow_b.png" width="450">
+<img src="figs/singlewindow_b.png" width="425">
 
 __Cosine Taper Width:__ 20 % (i.e., 10 % in Geopsy)
 
-<img src="figs/singlewindow_e.png" width="450">
+<img src="figs/singlewindow_e.png" width="425">
 
 __Cosine Taper Width:__ 0.2 % (i.e., 0.1 % in Geopsy)
 
-<img src="figs/singlewindow_f.png" width="450">
+<img src="figs/singlewindow_f.png" width="425">
 
 __Konno and Ohmachi Smoothing Coefficient:__ 10
 
-<img src="figs/singlewindow_c.png" width="450">
+<img src="figs/singlewindow_c.png" width="425">
 
 __Konno and Ohmachi Smoothing Coefficient:__ 80
 
-<img src="figs/singlewindow_d.png" width="450">
+<img src="figs/singlewindow_d.png" width="425">
 
 __Number of Points:__ 512
 
-<img src="figs/singlewindow_g.png" width="450">
+<img src="figs/singlewindow_g.png" width="425">
 
 __Number of Points:__ 4096
 
-<img src="figs/singlewindow_h.png" width="450">
+<img src="figs/singlewindow_h.png" width="425">
