@@ -7,14 +7,13 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-3.5
       - test-3.6
       - test-3.7
       - test-3.8
 jobs:
-  test-3.5: &test-template
+  test-3.6: &test-template
     docker:
-      - image: circleci/python:3.5.9
+      - image: circleci/python:3.6.9
     working_directory: ~/repo
     steps:
       - checkout
@@ -50,10 +49,6 @@ jobs:
             . venv/bin/activate
             python -m unittest
 
-  test-3.6:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.6.9
   test-3.7:
     <<: *test-template
     docker:

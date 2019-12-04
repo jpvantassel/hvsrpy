@@ -1,4 +1,4 @@
-# _hvsrpy_ - A Python module for horizontal-to-vertical spectral ratio processing
+# _hvsrpy_ - A Python package for horizontal-to-vertical spectral ratio processing
 
 > Joseph P. Vantassel, The University of Texas at Austin (jvantassel@utexas.edu)
 
@@ -18,7 +18,7 @@
 
 ---
 
-`hvsrpy` is a Python module for performing horizontal-to-vertical spectral ratio
+`hvsrpy` is a Python package for performing horizontal-to-vertical spectral ratio
 (H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
 Cox at The University of Texas at Austin. The fully-automated frequency-domain
@@ -42,6 +42,9 @@ described in terms of frequency or period.
 - Access to the H/V data from each time window, not only the
 mean/median curve.
 - A performant framework for batch-style processing.
+
+<!-- !["example_hvsr_figure"](figs/example_hvsr_figure.png) -->
+<img src="figs/example_hvsr_figure.png" height="650">
 
 ## A comparison of _hvsrpy_ with _Geopsy_
 
