@@ -1,6 +1,6 @@
-# This file is part of hvsrpy a Python package for horizontal-to-vertical 
+# This file is part of hvsrpy a Python module for horizontal-to-vertical 
 # spectral ratio processing.
-# Copyright (C) 2019 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -28,15 +28,15 @@ logging.getLogger()
 class Sensor3c():
     """Class for creating and manipulating 3-component sensor objects.
 
-    Attributes:
-        ns, ew, vt : Timeseries
-            `TimeSeries` object for each component.
-        ns_f, ew_f, vt_f : FourierTransform
-            `FourierTransform` object for each component.
-        normalization_factor : float
-            Maximum value of `ns`, `ew`, and `vt` amplitude used for
-            normalization when plotting.
-        
+    Attributes
+    ----------
+    ns, ew, vt : Timeseries
+        `TimeSeries` object for each component.
+    ns_f, ew_f, vt_f : FourierTransform
+        `FourierTransform` object for each component.
+    normalization_factor : float
+        Maximum value of `ns`, `ew`, and `vt` amplitude used for
+        normalization when plotting.
     """
 
     @staticmethod
@@ -49,13 +49,16 @@ class Sensor3c():
             3. Ensure all components have same `n_samples`. If not trim
             components to a common length.
 
-        Args:
-            values_dict : dict
-                Key is human readable component name {'ns', 'ew', 'vt'}.
-                Value is corresponding `TimeSeries` object.
+        Parameters
+        ----------
+        values_dict : dict
+            Key is human readable component name {'ns', 'ew', 'vt'}.
+            Value is corresponding `TimeSeries` object.
 
-        Returns:
-            Tuple of checked components.
+        Returns
+        -------
+        Tuple
+            Containing checked components.
         """
         if not isinstance(values_dict["ns"], TimeSeries):
             msg = f"'ns' must be a `TimeSeries`, not {type(values_dict['ns'])}."
@@ -94,12 +97,15 @@ class Sensor3c():
     def __init__(self, ns, ew, vt):
         """Initalize a 3-component sensor (Sensor3c) object.
 
-        Args:
-            ns, ew, vt : timeseries
-                `TimeSeries` object for each component.
+        Parameters
+        ----------
+        ns, ew, vt : timeseries
+            `TimeSeries` object for each component.
 
-        Returns:
-            Initialized 3-component sensor (`Sensor3c`) object.
+        Returns
+        -------
+        Sensor3c
+            Initialized 3-component sensor object.
         """
         self.ns, self.ew, self.vt = self._check_input({"ns": ns,
                                                        "ew": ew,
@@ -118,16 +124,19 @@ class Sensor3c():
         """Initialize a 3-component sensor (Sensor3c) object from a
         .miniseed file.
 
-        Args:
-            fname : str
-                Name of miniseed file, full path may be used if desired.
-                The file should contain three traces with the 
-                appropriate channel names. Refer to the `SEED` Manual 
-                `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
-                for specifics.
+        Parameters
+        ----------
+        fname : str
+            Name of miniseed file, full path may be used if desired.
+            The file should contain three traces with the 
+            appropriate channel names. Refer to the `SEED` Manual 
+            `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
+            for specifics.
 
-        Returns:
-            Initialized 3-component sensor (`Sensor3c`) object.
+        Returns
+        -------
+        Sensor3c
+            Initialized 3-component sensor object.
         """
         traces = obspy.read(fname)
 
@@ -155,7 +164,7 @@ class Sensor3c():
     def split(self, windowlength):
         """Split component `TimeSeries`.
 
-        Refer to `SigProPy` documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.split(windowlength)
@@ -163,7 +172,7 @@ class Sensor3c():
     def detrend(self):
         """Detrend component `TimeSeries`.
 
-        Refer to `SigProPy` documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.detrend()
@@ -171,7 +180,7 @@ class Sensor3c():
     def bandpassfilter(self, flow, fhigh, order):
         """Bandpassfilter component `TimeSeries`.
 
-        Refer to `SigProPy` documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.bandpassfilter(flow, fhigh, order)
@@ -179,7 +188,7 @@ class Sensor3c():
     def cosine_taper(self, width):
         """Cosine taper component `TimeSeries`.
 
-        Refer to `SigProPy` documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.cosine_taper(width)
@@ -187,8 +196,10 @@ class Sensor3c():
     def transform(self):
         """Perform Fourier transform on component `TimeSeries`.
 
-        Returns:
-            `None`, redefines attributes `ew_f`, `ns_f`, and `vt_f` as 
+        Returns
+        -------
+        None
+            Redefines attributes `ew_f`, `ns_f`, and `vt_f` as 
             `FourierTransform` objects for each component.
         """
         self.ew_f = FourierTransform.from_timeseries(self.ew)
@@ -198,7 +209,7 @@ class Sensor3c():
     def smooth(self, bandwidth):
         """Smooth component `FourierTransforms`.
 
-        Refer to `SigProPy` documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
         for comp in [self.ew_f, self.ns_f, self.vt_f]:
             comp.smooth_konno_ohmachi(bandwidth)
@@ -206,7 +217,7 @@ class Sensor3c():
     def resample(self, fmin, fmax, fn, res_type, inplace):
         """Resample component `FourierTransforms`.
 
-        Refer to `SigProPy` documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
         for comp in [self.ew_f, self.ns_f, self.vt_f]:
             comp.resample(fmin, fmax, fn, res_type, inplace)
@@ -214,15 +225,17 @@ class Sensor3c():
     def combine_horizontals(self, method='squared-average'):
         """Combine two horizontal components (`ns` and `ew`).
 
-        Args:
-            method : {'squared-averge', 'geometric-mean'}, optional
-                Defines how the two horizontal components are combined 
-                to represent a single horizontal component, the default
-                is 'squared-average'.
+        Parameters
+        ----------
+        method : {'squared-averge', 'geometric-mean'}, optional
+            Defines how the two horizontal components are combined 
+            to represent a single horizontal component, the default
+            is 'squared-average'.
 
-        Returns:
-            A `FourierTransform` object representing the combined
-            horizontal components.
+        Returns
+        -------
+        FourierTransform
+            Representing the combined horizontal components.
         """
         if method == 'squared-average':
             horizontal = np.sqrt(
@@ -237,48 +250,59 @@ class Sensor3c():
     def hv(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
         """Prepare time series and Fourier transforms then compute H/V.
 
-        Args:
-            windowlength : float
-                Length of time windows in seconds.
-            bp_filter : dict
-                Bandpass filter settings, of the form 
-                {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
-                'order':`int`}.
-            taper_width : float
-                Width of cosine taper.
-            bandwidth : float
-                Bandwidth of the Konno and Ohmachi smoothing window.
-            resampling : dict
-                Resampling settings, of the form 
-                {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
-                'res_type':`str`}.
-            method : {'squared-averge', 'geometric-mean'}
-                Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
+        Parameters
+        ----------
+        windowlength : float
+            Length of time windows in seconds.
+        bp_filter : dict
+            Bandpass filter settings, of the form 
+            {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
+            'order':`int`}.
+        taper_width : float
+            Width of cosine taper.
+        bandwidth : float
+            Bandwidth of the Konno and Ohmachi smoothing window.
+        resampling : dict
+            Resampling settings, of the form 
+            {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
+            'res_type':`str`}.
+        method : {'squared-averge', 'geometric-mean'}
+            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
 
-        Returns:
-            Initialized `Hvsr` object.
+        Returns
+        -------
+        Hvsr
 
-        Notes:
-            More information for the above arguements can be found in
-            the documenation of `SigProPy`.
+        Notes
+        -----
+        More information for the above arguements can be found in
+        the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
         """
+        # Time Domain Effects
+        # Split
         self.split(windowlength)
+
+        # Detrend
         self.detrend()
+
+        # Filter
         if bp_filter["flag"]:
             self.bandpassfilter(flow=bp_filter["flow"],
                                 fhigh=bp_filter["fhigh"],
                                 order=bp_filter["order"])
+        
+        # Cosine Taper
         self.cosine_taper(width=taper_width)
+
+        # Frequency Domain Effects
         self.transform()
 
         for comp in [self.ns_f, self.ew_f, self.vt_f]:
             comp.amp = comp.mag
 
-        # Horizontal Component
+        # H/V Effects
         hor = self.combine_horizontals(method=method)
         hor.smooth_konno_ohmachi(bandwidth)
-
-        # Vertical Component
         self.vt_f.smooth_konno_ohmachi(bandwidth)
 
         # H/V

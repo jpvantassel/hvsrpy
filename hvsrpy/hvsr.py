@@ -1,6 +1,6 @@
-# This file is part of hvsrpy a Python package for horizontal-to-vertical
+# This file is part of hvsrpy a Python module for horizontal-to-vertical 
 # spectral ratio processing.
-# Copyright (C) 2019 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -27,22 +27,23 @@ class Hvsr():
     """Class for creating and manipulating horizontal-to-vertical
     spectral ratio objects.
 
-    Attributes:
-        amp : ndarray
-            Array of H/V amplitudes. Each row represents an individual
-            curve and each column a frequency.
-        frq : ndarray
-            Vector of frequencies corresponds to each column.
-        n_windows : int
-            Number of windows in `Hvsr` object.
-        valid_window_indices : ndarray
-            Array of indices indicating valid windows.
-        rejected_window_indices : ndarray
-            Array of indices indicating rejected windows.
-        peak_frq : ndarray
-            Frequency peaks, one per valid time window.
-        peak_amp : ndarray
-            Amplitude(s) which correspond to `peak_frq`.
+    Attributes
+    ----------
+    amp : ndarray
+        Array of H/V amplitudes. Each row represents an individual
+        curve and each column a frequency.
+    frq : ndarray
+        Vector of frequencies corresponds to each column.
+    n_windows : int
+        Number of windows in `Hvsr` object.
+    valid_window_indices : ndarray
+        Array of indices indicating valid windows.
+    rejected_window_indices : ndarray
+        Array of indices indicating rejected windows.
+    peak_frq : ndarray
+        Frequency peaks, one per valid time window.
+    peak_amp : ndarray
+        Amplitude(s) which correspond to `peak_frq`.
     """
     @staticmethod
     def _check_input(name, value):
@@ -53,21 +54,25 @@ class Hvsr():
             2. If `value` is not `ndarray`, convert to `ndarray`.
             3. `value` must be >=0.
 
-        Args:
-            name : str
-                Name of `value` to be checked, used solely for
-                meaningful error messages.
-            value : any
-                Value to be checked.
+        Parameters
+        ----------
+        name : str
+            Name of `value` to be checked, used solely for
+            meaningful error messages.
+        value : any
+            Value to be checked.
 
-        Returns:
-            `value` as an `ndarray`.
+        Returns
+        -------
+        ndarray
+            `values` in correct format.
 
-        Raises:
-            TypeError:
-                If `value` is not one of the types specified.
-            ValueError:
-                If `value` contains a negative values.
+        Raises
+        ------
+        TypeError
+            If `value` is not one of the types specified.
+        ValueError
+            If `value` contains a negative values.
         """
 
         if type(value) not in [list, tuple, np.ndarray]:
@@ -83,15 +88,18 @@ class Hvsr():
         """Initialize a `Hvsr` oject from an amplitude and frequency
         vector.
 
-        Args:
-            amplitude : ndarray
-                Array of H/V amplitudes. Each row represents an individual
-                curve and each column a frequency.
-            frequency : ndarray
-                Vector of frequencies, corresponding to each column.
+        Parameters
+        ----------
+        amplitude : ndarray
+            Array of H/V amplitudes. Each row represents an individual
+            curve and each column a frequency.
+        frequency : ndarray
+            Vector of frequencies, corresponding to each column.
 
-        Returns:
-            Initialized `Hvsr` object.
+        Returns
+        -------
+        Hvsr
+            Initialized with `amplitdue` and `frequency`.
         """
         self.amp = self._check_input("amplitude", amplitude)
         self.frq = self._check_input("frequency", frequency)
@@ -128,21 +136,26 @@ class Hvsr():
 
         Wrapper method for scipy.signal.find_peaks function.
 
-        Args:
-            amp : ndarray
-                Vector or array of amplitudes. See `amp` attribute for
-                details.
-            **kwargs : dict
-                Refer to
-                `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-                documentation.
+        Parameters
+        ----------
+        amp : ndarray
+            Vector or array of amplitudes. See `amp` attribute for
+            details.
+        **kwargs : dict
+            Refer to
+            `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
+            documentation.
 
-        Returns:
+        Returns
+        -------
+        Tuple
+            Of the form (peaks, settings)
+
             peaks : ndarray or list
                 `ndarray` or `list` of `ndarrays` (one per window) of
                 peak indices.
 
-            properties : dict
+            settings : dict
                 Refer to
                 `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
                 documentation.
@@ -161,13 +174,15 @@ class Hvsr():
         """Update `peaks` attribute with the lowest frequency, highest
         amplitude peak.
 
-        Args:
-            **kwargs:
-                Refer to :meth:`find_peaks <Hvsr.find_peaks>`
-                documentation.
+        Properties
+        ----------
+        **kwargs : dict
+            Refer to :meth:`find_peaks <Hvsr.find_peaks>` documentation.
 
-        Returns:
-            `None`, update `peaks` attribute.
+        Returns
+        -------
+        None
+            Updates `peaks` attribute.
         """
         if not self._initialized_peaks:
             self._initialized_peaks = True
@@ -197,16 +212,20 @@ class Hvsr():
     def mean_f0_frq(self, distribution='log-normal'):
         """Mean `f0` of valid time windows.
 
-        Args:
-            distribution : {'normal', 'log-normal'}
-                Assumed distribution of `f0`, default is 'log-normal'.
+        Parameters
+        ----------
+        distribution : {'normal', 'log-normal'}
+            Assumed distribution of `f0`, default is 'log-normal'.
 
-        Returns:
+        Returns
+        -------
+        float
             Mean value of `f0` according to the distribution specified.
 
-        Raises:
-            KeyError:
-                If `distribution` does not match the available options.
+        Raises
+        ------
+        KeyError
+            If `distribution` does not match the available options.
         """
         if distribution == "normal":
             return np.mean(self.peak_frq)
@@ -219,17 +238,21 @@ class Hvsr():
     def mean_f0_amp(self, distribution='log-normal'):
         """Mean amplitude of `f0` of valid time windows.
 
-        Args:
-            distribution : {'normal', 'log-normal'}
-                Assumed distribution of `f0`, default is 'log-normal'.
+        Parameters
+        ----------
+        distribution : {'normal', 'log-normal'}
+            Assumed distribution of `f0`, default is 'log-normal'.
 
-        Returns:
+        Returns
+        -------
+        float
             Mean amplitude of `f0` according to the distribution
             specified.
 
-        Raises:
-            KeyError:
-                If `distribution` does not match the available options.
+        Raises
+        ------
+        KeyError
+            If `distribution` does not match the available options.
         """
         if distribution == "normal":
             return np.mean(self.peak_amp)
@@ -242,17 +265,20 @@ class Hvsr():
     def std_f0_frq(self, distribution='log-normal'):
         """Sample standard deviation of `f0` of valid time windows.
 
-        Args:
+        Parameters
+        ----------
             distribution : {'normal', 'log-normal'}, optional
                 Assumed distribution of `f0`, default is 'log-normal'.
 
-        Returns:
+        Returns
+        -------
             Sample standard deviation of `f0` according to the
             distribution specified.
 
-        Raises:
-            KeyError:
-                If `distribution` does not match the available options.
+        Raises
+        ------
+        KeyError
+            If `distribution` does not match the available options.
         """
         if distribution == "normal":
             return np.std(self.peak_frq, ddof=1)
@@ -265,17 +291,21 @@ class Hvsr():
         """Sample standard deviation of amplitude of `f0` of valid
         time windows.
 
-        Args:
-            distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of `f0`, default is 'log-normal'.
+        Parameters
+        ----------
+        distribution : {'normal', 'log-normal'}, optional
+            Assumed distribution of `f0`, default is 'log-normal'.
 
-        Returns:
+        Returns
+        -------
+        float
             Sample standard deviation of the amplitude of f0 according
             to the distribution specified.
 
-        Raises:
-            KeyError:
-                If `distribution` does not match the available options.
+        Raises
+        ------
+        KeyError
+            If `distribution` does not match the available options.
         """
         if distribution == "normal":
             return np.std(self.peak_amp, ddof=1)
@@ -287,18 +317,21 @@ class Hvsr():
     def mean_curve(self, distribution='log-normal'):
         """Return mean H/V curve.
 
-        Args:
+        Parameters
+        ----------
             distribution : {'normal', 'log-normal'}, optional
                 Assumed distribution of mean curve, default is
                 'log-normal'.
 
-        Returns:
-            Mean H/V curve as `ndarray` according to the distribution
-            specified.
+        Returns
+        -------
+        ndarray
+            Mean H/V curve according to the distribution specified.
 
-        Raises:
-            KeyError:
-                If `distribution` does not match the available options.
+        Raises
+        ------
+        KeyError
+            If `distribution` does not match the available options.
         """
         if self.n_windows == 1:
             return self.amp
@@ -313,20 +346,23 @@ class Hvsr():
     def std_curve(self, distribution='log-normal'):
         """Sample standard deviation associated with the mean H/V curve.
 
-        Args:
+        Parameters
             distribution : {'normal', 'log-normal'}, optional
                 Assumed distribution of H/V curve, default is
                 'log-normal'.
 
-        Returns:
-            Sample standard deviation of H/V curve as `ndarray`
-            according to the distribution specified.
+        Returns
+        -------
+        ndarray
+            Sample standard deviation of H/V curve according to the
+            distribution specified.
 
-        Raises:
-            ValueError:
-                If only single time window is defined.
-            KeyError:
-                If `distribution` does not match the available options.
+        Raises
+        ------
+        ValueError
+            If only single time window is defined.
+        KeyError
+            If `distribution` does not match the available options.
         """
         if self.n_windows == 1:
             msg = "The standard deviation of the mean curve is not defined for a single window."
@@ -342,11 +378,14 @@ class Hvsr():
     def mc_peak_frq(self, distribution='log-normal'):
         """Frequency of the peak of the mean H/V curve.
 
-        Args:
-            distribution : {'normal', 'log-normal'}, optional
-                Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
+        Parameters
+        ----------
+        distribution : {'normal', 'log-normal'}, optional
+            Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
 
-        Returns:
+        Returns
+        -------
+        float
             Frequency associated with the peak of the mean H/V curve.
         """
         mc = self.mean_curve(distribution)
@@ -355,11 +394,14 @@ class Hvsr():
     def mc_peak_amp(self, distribution='log-normal'):
         """Amplitude of the peak of the mean H/V curve.
 
-        Args:
-            distribution : {'normal', 'log-normal'}, optional
-                Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
+        Parameters
+        ----------
+        distribution : {'normal', 'log-normal'}, optional
+            Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
 
-        Returns:
+        Returns
+        -------
+        float
             Ampltiude associated with the peak of the mean H/V curve.
         """
         mc = self.mean_curve(distribution)
@@ -369,23 +411,25 @@ class Hvsr():
         """Perform rejection of H/V windows using the method proposed by
         Cox et al. (in review).
 
-        Args:
-            n : float, optional
-                Number of standard deviations from the mean, default
-                value is 2.
-            max_iterations : int, optional
-                Maximum number of rejection iterations, default value is
-                50.
-            distribution_f0 : {'log-normal', 'normal'}, optional
-                Assumed distribution of `f0` from time windows, the
-                default is 'log-normal'.
-            distribution_mc : {'log-normal', 'normal'}, optional
-                Assumed distribution of mean curve, the default is
-                'log-normal'.
+        Parameters
+        ----------
+        n : float, optional
+            Number of standard deviations from the mean, default
+            value is 2.
+        max_iterations : int, optional
+            Maximum number of rejection iterations, default value is
+            50.
+        distribution_f0 : {'log-normal', 'normal'}, optional
+            Assumed distribution of `f0` from time windows, the
+            default is 'log-normal'.
+        distribution_mc : {'log-normal', 'normal'}, optional
+            Assumed distribution of mean curve, the default is
+            'log-normal'.
 
-        Returns:
-            c_iteration : int
-                Number of iterations required for convergence.
+        Returns
+        -------
+        int
+            Number of iterations required for convergence.
         """
         if not self._initialized_peaks:
             self.update_peaks()
@@ -439,16 +483,19 @@ class Hvsr():
     def nstd_f0_frq(self, n, distribution):
         """Return nth standard deviation of `f0`.
 
-        Args:
-            n : float
-                Number of standard deviations away from the mean `f0`
-                from the valid time windows.
-            distribution : {'log-normal', 'normal'}, optional
-                Assumed distribution of `f0`, the default is
-                'log-normal'.
+        Parameters
+        ----------
+        n : float
+            Number of standard deviations away from the mean `f0`
+            from the valid time windows.
+        distribution : {'log-normal', 'normal'}, optional
+            Assumed distribution of `f0`, the default is
+            'log-normal'.
 
-        Return:
-            nth standard deviation of `f0` as `float`.
+        Returns
+        -------
+        float
+            nth standard deviation of `f0`.
         """
         if distribution == "normal":
             return (self.mean_f0_frq(distribution) + n*self.std_f0_frq(distribution))
@@ -461,16 +508,19 @@ class Hvsr():
         """nth sample standard deviation of amplitude of `f0` from time
         windows.
 
-        Args:
-            n : float
-                Number of standard deviations away from the mean
-                amplitude of `f0` from valid time windows.
-            distribution : {'log-normal', 'normal'}, optional
-                Assumed distribution of `f0`, the default is
-                'log-normal'.
+        Parameters
+        ----------
+        n : float
+            Number of standard deviations away from the mean
+            amplitude of `f0` from valid time windows.
+        distribution : {'log-normal', 'normal'}, optional
+            Assumed distribution of `f0`, the default is
+            'log-normal'.
 
-        Return:
-            nth standard deviation of ampltiude of `f0` as `float`.
+        Returns
+        -------
+        float
+            nth standard deviation of ampltiude of `f0`.
         """
         if distribution == "normal":
             return (self.mean_f0_amp(distribution) + n*self.std_f0_amp(distribution))
@@ -482,15 +532,18 @@ class Hvsr():
     def nstd_curve(self, n, distribution):
         """Return nth standard deviation curve.
 
-        Args:
-            n : float
-                Number of standard deviations away from the mean curve.
-            distribution : {'log-normal', 'normal'}, optional
-                Assumed distribution of mean curve, the default is
-                'log-normal'.
+        Parameters
+        ----------
+        n : float
+            Number of standard deviations away from the mean curve.
+        distribution : {'log-normal', 'normal'}, optional
+            Assumed distribution of mean curve, the default is
+            'log-normal'.
 
-        Return:
-            nth standard deviation curve as an `ndarray`.
+        Returns
+        -------
+        ndarray
+            nth standard deviation curve.
         """
         if distribution == "normal":
             return (self.mean_curve(distribution) + n*self.std_curve(distribution))
@@ -557,21 +610,24 @@ class Hvsr():
                 print(stat)
 
     def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):
-        """Save H/V data to file following the Geopsy format.
+        """Save H/V data to file in Geopsy format.
 
-        Args:
-            fname : str
-                Name of file to save the results, may be a full or
-                relative path.
-            distribution_f0 : {'log-normal', 'normal'}, optional
-                Assumed distribution of `f0` from the time windows, the
-                default is 'log-normal'.
-            distribution_mc : {'log-normal', 'normal'}, optional
-                Assumed distribution of mean curve, the default is
-                'log-normal'.
+        Parameters
+        ----------
+        fname : str
+            Name of file to save the results, may be a full or
+            relative path.
+        distribution_f0 : {'log-normal', 'normal'}, optional
+            Assumed distribution of `f0` from the time windows, the
+            default is 'log-normal'.
+        distribution_mc : {'log-normal', 'normal'}, optional
+            Assumed distribution of mean curve, the default is
+            'log-normal'.
 
-        Returns:
-            `None`, writes file to disk.
+        Returns
+        -------
+        None
+            Writes file to disk.
         """
         # f0 from windows
         mean = self.mean_f0_frq(distribution_f0)

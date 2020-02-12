@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Sensor3c &mdash; hvsrpy 0.1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Hvsr" href="hvsr.html" />
+    <link rel="prev" title="API Reference" href="api.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> hvsrpy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Sensor3c</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hvsr.html">Hvsr</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License Information</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">hvsrpy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="api.html">API Reference</a> &raquo;</li>
+        
+      <li>Sensor3c</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/sensor3c.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="sensor3c">
+<span id="id1"></span><h1>Sensor3c<a class="headerlink" href="#sensor3c" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-hvsrpy.sensor3c"></span><p>This file contains the 3-component sensor (Sensor3c) class.</p>
+<dl class="class">
+<dt id="hvsrpy.sensor3c.Sensor3c">
+<em class="property">class </em><code class="sig-name descname">Sensor3c</code><span class="sig-paren">(</span><em class="sig-param">ns</em>, <em class="sig-param">ew</em>, <em class="sig-param">vt</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for creating and manipulating 3-component sensor objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ew</strong><strong>, </strong><strong>vt</strong> (<em>ns</em><em>,</em>) – <cite>TimeSeries</cite> object for each component.</p></li>
+<li><p><strong>ew_f</strong><strong>, </strong><strong>vt_f</strong> (<em>ns_f</em><em>,</em>) – <cite>FourierTransform</cite> object for each component.</p></li>
+<li><p><a class="reference internal" href="#hvsrpy.sensor3c.Sensor3c.normalization_factor" title="hvsrpy.sensor3c.Sensor3c.normalization_factor"><strong>normalization_factor</strong></a> (<em>float</em>) – Maximum value of <cite>ns</cite>, <cite>ew</cite>, and <cite>vt</cite> amplitude used for
+normalization when plotting.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">ns</em>, <em class="sig-param">ew</em>, <em class="sig-param">vt</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initalize a 3-component sensor (Sensor3c) object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ns, ew, vt</strong> (<em>timeseries</em>) – <cite>TimeSeries</cite> object for each component.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>Sensor3c</em> – Initialized 3-component sensor object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.bandpassfilter">
+<code class="sig-name descname">bandpassfilter</code><span class="sig-paren">(</span><em class="sig-param">flow</em>, <em class="sig-param">fhigh</em>, <em class="sig-param">order</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.bandpassfilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bandpassfilter component <cite>TimeSeries</cite>.</p>
+<p>Refer to <a class="reference external" href="https://sigpropy.readthedocs.io/en/latest/?badge=latest">SigProPy</a> documentation for details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.combine_horizontals">
+<code class="sig-name descname">combine_horizontals</code><span class="sig-paren">(</span><em class="sig-param">method='squared-average'</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.combine_horizontals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combine two horizontal components (<cite>ns</cite> and <cite>ew</cite>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>method</strong> (<em>{‘squared-averge’, ‘geometric-mean’}, optional</em>) – Defines how the two horizontal components are combined
+to represent a single horizontal component, the default
+is ‘squared-average’.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>FourierTransform</em> – Representing the combined horizontal components.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.cosine_taper">
+<code class="sig-name descname">cosine_taper</code><span class="sig-paren">(</span><em class="sig-param">width</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.cosine_taper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cosine taper component <cite>TimeSeries</cite>.</p>
+<p>Refer to <a class="reference external" href="https://sigpropy.readthedocs.io/en/latest/?badge=latest">SigProPy</a> documentation for details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.detrend">
+<code class="sig-name descname">detrend</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.detrend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detrend component <cite>TimeSeries</cite>.</p>
+<p>Refer to <a class="reference external" href="https://sigpropy.readthedocs.io/en/latest/?badge=latest">SigProPy</a> documentation for details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.from_mseed">
+<em class="property">classmethod </em><code class="sig-name descname">from_mseed</code><span class="sig-paren">(</span><em class="sig-param">fname</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.from_mseed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize a 3-component sensor (Sensor3c) object from a
+.miniseed file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) – Name of miniseed file, full path may be used if desired.
+The file should contain three traces with the
+appropriate channel names. Refer to the <cite>SEED</cite> Manual
+<a class="reference external" href="https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf">here</a>.
+for specifics.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>Sensor3c</em> – Initialized 3-component sensor object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.hv">
+<code class="sig-name descname">hv</code><span class="sig-paren">(</span><em class="sig-param">windowlength</em>, <em class="sig-param">bp_filter</em>, <em class="sig-param">taper_width</em>, <em class="sig-param">bandwidth</em>, <em class="sig-param">resampling</em>, <em class="sig-param">method</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.hv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare time series and Fourier transforms then compute H/V.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>windowlength</strong> (<em>float</em>) – Length of time windows in seconds.</p></li>
+<li><p><strong>bp_filter</strong> (<em>dict</em>) – Bandpass filter settings, of the form
+{‘flag’:<cite>bool</cite>, ‘flow’:<cite>float</cite>, ‘fhigh’:<cite>float</cite>,
+‘order’:<cite>int</cite>}.</p></li>
+<li><p><strong>taper_width</strong> (<em>float</em>) – Width of cosine taper.</p></li>
+<li><p><strong>bandwidth</strong> (<em>float</em>) – Bandwidth of the Konno and Ohmachi smoothing window.</p></li>
+<li><p><strong>resampling</strong> (<em>dict</em>) – Resampling settings, of the form
+{‘minf’:<cite>float</cite>, ‘maxf’:<cite>float</cite>, ‘nf’:<cite>int</cite>,
+‘res_type’:<cite>str</cite>}.</p></li>
+<li><p><strong>method</strong> (<em>{‘squared-averge’, ‘geometric-mean’}</em>) – Refer to <a class="reference internal" href="#hvsrpy.sensor3c.Sensor3c.combine_horizontals" title="hvsrpy.sensor3c.Sensor3c.combine_horizontals"><code class="xref py py-meth docutils literal notranslate"><span class="pre">combine_horizontals</span></code></a> for details.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>Hvsr</em></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>More information for the above arguements can be found in
+the documenation of <a class="reference external" href="https://sigpropy.readthedocs.io/en/latest/?badge=latest">SigProPy</a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.normalization_factor">
+<em class="property">property </em><code class="sig-name descname">normalization_factor</code><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.normalization_factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return sensor time history normalization factor.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.resample">
+<code class="sig-name descname">resample</code><span class="sig-paren">(</span><em class="sig-param">fmin</em>, <em class="sig-param">fmax</em>, <em class="sig-param">fn</em>, <em class="sig-param">res_type</em>, <em class="sig-param">inplace</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.resample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample component <cite>FourierTransforms</cite>.</p>
+<p>Refer to <a class="reference external" href="https://sigpropy.readthedocs.io/en/latest/?badge=latest">SigProPy</a> documentation for details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.smooth">
+<code class="sig-name descname">smooth</code><span class="sig-paren">(</span><em class="sig-param">bandwidth</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.smooth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smooth component <cite>FourierTransforms</cite>.</p>
+<p>Refer to <a class="reference external" href="https://sigpropy.readthedocs.io/en/latest/?badge=latest">SigProPy</a> documentation for details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.split">
+<code class="sig-name descname">split</code><span class="sig-paren">(</span><em class="sig-param">windowlength</em><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split component <cite>TimeSeries</cite>.</p>
+<p>Refer to <a class="reference external" href="https://sigpropy.readthedocs.io/en/latest/?badge=latest">SigProPy</a> documentation for details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hvsrpy.sensor3c.Sensor3c.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hvsrpy.sensor3c.Sensor3c.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform Fourier transform on component <cite>TimeSeries</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>None</em> – Redefines attributes <cite>ew_f</cite>, <cite>ns_f</cite>, and <cite>vt_f</cite> as
+<cite>FourierTransform</cite> objects for each component.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="hvsr.html" class="btn btn-neutral float-right" title="Hvsr" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019-2020, Joseph P. Vantassel
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

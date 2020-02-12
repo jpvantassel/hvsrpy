@@ -2,6 +2,7 @@
 *.egg-info
 *.pyc
 *.tmp_profiler_run
+.vscode
 
 # Folders
 .ipynb_checkpoints
