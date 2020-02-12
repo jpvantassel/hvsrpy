@@ -1,6 +1,6 @@
-# This file is part of hvsrpy a Python module for horizontal-to-vertical 
-# spectral ratio processing.
-# Copyright (C) 2019 Joseph P. Vantassel (jvantassel@utexas.edu)
+# This file is part of hvsrpy, a Python module for
+# horizontal-to-vertical spectral ratio processing.
+# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import logging
 logging.basicConfig(level=logging.WARNING)
 
 
-class Test(unittest.TestCase):
+class Test_Sensor3c(unittest.TestCase):
     def test_init(self):
         # Successful init
         ns = hv.TimeSeries([1, 1, 1], dt=1)
@@ -44,6 +44,7 @@ class Test(unittest.TestCase):
         hv.Sensor3c(ns, ew, vt)
         self.assertEqual(ew.amp.tolist(), [1, 1])
         self.assertEqual(vt.amp.tolist(), [1, 1])
+
 
 if __name__ == "__main__":
     unittest.main()
