@@ -1,6 +1,6 @@
 This license applies to hvsrpy a Python package for horizontal-to-vertical
 spectral ratio processing.
-Copyright (C) 2019 Joseph P. Vantassel (jvantassel@utexas.edu)
+Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
