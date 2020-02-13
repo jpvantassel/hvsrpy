@@ -637,11 +637,12 @@ class Hvsr():
         # mean curve
         mc = self.mean_curve(distribution_mc)
         mc_peak_frq = self.mc_peak_frq(distribution_mc)
+        mc_peak_amp = self.mc_peak_amp(distribution_mc)
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 
         lines = [
-            f"# hvsrpy output version 0.0.1",
+            f"# hvsrpy output version 0.2.0",
             f"# Number of windows = {len(self.valid_window_indices)}",
             f"# f0 from average\t{mc_peak_frq[0]}",
             f"# Number of windows for f0 = {len(self.valid_window_indices)}",
@@ -656,3 +657,83 @@ class Hvsr():
                 f.write(line+"\n")
             for f_i, a_i, n_i, x_i in zip(self.frq, mc, _min, _max):
                 f.write(f"{f_i}\t{a_i}\t{n_i}\t{x_i}\n")
+
+    def to_file(self, fname, distribution_f0, distribution_mc):
+        """Save H/V data to file in hvsrpy format.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file to save the results, may be a full or
+            relative path.
+        distribution_f0 : {'log-normal', 'normal'}, optional
+            Assumed distribution of `f0` from the time windows, the
+            default is 'log-normal'.
+        distribution_mc : {'log-normal', 'normal'}, optional
+            Assumed distribution of mean curve, the default is
+            'log-normal'.
+
+        Returns
+        -------
+        None
+            Writes file to disk.
+        """
+        # f0 from windows
+        mean_f = self.mean_f0_frq(distribution_f0)
+        sigm_f = self.std_f0_frq(distribution_f0)
+        ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
+        ci_68_upper_f = self.nstd_f0_frq(+1, distribution_f0)
+
+        # mean curve
+        mc = self.mean_curve(distribution_mc)
+        mc_peak_frq = self.mc_peak_frq(distribution_mc)[0]
+        mc_peak_amp = self.mc_peak_amp(distribution_mc)
+        _min = self.nstd_curve(-1, distribution_mc)
+        _max = self.nstd_curve(+1, distribution_mc)
+
+        n_rejected = len(self.valid_window_indices)
+        lines = [
+            f"# hvsrpy output version 0.2.0",
+            f"# Total Number of Windows,{self.n_windows}",
+            f"# Number of Accepted Windows,{self.n_windows-n_rejected}",
+            f"# Number of Rejected Windows,{n_rejected}",
+            f"# Distribution of f0,{distribution_f0}"]
+
+        if distribution_f0 == "log-normal":
+            mean_t = 1/mean_f
+            sigm_t = -1*sigm_f
+            ci_68_lower_t = np.exp(np.log(mean_t) + sigm_t)
+            ci_68_upper_t = np.exp(np.log(mean_t) - sigm_t) 
+
+            lines += [
+                f"# Median f0 (Hz) [LMf0],{mean_f}",
+                f"# Log-normal standard deviation f0 () [SigmaLNf0],{sigm_f}",
+                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Median T0 (s) [LMT0],{mean_t}",
+                f"# Log-normal standard deviation T0 () [SigmaLNT0],{sigm_t}",
+                f"# 68 % Confidence Interval T0 (s),{ci_68_lower_t},to,{ci_68_upper_t}",
+                ]
+
+        else:
+            lines += [
+                f"# Mean f0 (Hz),{mean_f}"
+                f"# Standard deviation f0 (Hz) [Sigmaf0],{sigm_f}",
+                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower},to,{ci_68_upper}",
+                f"# Mean T0 (s) [LMT0],NA",
+                f"# Standard deviation T0 () [SigmaT0],NA",
+                f"# 68 % Confidence Interval T0 (s),NA",
+                ]
+        
+        c_type = "Median" if distribution_mc == "log-normal" else "Mean"
+        lines += [
+            f"# {c_type} Curve Distribution,{distribution_mc}",
+            f"# {c_type} Curve Peak Frequency (Hz) [f0mc],{mc_peak_frq}",
+            f"# {c_type} Curve Peak Amplitude (),{mc_peak_amp}",
+            f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve, 1 STD Above {c_type} Curve",
+        ]
+            
+        with open(fname, "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+            for f_i, mean_i, bel_i, abv_i in zip(self.frq, mc, _min, _max):
+                f.write(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
