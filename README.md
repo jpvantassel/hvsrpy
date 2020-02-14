@@ -47,7 +47,7 @@ general concept citations, such as that listed above. To generate a version
 specific citation for `hvsrpy`, please use the citation tool for that specific
 version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
 
-## Why use _hvsrpy_s
+## Why use _hvsrpy_
 
 ---
 
@@ -84,8 +84,8 @@ of this document.
 
 ### Installing _hvsrpy_
 
-1. If you do not have Python 3.6 or later installed, you will need to do so.
-A detailed set of instructions can be found [here](https://github.com/jpvantassel/python3-course/blob/master/0_Getting_Started/installing_python.md).
+1. If you have not installed Python 3.6 or later installed, you will need to do
+so. A detailed set of instructions can be found [here](https://github.com/jpvantassel/python3-course/blob/master/0_Getting_Started/installing_python.md).
 
 2. `pip install hvsrpy`. If you are not familiar with `pip`, a useful tutorial
 can be found [here](https://github.com/jpvantassel/python3-course/blob/master/1_Installing_Packages/pip.md).
