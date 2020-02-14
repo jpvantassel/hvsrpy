@@ -84,7 +84,7 @@ of this document.
 
 ### Installing _hvsrpy_
 
-1. If you have not installed Python 3.6 or later installed, you will need to do
+1. If you do not have Python 3.6 or later installed, you will need to do
 so. A detailed set of instructions can be found [here](https://github.com/jpvantassel/python3-course/blob/master/0_Getting_Started/installing_python.md).
 
 2. `pip install hvsrpy`. If you are not familiar with `pip`, a useful tutorial
