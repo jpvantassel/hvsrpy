@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python module for horizontal-to-vertical 
+# This file is part of hvsrpy a Python module for horizontal-to-vertical
 # spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -20,7 +20,7 @@
 import numpy as np
 import scipy.signal as sg
 import logging
-logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class Hvsr():
@@ -84,7 +84,7 @@ class Hvsr():
             raise ValueError(f"{name} must be >= 0.")
         return value
 
-    def __init__(self, amplitude, frequency, find_peaks=True):
+    def __init__(self, amplitude, frequency, find_peaks=True, meta=None):
         """Initialize a `Hvsr` oject from an amplitude and frequency
         vector.
 
@@ -95,6 +95,11 @@ class Hvsr():
             curve and each column a frequency.
         frequency : ndarray
             Vector of frequencies, corresponding to each column.
+        find_peaks : bool, optional
+            Indicates whether peaks of Hvsr will be found when created,
+            default is True.
+        meta : dict, optional
+            Meta information about the object, default is None.
 
         Returns
         -------
@@ -108,6 +113,7 @@ class Hvsr():
         self._master_peak_frq = np.zeros(self.n_windows)
         self._master_peak_amp = np.zeros(self.n_windows)
         self._initialized_peaks = find_peaks
+        self.meta = meta
         if find_peaks:
             self.update_peaks()
 
@@ -206,7 +212,7 @@ class Hvsr():
                 valid_indices.append(c_window)
             except:
                 assert(c_window_peaks.size == 0)
-                logging.warning(f"No peak found in window #{c_window}.")
+                logger.warning(f"No peak found in window #{c_window}.")
         self.valid_window_indices = np.array(valid_indices)
 
     def mean_f0_frq(self, distribution='log-normal'):
@@ -389,7 +395,7 @@ class Hvsr():
             Frequency associated with the peak of the mean H/V curve.
         """
         mc = self.mean_curve(distribution)
-        return self.frq[np.where(mc == np.max(mc[self.find_peaks(mc)[0]]))]
+        return float(self.frq[np.where(mc == np.max(mc[self.find_peaks(mc)[0]]))])
 
     def mc_peak_amp(self, distribution='log-normal'):
         """Amplitude of the peak of the mean H/V curve.
@@ -407,7 +413,9 @@ class Hvsr():
         mc = self.mean_curve(distribution)
         return np.max(mc[self.find_peaks(mc)[0]])
 
-    def reject_windows(self, n=2, max_iterations=50, distribution_f0='log-normal', distribution_mc='log-normal'):
+    def reject_windows(self, n=2, max_iterations=50,
+                       distribution_f0='log-normal',
+                       distribution_mc='log-normal'):
         """Perform rejection of H/V windows using the method proposed by
         Cox et al. (in review).
 
@@ -431,53 +439,64 @@ class Hvsr():
         int
             Number of iterations required for convergence.
         """
+        if isinstance(self.meta, dict):
+            self.meta["n"] = n
+            self.meta["Performed Rejection"] = "True"
+        else:
+            self.meta = {"n": n, "Performed Rejection": "True"}
+
         if not self._initialized_peaks:
             self.update_peaks()
 
         for c_iteration in range(max_iterations):
 
-            logging.debug(f"c_iteration: {c_iteration}")
-            logging.debug(f"valid_window_indices: {self.valid_window_indices}")
+            logger.debug(f"c_iteration: {c_iteration}")
+            logger.debug(f"valid_window_indices: {self.valid_window_indices}")
 
-            mean_f0 = self.mean_f0_frq(distribution_f0)
-            logging.debug(f"mean_f0: {mean_f0}")
-            std_f0 = self.std_f0_frq(distribution_f0)
-            logging.debug(f"std_f0: {std_f0}")
-            mc_peak_frq = self.mc_peak_frq(distribution_mc)
-            logging.debug(f"mc_peak_frq: {mc_peak_frq}")
+            mean_f0_before = self.mean_f0_frq(distribution_f0)
+            std_f0_before = self.std_f0_frq(distribution_f0)
+            mc_peak_frq_before = self.mc_peak_frq(distribution_mc)
+            d_before = abs(mean_f0_before - mc_peak_frq_before)
 
-            d_before = abs(mean_f0 - mc_peak_frq)
+            logger.debug(f"\tmean_f0_before: {mean_f0_before}")
+            logger.debug(f"\tstd_f0_before: {std_f0_before}")
+            logger.debug(f"\tmc_peak_frq_before: {mc_peak_frq_before}")
+            logger.debug(f"\td_before: {d_before}")
 
             lower_bound = self.nstd_f0_frq(-n, distribution_f0)
             upper_bound = self.nstd_f0_frq(+n, distribution_f0)
-            rejected_windows = 0
             keep_indices = []
             for c_window, c_peak in zip(self.valid_window_indices, self.peak_frq):
-                if c_peak < lower_bound or c_peak > upper_bound:
-                    rejected_windows += 1
-                else:
+                if c_peak > lower_bound and c_peak < upper_bound:
                     keep_indices.append(c_window)
+            old_indices = np.array(self.valid_window_indices)
             self.valid_window_indices = np.array(keep_indices)
 
-            new_mean_f0 = self.mean_f0_frq(distribution_f0)
-            new_mc_peak_frq = self.mc_peak_frq(distribution_mc)
-            new_std_f0 = self.std_f0_frq(distribution_f0)
+            mean_f0_after = self.mean_f0_frq(distribution_f0)
+            std_f0_after = self.std_f0_frq(distribution_f0)
+            mc_peak_frq_after = self.mc_peak_frq(distribution_mc)
+            d_after = abs(mean_f0_after - mc_peak_frq_after)
 
-            d_after = abs(new_mean_f0 - new_mc_peak_frq)
+            logger.debug(f"\tmean_f0_after: {mean_f0_after}")
+            logger.debug(f"\tstd_f0_after: {std_f0_after}")
+            logger.debug(f"\tmc_peak_frq_after: {mc_peak_frq_after}")
+            logger.debug(f"\td_after: {d_after}")
 
-            if std_f0 == 0 or new_std_f0 == 0 or d_before == 0:
-                msg = f"Performed {c_iteration} iterations, returning b/c 0 values."
-                logging.warning(msg)
+            if d_before == 0 or std_f0_before == 0 or std_f0_after == 0:
+                logger.warning(
+                    f"Performed {c_iteration} iterations, returning b/c 0 values.")
                 return c_iteration
 
-            msg = f"d relative difference: {(abs(d_after - d_before)/d_before)}"
-            logging.debug(msg)
-            msg = f"std relative difference: {(abs(std_f0 - new_std_f0)/std_f0)}"
-            logging.debug(msg)
+            d_diff = abs(d_after - d_before)/d_before
+            s_diff = abs(std_f0_after - std_f0_before)
 
-            if ((abs(d_after - d_before)/d_before) < 0.01) and ((abs(std_f0 - new_std_f0)/std_f0) < 0.01):
-                msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
-                logging.info(msg)
+            logger.debug(f"\td_diff: {d_diff}")
+            logger.debug(f"\ts_diff: {s_diff}")
+
+            if (d_diff < 0.01) and (s_diff < 0.01):
+                self.valid_window_indices = old_indices
+                logger.info(
+                    f"Performed {c_iteration} iterations, returning b/c rejection converged.")
                 return c_iteration
 
     def nstd_f0_frq(self, n, distribution):
@@ -578,8 +597,8 @@ class Hvsr():
         """Print basic statistics of `Hvsr` instance."""
 
         if distribution_f0 == "log-normal":
-            upper="                                 | Log-Normal |     Log-Normal     |"
-            lower="|              Name              |   Median   | Standard Deviation |"
+            upper = "                                 | Log-Normal |     Log-Normal     |"
+            lower = "|              Name              |   Median   | Standard Deviation |"
 
             f0 = (f"|   {str(self.mean_f0_frq(distribution_f0))[:4]} Hz  " +
                   f"|        {str(self.std_f0_frq(distribution_f0))[:4]}        |")
@@ -587,13 +606,13 @@ class Hvsr():
                   f"|       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |")
 
         elif distribution_f0 == "normal":
-            upper=""
-            lower="|              Name              |    Mean    | Standard Deviation |"
+            upper = ""
+            lower = "|              Name              |    Mean    | Standard Deviation |"
 
             f0 = (f"|   {str(self.mean_f0_frq(distribution_f0))[:4]} Hz  " +
                   f"|      {str(self.std_f0_frq(distribution_f0))[:4]} Hz       |")
             T0 = (f"|     -      |         -          |")
-        
+
         else:
             msg = f"`distribution_f0` of {distribution_f0} is not implemented."
             raise NotImplementedError(msg)
@@ -606,7 +625,7 @@ class Hvsr():
             "|   Fundemental Site Period, T0  "+T0
         ]
         for stat in stats:
-            if stat!="":
+            if stat != "":
                 print(stat)
 
     def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):
@@ -681,8 +700,6 @@ class Hvsr():
         # f0 from windows
         mean_f = self.mean_f0_frq(distribution_f0)
         sigm_f = self.std_f0_frq(distribution_f0)
-        ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
-        ci_68_upper_f = self.nstd_f0_frq(+1, distribution_f0)
 
         # mean curve
         mc = self.mean_curve(distribution_mc)
@@ -691,10 +708,15 @@ class Hvsr():
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 
-        n_rejected = len(self.valid_window_indices)
+        n_rejected = self.n_windows - len(self.valid_window_indices)
+        rejection = self.meta.get('Performed Rejection')
         lines = [
             f"# hvsrpy output version 0.2.0",
+            f"# File Name (),{self.meta.get('File Name')}",
+            f"# Window Length (s),{self.meta.get('Window Length')}",
             f"# Total Number of Windows,{self.n_windows}",
+            f"# Frequency Domain Rejetion Performed,{'False' if rejection is None else rejection}",
+            f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
             f"# Number of Accepted Windows,{self.n_windows-n_rejected}",
             f"# Number of Rejected Windows,{n_rejected}",
             f"# Distribution of f0,{distribution_f0}"]
@@ -703,7 +725,7 @@ class Hvsr():
             mean_t = 1/mean_f
             sigm_t = -1*sigm_f
             ci_68_lower_t = np.exp(np.log(mean_t) + sigm_t)
-            ci_68_upper_t = np.exp(np.log(mean_t) - sigm_t) 
+            ci_68_upper_t = np.exp(np.log(mean_t) - sigm_t)
 
             lines += [
                 f"# Median f0 (Hz) [LMf0],{mean_f}",
@@ -712,26 +734,29 @@ class Hvsr():
                 f"# Median T0 (s) [LMT0],{mean_t}",
                 f"# Log-normal standard deviation T0 () [SigmaLNT0],{sigm_t}",
                 f"# 68 % Confidence Interval T0 (s),{ci_68_lower_t},to,{ci_68_upper_t}",
-                ]
+            ]
 
         else:
+            ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
+            ci_68_upper_f = self.nstd_f0_frq(+1, distribution_f0)
+
             lines += [
-                f"# Mean f0 (Hz),{mean_f}"
+                f"# Mean f0 (Hz),{mean_f}",
                 f"# Standard deviation f0 (Hz) [Sigmaf0],{sigm_f}",
-                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower},to,{ci_68_upper}",
+                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
                 f"# Mean T0 (s) [LMT0],NA",
                 f"# Standard deviation T0 () [SigmaT0],NA",
                 f"# 68 % Confidence Interval T0 (s),NA",
-                ]
-        
+            ]
+
         c_type = "Median" if distribution_mc == "log-normal" else "Mean"
         lines += [
             f"# {c_type} Curve Distribution,{distribution_mc}",
             f"# {c_type} Curve Peak Frequency (Hz) [f0mc],{mc_peak_frq}",
             f"# {c_type} Curve Peak Amplitude (),{mc_peak_amp}",
-            f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve, 1 STD Above {c_type} Curve",
+            f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
         ]
-            
+
         with open(fname, "w") as f:
             for line in lines:
                 f.write(line+"\n")
