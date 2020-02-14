@@ -43,10 +43,9 @@ In review.
 [http://doi.org/10.5281/zenodo.3666956](http://doi.org/10.5281/zenodo.3666956)
 
 _Note: For software, version specific citations should be prefered to
-general concept citations, such as that listed above, to inform others of the
-exact version used. To generate a version specific citation for
-`hvsrpy`, please use the citation tool for that specific version on the `hvsrpy`
-[archive](http://doi.org/10.5281/zenodo.3666956)._
+general concept citations, such as that listed above. To generate a version
+specific citation for `hvsrpy`, please use the citation tool for that specific
+version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
 
 ## Why use _hvsrpy_
 
