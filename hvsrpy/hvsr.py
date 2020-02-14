@@ -155,16 +155,10 @@ class Hvsr():
         Returns
         -------
         Tuple
-            Of the form (peaks, settings)
-
-            peaks : ndarray or list
-                `ndarray` or `list` of `ndarrays` (one per window) of
-                peak indices.
-
-            settings : dict
-                Refer to
-                `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-                documentation.
+            Of the form (peaks, settings). Where `peaks` is an `ndarray`
+            or `list` of `ndarray` (one per window) of peak indices,
+            and `settings` is `dict`, refer to `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
+            documentation.
         """
         if len(amp.shape) == 1:
             peaks, settings = sg.find_peaks(amp, **kwargs)

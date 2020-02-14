@@ -30,10 +30,18 @@ class Sensor3c():
 
     Attributes
     ----------
-    ns, ew, vt : Timeseries
-        `TimeSeries` object for each component.
-    ns_f, ew_f, vt_f : FourierTransform
-        `FourierTransform` object for each component.
+    ns : Timeseries
+        North-south component, time domain.
+    ew : Timeseries
+        East-west component, time domain.
+    vt : Timeseries
+        Vertical component, time domain.
+    ns_f : FourierTransform
+        North-south component, frequency domain.
+    ew_f : FourierTransform
+        East-west component, frequency domain.
+    vt_f : FourierTransform
+        Vertical component, frequency domain.
     normalization_factor : float
         Maximum value of `ns`, `ew`, and `vt` amplitude used for
         normalization when plotting.
@@ -259,6 +267,9 @@ class Sensor3c():
     def hv(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
         """Prepare time series and Fourier transforms then compute H/V.
 
+        More information for the all parameters can be found in
+        the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
+
         Parameters
         ----------
         windowlength : float
@@ -281,15 +292,8 @@ class Sensor3c():
         Returns
         -------
         Hvsr
-
-        Notes
-        -----
-        More information for the above arguements can be found in
-        the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
         """
         # Time Domain Effects
-
-
         # Filter
         if bp_filter["flag"]:
             self.bandpassfilter(flow=bp_filter["flow"],
@@ -301,7 +305,6 @@ class Sensor3c():
 
         # Detrend
         self.detrend()
-
 
         # Cosine Taper
         self.cosine_taper(width=taper_width)
