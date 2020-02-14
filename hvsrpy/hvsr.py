@@ -694,6 +694,8 @@ class Hvsr():
         # f0 from windows
         mean_f = self.mean_f0_frq(distribution_f0)
         sigm_f = self.std_f0_frq(distribution_f0)
+        ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
+        ci_68_upper_f = self.nstd_f0_frq(+1, distribution_f0)
 
         # mean curve
         mc = self.mean_curve(distribution_mc)
@@ -731,9 +733,6 @@ class Hvsr():
             ]
 
         else:
-            ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
-            ci_68_upper_f = self.nstd_f0_frq(+1, distribution_f0)
-
             lines += [
                 f"# Mean f0 (Hz),{mean_f}",
                 f"# Standard deviation f0 (Hz) [Sigmaf0],{sigm_f}",
