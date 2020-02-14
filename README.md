@@ -26,10 +26,27 @@
 `hvsrpy` is a Python package for performing horizontal-to-vertical spectral ratio
 (H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
-Cox at The University of Texas at Austin. The fully-automated frequency-domain
-rejection algorithm implemented in `hvsrpy` was developed by Tianjian Cheng
-under the supervision of Professor Brady R. Cox at The University of Texas at
-Austin and detailed in Cox et al. (in review).
+Cox at The University of Texas at Austin.  The automated frequency-domain
+rejection algorithm and log-normal statistics implemented in `hvsrpy` was
+developed by Tianjian Cheng under the supervision of Professor Brady R. Cox at
+The University of Texas at Austin and detailed in Cox et al. (2020), citation
+below.
+
+If you use _hvsrpy_ in your research, we ask you please cite the following:
+
+>Cox, B. R., Cheng, T., Vantassel, J. P., and Manuel, L. (2020). “A Statistical
+Representation and Frequency-Domain Window-Rejection Algorithm for
+Single-Station HVSR Measurements.” _Geophysical Journal International._
+In review.
+
+>Joseph Vantassel. (2020). jpvantassel/hvsrpy: latest (Concept). Zenodo.
+[http://doi.org/10.5281/zenodo.3666956](http://doi.org/10.5281/zenodo.3666956)
+
+_Note: For software, version specific citations should be prefered to
+general concept citations, such as that listed above, to inform others of the
+exact version used. To generate a version specific citation for
+`hvsrpy`, please use the citation tool for that specific version on the `hvsrpy`
+[archive](http://doi.org/10.5281/zenodo.3666956)._
 
 ## Why use _hvsrpy_
 
@@ -84,7 +101,7 @@ lines of the text displayed in the console.
 
 2. Launch the Jupyter notebook (`file with .ipynb extension`) in the examples
   directory for a no-coding-required introduction to the `hvsrpy` package. If
-  you have not installed `Jupyter`, deetailed instructions can be found
+  you have not installed `Jupyter`, detailed instructions can be found
   [here](https://github.com/jpvantassel/python3-course/blob/master/0_Getting_Started/installing_jupyter.md).
 
 3. Enjoy!
@@ -99,8 +116,9 @@ The examples in this section use the same settings applied to different
 noise records. The settings are provided in the __Settings__ section and the
 name of each file is provided above the corresponding figure in the __Results__
 section. The noise records (i.e., _.miniseed_ files) are provided in the
-`examples` directory or can be found
-[here](https://www.designsafe-ci.org/data/browser/public/designsafe.storage.published//PRJ-2075/Thorndon%20Warf%20(A2)/Unprocessed%20Data/Microtremor%20Array%20Measurements%20(MAM)).
+[examples](https://github.com/jpvantassel/hvsrpy/tree/master/examples) directory
+and also as part of a large published data set
+[(Cox and Vantassel, 2018)](https://www.designsafe-ci.org/data/browser/public/designsafe.storage.published//PRJ-2075/Thorndon%20Warf%20(A2)/Unprocessed%20Data/Microtremor%20Array%20Measurements%20(MAM)).
 
 #### Settings
 
