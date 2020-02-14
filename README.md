@@ -11,11 +11,11 @@
 
 ---
 
-- [About _hvsrpy_](#About-_hvsrpy_)
-- [Why use _hvsrpy_](#Why-use-_hvsrpy_)
-- [A Comparison of _hvsrpy_ with _Geopsy_](#A-comparison-of-_hvsrpy_-with-_Geopsy_)
+- [About _hvsrpy_](#About-hvsrpy)
+- [Why use _hvsrpy_](#Why-use-hvsrpy)
+- [A Comparison of _hvsrpy_ with _Geopsy_](#A-comparison-of-hvsrpy-with-Geopsy)
 - [Getting Started](#Getting-Started)
-- [Additional Comparisons between _hvsrpy_ and _Geopsy_](#Additional-Comparisons-between-_hvsrpy_-and-_Geopsy_)
+- [Additional Comparisons between _hvsrpy_ and _Geopsy_](#Additional-Comparisons-between-hvsrpy-and-Geopsy)
   - [Multiple Windows](#Multiple-Windows)
   - [Single Window](#Single-Window)
 
