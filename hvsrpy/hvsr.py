@@ -663,7 +663,7 @@ class Hvsr():
         lines = [
             f"# hvsrpy output version 0.2.0",
             f"# Number of windows = {len(self.valid_window_indices)}",
-            f"# f0 from average\t{mc_peak_frq[0]}",
+            f"# f0 from average\t{mc_peak_frq}",
             f"# Number of windows for f0 = {len(self.valid_window_indices)}",
             f"# f0 from windows\t{mean}\t{lower}\t{upper}",
             f"# Peak amplitude\t{mc[np.where(self.frq == mc_peak_frq)][0]}",
@@ -703,7 +703,7 @@ class Hvsr():
 
         # mean curve
         mc = self.mean_curve(distribution_mc)
-        mc_peak_frq = self.mc_peak_frq(distribution_mc)[0]
+        mc_peak_frq = self.mc_peak_frq(distribution_mc)
         mc_peak_amp = self.mc_peak_amp(distribution_mc)
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
