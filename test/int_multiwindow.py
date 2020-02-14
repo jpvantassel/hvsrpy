@@ -78,7 +78,7 @@ for fname, fname_geopsy in zip(timerecords, known_solutions):
     ax.plot(geopsy_hv.frq, geopsy_hv["min"], color='r', linestyle=':', label='')
     ax.plot(geopsy_hv.frq, geopsy_hv["max"], color='r', linestyle=':', label='')
     ax.set_xlabel("Frequency (Hz)")
-    ax.set_ylabel("H/V Ampltidue (#)")
+    ax.set_ylabel("H/V Ampltidue")
     ax.set_xscale('log')
     ax.legend()
     plt.savefig(full_path+f"../figs/multiwindow_{fname_geopsy[-13:-3]}.png", dpi=200, bbox_inches='tight')

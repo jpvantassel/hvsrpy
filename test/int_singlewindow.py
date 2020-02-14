@@ -99,7 +99,7 @@ for setting, fname, fname_geopsy in zip(settings, timerecords, known_solutions):
     ax.plot(geopsy_hv.frq, geopsy_hv["avg"], color='r', linestyle="--", label="Geopsy")
 
     ax.set_xlabel("Frequency (Hz)")
-    ax.set_ylabel("H/V Ampltidue (#)")
+    ax.set_ylabel("H/V Ampltidue")
     ax.set_xscale('log')
     ax.legend()
     plt.savefig(full_path+f"../figs/singlewindow_{fname_geopsy[-4]}.png", dpi=200, bbox_inches='tight')
