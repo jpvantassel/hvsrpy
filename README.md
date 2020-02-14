@@ -23,13 +23,13 @@
 
 ---
 
-`hvsrpy` is a Python package for performing horizontal-to-vertical spectral ratio
-(H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
+`hvsrpy` is a Python package for performing horizontal-to-vertical spectral
+ratio (H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
-Cox at The University of Texas at Austin.  The automated frequency-domain
-rejection algorithm and log-normal statistics implemented in `hvsrpy` was
-developed by Tianjian Cheng under the supervision of Professor Brady R. Cox at
-The University of Texas at Austin and detailed in Cox et al. (2020), citation
+Cox at The University of Texas at Austin. The automated frequency-domain
+window-rejection algorithm and log-normal statistics implemented in `hvsrpy`
+were developed by Tianjian Cheng under the supervision of Professor Brady R. Cox
+at The University of Texas at Austin and detailed in Cox et al. (2020), citation
 below.
 
 If you use _hvsrpy_ in your research, we ask you please cite the following:
@@ -47,15 +47,15 @@ general concept citations, such as that listed above. To generate a version
 specific citation for `hvsrpy`, please use the citation tool for that specific
 version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
 
-## Why use _hvsrpy_
+## Why use _hvsrpy_s
 
 ---
 
 `hvsrpy` contains features not currently available in any other commercial or
 open-source software, including:
 
-- A fully-automated frequency-domain rejection algorithm, which allows spurious
-time windows to be removed in a repeatable and expedient manner.
+- A fully-automated frequency-domain window-rejection algorithm, which allows
+spurious time windows to be removed in a repeatable and expedient manner.
 - A log-normal distribution for the fundemental site frequency (`f0`) so the
 uncertainty in `f0` can be represented consistently regardless of whether it is
 described in terms of frequency or period.
