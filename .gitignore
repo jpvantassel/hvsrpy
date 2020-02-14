@@ -3,6 +3,7 @@
 *.pyc
 *.tmp_profiler_run
 .vscode
+html
 
 # Folders
 .ipynb_checkpoints
