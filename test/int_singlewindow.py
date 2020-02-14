@@ -34,6 +34,10 @@ timerecords = [
     "data/a2/UT.STN11.A2_C50.miniseed",
     "data/a2/UT.STN11.A2_C50.miniseed",
     "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C50.miniseed",
+    "data/a2/UT.STN12.A2_C50.miniseed",
+    "data/a2/UT.STN11.A2_C150.miniseed",
+    "data/a2/UT.STN12.A2_C150.miniseed",
 ]
 
 known_solutions = [
@@ -45,6 +49,10 @@ known_solutions = [
     "data/integration/UT_STN11_c50_single_f.hv",
     "data/integration/UT_STN11_c50_single_g.hv",
     "data/integration/UT_STN11_c50_single_h.hv",
+    "data/integration/UT_STN11_c50_single_i.hv",
+    "data/integration/UT_STN12_c50_single_j.hv",
+    "data/integration/UT_STN11_c150_single_k.hv",
+    "data/integration/UT_STN12_c150_single_l.hv",
 ]
 
 settings = [
@@ -64,6 +72,14 @@ settings = [
      "resampling": {"minf": 0.3, "maxf": 40, "nf": 512, "res_type": "log"}},
     {"length": 60, "width": 0.1, "b": 40,
      "resampling": {"minf": 0.3, "maxf": 40, "nf": 4096, "res_type": "log"}},
+    {"length": 30, "width": 0.1, "b": 40,
+     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
+    {"length": 30, "width": 0.1, "b": 40,
+     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
+    {"length": 30, "width": 0.1, "b": 40,
+     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
+    {"length": 30, "width": 0.1, "b": 40,
+     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
 ]
 
 bp_filter = {"flag": False, "flow": 0.001, "fhigh": 49.9, "order": 5}
