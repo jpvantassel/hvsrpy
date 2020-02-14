@@ -180,7 +180,7 @@ class Hvsr():
         """Update `peaks` attribute with the lowest frequency, highest
         amplitude peak.
 
-        Properties
+        Parameters
         ----------
         **kwargs : dict
             Refer to :meth:`find_peaks <Hvsr.find_peaks>` documentation.

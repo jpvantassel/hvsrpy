@@ -15,7 +15,6 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../hvsrpy'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'hvsrpy'
@@ -23,7 +22,7 @@ copyright = '2019-2020, Joseph P. Vantassel'
 author = 'Joseph P. Vantassel'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.1'
+release = '0.2.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -74,7 +73,7 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = []
 
 html_sidebars = {
    '**': ['localtoc.html', 'sourcelink.html', 'searchbox.html'],

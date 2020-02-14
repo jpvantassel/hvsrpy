@@ -3,8 +3,6 @@
 Installation
 ============
 
-.. code-block::
-
-   pip install hvsrpy
+``pip install hvsrpy``
 
 ``pip`` will handle the rest!
