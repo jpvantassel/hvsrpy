@@ -1,6 +1,6 @@
 # _hvsrpy_ - A Python package for horizontal-to-vertical spectral ratio processing
 
-> Joseph P. Vantassel, The University of Texas at Austin (jvantassel@utexas.edu)
+> Joseph P. Vantassel, The University of Texas at Austin
 
 ## Table of Contents
 
@@ -43,7 +43,7 @@ described in terms of frequency or period.
 mean/median curve.
 - A performant framework for batch-style processing.
 
-<img src="figs/example_hvsr_figure.png" width="775">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure.png?raw=true" width="775">
 
 ## A comparison of _hvsrpy_ with _Geopsy_
 
@@ -55,63 +55,34 @@ time window (left) and one for multiple time windows (right). Additional
 examples and the information necessary to reproduce them are provided at the end
 of this document.
 
-<img src="figs/singlewindow_a.png" width="425"> <img src="figs/multiwindow_STN11_c050.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_a.png?raw=true" width="425"> <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN11_c050.png?raw=true" width="425">
 
 ## Getting Started
 
 ---
 
-### Installing _sigpropy_ (a dependency of _hvsrpy_)
+### Installing _hvsrpy_
 
-1. Download and unzip the provided zip file named `hvsrpy_v0.1.0`.
+1. If you do not have Python 3.6 or later installed, you will need to do so.
+A detailed set of instructions can be found [here](https://github.com/jpvantassel/python3-course/blob/master/0_Getting_Started/installing_python.md).
 
-2. Move the directory `sigpropy` and its contents to the root directory of
-  your main hardrive, this is typically the `C` drive on Windows.
+2. `pip install hvsrpy`. If you are not familiar with `pip`, a useful tutorial
+can be found [here](https://github.com/jpvantassel/python3-course/blob/master/1_Installing_Packages/pip.md).
 
-3. Open a Windows Powershell (recommended) or Command Prompt window inside
-the `sigpropy` directory. If using Windows Powershell you can do this with
-`shift + right click` on the directory and selecting the option
-`open PowerShell window here`. If using Command Prompt you will need to
-navigate to that directory using the console.
+3. Confirm that `hvsrpy` has installed succesfully by examining the last few
+lines of the text displayed in the console.
 
-4. Ensure you are in the correct directory by confirming it contains a file
-called `sigpropy-0.1.0-py3-none-any.whl`. You can view the contents of the
-current directory by using the command `ls` in Windows Powershell or `dir` in
-Command Prompt.
+### Using _hvsrpy_
 
-5. Install the module by entering `pip install sigpropy-0.1.0-py3-none-any.whl`
-into Windows Powershell or Command Prompt.
+1. Download the contents of the [examples](https://github.com/jpvantassel/hvsrpy/tree/master/examples)
+  directory to any location of your choice.
 
-6. Confirm that `sigpropy` was built successfully by reading the last few
-lines printed to the console.
+2. Launch the Jupyter notebook (`file with .ipynb extension`) in the examples
+  directory for a no-coding-required introduction to the `hvsrpy` package. If
+  you have not installed `Jupyter`, deetailed instructions can be found
+  [here](https://github.com/jpvantassel/python3-course/blob/master/0_Getting_Started/installing_jupyter.md).
 
-### Installing _hvsrpy_ and its dependencies
-
-1. Move the directory `hvsrpy` and its contents to the root directory of
-  your main hard drive, this is typically the `C` drive on Windows.
-
-2. Open a Windows Powershell (recommended) or Command Prompt window inside
-the `hvsrpy` directory.
-
-3. Ensure you are in the correct directory by confirming it contains a file
-called `hvsrpy-0.1.0-py3-none-any.whl`.
-
-4. Install the module by entering `pip install hvsrpy-0.1.0-py3-none-any.whl`
-into Windows Powershell or Command Prompt.
-
-5. Confirm that `hvsrpy` was built successfully by reading the last few
-lines printed to the console.
-
-### Begin using _hvsrpy_
-
-1. Move the directory `examples` and its contents to any location of your
-  choice.
-
-2. Navigate to the `examples` directory and open the Jupyter
-  notebook titled `simple_hvsrpy_interface.ipynb`.
-
-3. Follow the instructions in the notebook for a no-coding-required introduction
-  to the `hvsrpy` package.
+3. Enjoy!
 
 ## Additional Comparisons between _hvsrpy_ and _Geopsy_
 
@@ -123,7 +94,7 @@ The examples in this section use the same settings applied to different
 noise records. The settings are provided in the __Settings__ section and the
 name of each file is provided above the corresponding figure in the __Results__
 section. The noise records (i.e., _.miniseed_ files) are provided in the
-`examples` directory included as part of this module or can be found
+`examples` directory or can be found
 [here](https://www.designsafe-ci.org/data/browser/public/designsafe.storage.published//PRJ-2075/Thorndon%20Warf%20(A2)/Unprocessed%20Data/Microtremor%20Array%20Measurements%20(MAM)).
 
 #### Settings
@@ -141,23 +112,23 @@ section. The noise records (i.e., _.miniseed_ files) are provided in the
 - __Distribution for f0 from Time Windows:__ 'normal'
 - __Distribution for Mean Curve:__ 'log-normal'
 
-#### Results
+#### Multiple Window Results
 
 __File Name:__ _UT.STN11.A2_C50.miniseed_
 
-<img src="figs/multiwindow_STN11_c050.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN11_c050.png?raw=true" width="425">
 
 __File Name:__ _UT.STN11.A2_C150.miniseed_
 
-<img src="figs/multiwindow_STN11_c150.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN11_c150.png?raw=true" width="425">
 
 __File Name:__ _UT.STN12.A2_C50.miniseed_
 
-<img src="figs/multiwindow_STN12_c050.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN12_c050.png?raw=true" width="425">
 
 __File Name:__ _UT.STN12.A2_C150.miniseed_
 
-<img src="figs/multiwindow_STN12_c150.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN12_c150.png?raw=true" width="425">
 
 ### Single Window
 
@@ -181,36 +152,36 @@ these settings noted for each example.
 - __Distribution for f0 from Time Windows:__ 'normal'
 - __Distribution for Mean Curve:__ 'log-normal'
 
-#### Results
+#### Single Window Results
 
 __Default Case:__ No variation from those settings listed above.
 
-<img src="figs/singlewindow_a.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_a.png?raw=true" width="425">
 
 __Window Length:__ 120 seconds.
 
-<img src="figs/singlewindow_b.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_b.png?raw=true" width="425">
 
 __Cosine Taper Width:__ 20 % (i.e., 10 % in Geopsy)
 
-<img src="figs/singlewindow_e.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_e.png?raw=true" width="425">
 
 __Cosine Taper Width:__ 0.2 % (i.e., 0.1 % in Geopsy)
 
-<img src="figs/singlewindow_f.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_f.png?raw=true" width="425">
 
 __Konno and Ohmachi Smoothing Coefficient:__ 10
 
-<img src="figs/singlewindow_c.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_c.png?raw=true" width="425">
 
 __Konno and Ohmachi Smoothing Coefficient:__ 80
 
-<img src="figs/singlewindow_d.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_d.png?raw=true" width="425">
 
 __Number of Points:__ 512
 
-<img src="figs/singlewindow_g.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_g.png?raw=true" width="425">
 
 __Number of Points:__ 4096
 
-<img src="figs/singlewindow_h.png" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_h.png?raw=true" width="425">
