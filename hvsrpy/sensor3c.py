@@ -22,7 +22,7 @@ from hvsrpy import Hvsr
 from sigpropy import TimeSeries, FourierTransform
 import obspy
 import logging
-logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class Sensor3c():
@@ -94,13 +94,15 @@ class Sensor3c():
 
         return (values_dict["ns"], values_dict["ew"], values_dict["vt"])
 
-    def __init__(self, ns, ew, vt):
+    def __init__(self, ns, ew, vt, meta=None):
         """Initalize a 3-component sensor (Sensor3c) object.
 
         Parameters
         ----------
         ns, ew, vt : timeseries
             `TimeSeries` object for each component.
+        meta : dict, optional
+            Meta information for object, default is None.
 
         Returns
         -------
@@ -113,6 +115,7 @@ class Sensor3c():
         self.ns_f = None
         self.ew_f = None
         self.vt_f = None
+        self.meta = meta
 
     @property
     def normalization_factor(self):
@@ -159,7 +162,8 @@ class Sensor3c():
                 msg = f"Missing, duplicate, or incorrectly named components. See documentation."
                 raise ValueError(msg)
 
-        return cls(ns, ew, vt)
+        meta = {"File Name":fname}
+        return cls(ns, ew, vt, meta)
 
     def split(self, windowlength):
         """Split component `TimeSeries`.
@@ -202,6 +206,11 @@ class Sensor3c():
             Redefines attributes `ew_f`, `ns_f`, and `vt_f` as 
             `FourierTransform` objects for each component.
         """
+        # if self.ew.amp.shape[-1] < 8192:
+        #     n = 8192
+        # else:
+        #     n = self.ew.amp.shape[-1]
+
         self.ew_f = FourierTransform.from_timeseries(self.ew)
         self.ns_f = FourierTransform.from_timeseries(self.ns)
         self.vt_f = FourierTransform.from_timeseries(self.vt)
@@ -279,18 +288,21 @@ class Sensor3c():
         the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
         """
         # Time Domain Effects
-        # Split
-        self.split(windowlength)
 
-        # Detrend
-        self.detrend()
 
         # Filter
         if bp_filter["flag"]:
             self.bandpassfilter(flow=bp_filter["flow"],
                                 fhigh=bp_filter["fhigh"],
                                 order=bp_filter["order"])
-        
+
+        # Split
+        self.split(windowlength)
+
+        # Detrend
+        self.detrend()
+
+
         # Cosine Taper
         self.cosine_taper(width=taper_width)
 
@@ -313,4 +325,13 @@ class Sensor3c():
                       res_type=resampling["res_type"],
                       inplace=True)
 
-        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False)
+        if self.ns.n_windows == 1:
+            window_length = max(self.ns.time)
+        else:
+            window_length = max(self.ns.time[0])
+        if isinstance(self.meta, dict):
+            self.meta["Window Length"] = window_length
+        else:
+            self.meta = {"Window Length":window_length}
+
+        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
