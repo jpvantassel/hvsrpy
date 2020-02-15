@@ -23,12 +23,12 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install numpy>=1.16.2
-      - run:
-          name: Install SigProPy
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install git+ssh://git@github.com/jpvantassel/signal-processing.git
+      # - run:
+      #     name: Install SigProPy
+      #     command: |
+      #       python3 -m venv venv
+      #       . venv/bin/activate
+      #       pip install git+ssh://git@github.com/jpvantassel/signal-processing.git
       - run:
           name: Install remaining dependencies
           command: |
