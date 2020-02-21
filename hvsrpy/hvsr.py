@@ -565,28 +565,6 @@ class Hvsr():
         else:
             raise KeyError(f"distribution type {distribution} not recognized.")
 
-    # def print_stats(self, distribution_f0):
-    #     """Print basic statistics of `Hvsr` instance."""
-
-    #     if distribution_f0 == "log-normal":
-    #         f0 = f"|    f0     |  Log-normal  |    -    | {str(self.mean_f0_frq(distribution_f0))[:4]} Hz |        {str(self.std_f0_frq(distribution_f0))[:4]}        |"
-    #     else:
-    #         f0 = f"|    f0     |    Normal    | {str(self.std_f0_frq(distribution_f0))[:4]} Hz |    -    |      {str(self.std_f0_frq(distribution_f0))[:4]} Hz       |"
-
-    #     if distribution_f0 == "log-normal":
-    #         T0 = f"|    T0     |  Log-normal  |    -    | {str(1/self.mean_f0_frq(distribution_f0))[:4]} s  |       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |"
-    #     else:
-    #         T0 = f"|    T0     |    Normal    |    -    |    -    |         -          |"
-
-    #     stats = [
-    #         "| Parameter | Distribution |   Mean  |  Median | Standard Deviation |",
-    #         "|-----------+--------------+---------+---------+--------------------|",
-    #         f0,
-    #         T0
-    #     ]
-    #     for stat in stats:
-    #         print(stat)
-
     def print_stats(self, distribution_f0):
         """Print basic statistics of `Hvsr` instance."""
 
@@ -597,7 +575,7 @@ class Hvsr():
             f0 = (f"|   {str(self.mean_f0_frq(distribution_f0))[:4]} Hz  " +
                   f"|        {str(self.std_f0_frq(distribution_f0))[:4]}        |")
             T0 = (f"|   {str(1/self.mean_f0_frq(distribution_f0))[:4]} s   " +
-                  f"|       {str(-1*self.std_f0_frq(distribution_f0))[:5]}        |")
+                  f"|        {str(self.std_f0_frq(distribution_f0))[:4]}        |")
 
         elif distribution_f0 == "normal":
             upper = ""
@@ -655,7 +633,7 @@ class Hvsr():
         _max = self.nstd_curve(+1, distribution_mc)
 
         lines = [
-            f"# hvsrpy output version 0.2.1",
+            f"# hvsrpy output version 0.2.2",
             f"# Number of windows = {len(self.valid_window_indices)}",
             f"# f0 from average\t{mc_peak_frq}",
             f"# Number of windows for f0 = {len(self.valid_window_indices)}",
@@ -707,21 +685,21 @@ class Hvsr():
         n_rejected = self.n_windows - len(self.valid_window_indices)
         rejection = self.meta.get('Performed Rejection')
         lines = [
-            f"# hvsrpy output version 0.2.1",
+            f"# hvsrpy output version 0.2.2",
             f"# File Name (),{self.meta.get('File Name')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
-            f"# Total Number of Windows,{self.n_windows}",
-            f"# Frequency Domain Rejetion Performed,{'False' if rejection is None else rejection}",
+            f"# Total Number of Windows (),{self.n_windows}",
+            f"# Frequency Domain Window Rejection Performed (),{'False' if rejection is None else rejection}",
             f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
-            f"# Number of Accepted Windows,{self.n_windows-n_rejected}",
-            f"# Number of Rejected Windows,{n_rejected}",
-            f"# Distribution of f0,{distribution_f0}"]
+            f"# Number of Accepted Windows (),{self.n_windows-n_rejected}",
+            f"# Number of Rejected Windows (),{n_rejected}",
+            f"# Distribution of f0 (),{distribution_f0}"]
 
         if distribution_f0 == "log-normal":
             mean_t = 1/mean_f
-            sigm_t = -1*sigm_f
-            ci_68_lower_t = np.exp(np.log(mean_t) + sigm_t)
-            ci_68_upper_t = np.exp(np.log(mean_t) - sigm_t)
+            sigm_t = sigm_f
+            ci_68_lower_t = np.exp(np.log(mean_t) - sigm_t)
+            ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
 
             lines += [
                 f"# Median f0 (Hz) [LMf0],{mean_f}",
@@ -744,7 +722,7 @@ class Hvsr():
 
         c_type = "Median" if distribution_mc == "log-normal" else "Mean"
         lines += [
-            f"# {c_type} Curve Distribution,{distribution_mc}",
+            f"# {c_type} Curve Distribution (),{distribution_mc}",
             f"# {c_type} Curve Peak Frequency (Hz) [f0mc],{mc_peak_frq}",
             f"# {c_type} Curve Peak Amplitude (),{mc_peak_amp}",
             f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",

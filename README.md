@@ -42,7 +42,7 @@ In review.
 >Joseph Vantassel. (2020). jpvantassel/hvsrpy: latest (Concept). Zenodo.
 [http://doi.org/10.5281/zenodo.3666956](http://doi.org/10.5281/zenodo.3666956)
 
-_Note: For software, version specific citations should be prefered to
+_Note: For software, version specific citations should be preferred to
 general concept citations, such as that listed above. To generate a version
 specific citation for `hvsrpy`, please use the citation tool for that specific
 version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
@@ -56,7 +56,7 @@ open-source software, including:
 
 - A fully-automated frequency-domain window-rejection algorithm, which allows
 spurious time windows to be removed in a repeatable and expedient manner.
-- A log-normal distribution for the fundemental site frequency (`f0`) so the
+- A log-normal distribution for the fundamental site frequency (`f0`) so the
 uncertainty in `f0` can be represented consistently regardless of whether it is
 described in terms of frequency or period.
 - Combining the two horizontal components using the geometric mean.
@@ -90,7 +90,7 @@ so. A detailed set of instructions can be found [here](https://github.com/jpvant
 2. `pip install hvsrpy`. If you are not familiar with `pip`, a useful tutorial
 can be found [here](https://github.com/jpvantassel/python3-course/blob/master/1_Installing_Packages/pip.md).
 
-3. Confirm that `hvsrpy` has installed succesfully by examining the last few
+3. Confirm that `hvsrpy` has installed successfully by examining the last few
 lines of the text displayed in the console.
 
 ### Using _hvsrpy_
