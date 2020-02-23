@@ -20,10 +20,10 @@ __How do the time-domain, frequency-domain, and HVSR settings affect the result?
 The effect of the processing settings will vary on a case-by-case basis. Some
 simple examples showing how the processing settings affect a single time window
 are shown in the
-[README](https://github.com/jpvantassel/hvsrpy/blob/master/README.md)
-for most sites the default/recommended settings (as detailed in the
-Jupyter notebook) should be sufficient. Refer to the literature such as
-Cox et al. (2020) and the SESAME Guidelines for more information.
+[README](https://github.com/jpvantassel/hvsrpy/blob/master/README.md).
+For most sites the default/recommended settings (as detailed in the
+Jupyter notebook) should be sufficient. Refer to the literature including
+Cox et al. (2020) and the SESAME Guidelines specifically for more information.
 
 __What types of data formats can _hvsrpy_ accept?__
 
@@ -34,6 +34,6 @@ near future.
 
 __Do I need to pre-process my ambient noise recording before using _hvsrpy?___
 
-In general, good quality ambient noise data (i.e., sensor was allowed to record
-undisturbed for the full record length) does not need to be pre-processed, and
-can be used directly.
+In general, good quality ambient noise data (i.e., the sensor was allowed to
+record undisturbed for the full record length) does not need to be
+pre-processed, and can be used directly.
