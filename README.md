@@ -105,6 +105,11 @@ lines of the text displayed in the console.
 
 3. Enjoy!
 
+### Looking for more information
+
+More information regarding HVSR processing and `hvsrpy` can be found
+[here](https://github.com/jpvantassel/hvsrpy/blob/master/additional_information.md).
+
 ## Additional Comparisons between _hvsrpy_ and _Geopsy_
 
 ---
