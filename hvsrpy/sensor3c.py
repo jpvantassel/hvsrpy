@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python module for horizontal-to-vertical 
+# This file is part of hvsrpy a Python module for horizontal-to-vertical
 # spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -22,6 +22,7 @@ from hvsrpy import Hvsr
 from sigpropy import TimeSeries, FourierTransform
 import obspy
 import logging
+import json
 logger = logging.getLogger(__name__)
 
 
@@ -129,7 +130,7 @@ class Sensor3c():
     def normalization_factor(self):
         """Return sensor time history normalization factor."""
         return max(max(self.ns.amp.flatten()), max(self.ew.amp.flatten()), max(self.vt.amp.flatten()))
-        
+
     @classmethod
     def from_mseed(cls, fname):
         """Initialize a 3-component sensor (Sensor3c) object from a
@@ -170,9 +171,88 @@ class Sensor3c():
                 msg = f"Missing, duplicate, or incorrectly named components. See documentation."
                 raise ValueError(msg)
 
-        meta = {"File Name":fname}
+        meta = {"File Name": fname}
         return cls(ns, ew, vt, meta)
 
+    def to_dict(self):
+        """Dictionary representation of `Sensor3c` object.
+
+        Returns
+        -------
+        dict
+            With all of the components of the `Sensor3c`.
+        """
+
+        dictionary = {}
+        for name in ["ns", "ew", "vt", "meta"]:
+            value = getattr(self, name)
+            if name != "meta":
+                value = value.to_dict()
+            dictionary[name] = value
+        return dictionary
+
+    @classmethod
+    def from_dict(cls, dictionary):
+        """Create `Sensor3c` object from dictionary representation.
+
+        Parameters
+        ---------
+        dictionary : dict
+            Must contain keys "ns", "ew", and "vt", and may also contain
+            the optional key "meta". "ns", "ew", and "vt" must be
+            dictionary representations of `TimeSeries` objects, see
+            `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+            documentation for details.
+
+        Returns
+        -------
+        Sensor3c
+            Instantiated `Sensor3c` object.
+        """
+
+        if dictionary.get("meta") is None:
+            dictionary["meta"] = None
+
+        comps = []
+        for comp in ["ns", "ew", "vt"]:
+            comps.append(TimeSeries.from_dict(dictionary[comp]))
+
+        return cls(*comps, dictionary["meta"])
+
+    def to_json(self):
+        """Json string representation of `Sensor3c` object.
+
+        Returns
+        -------
+        str
+            With all of the components of the `Sensor3c`.
+        """
+        dictionary = self.to_dict()
+        return json.dumps(dictionary)
+
+    @classmethod
+    def from_json(cls, json_str):
+        """Create `Sensor3c` object from Json-string representation.
+
+        Parameters
+        ---------
+        json_str : str
+            Json-style string, which must contain keys "ns", "ew", and
+            "vt", and may also contain the optional key "meta". "ns",
+            "ew", and "vt" must be Json-style string representations of
+            `TimeSeries` objects, see
+            `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+            documentation for details.
+
+        Returns
+        -------
+        Sensor3c
+            Instantiated `Sensor3c` object.
+        """
+
+        dictionary = json.loads(json_str)
+        return cls.from_dict(dictionary)
+        
     def split(self, windowlength):
         """Split component `TimeSeries`.
 
@@ -335,6 +415,6 @@ class Sensor3c():
         if isinstance(self.meta, dict):
             self.meta["Window Length"] = window_length
         else:
-            self.meta = {"Window Length":window_length}
+            self.meta = {"Window Length": window_length}
 
         return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)

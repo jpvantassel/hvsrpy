@@ -17,13 +17,13 @@
 
 """Tests for Sensor3c."""
 
-import unittest
+from testtools import unittest, TestCase
 import hvsrpy as hv
 import logging
 logging.basicConfig(level=logging.WARNING)
 
 
-class Test_Sensor3c(unittest.TestCase):
+class Test_Sensor3c(TestCase):
     def test_init(self):
         # Successful init
         ns = hv.TimeSeries([1, 1, 1], dt=1)
@@ -45,6 +45,35 @@ class Test_Sensor3c(unittest.TestCase):
         self.assertEqual(ew.amp.tolist(), [1, 1])
         self.assertEqual(vt.amp.tolist(), [1, 1])
 
+    def test_to_and_from_dict(self):
+        # Simple Case
+        ns = hv.TimeSeries([1, 2, 3], dt=1)
+        ew = hv.TimeSeries([1, 4, 5], dt=1)
+        vt = hv.TimeSeries([1, -1, 1], dt=1)
+        expected = hv.Sensor3c(ns, ew, vt)
+
+        dict_repr = expected.to_dict()
+        returned = hv.Sensor3c.from_dict(dict_repr)
+
+        for comp in ["ns", "ew", "vt"]:
+            exp = getattr(expected, comp).amp
+            ret = getattr(returned, comp).amp
+            self.assertArrayEqual(exp, ret)
+
+    def test_to_and_from_json(self):
+        # Simple Case
+        ns = hv.TimeSeries([1, 2, 3], dt=1)
+        ew = hv.TimeSeries([1, 4, 5], dt=1)
+        vt = hv.TimeSeries([1, -1, 1], dt=1)
+        expected = hv.Sensor3c(ns, ew, vt)
+
+        json_repr = expected.to_json()
+        returned = hv.Sensor3c.from_json(json_repr)
+
+        for comp in ["ns", "ew", "vt"]:
+            exp = getattr(expected, comp).amp
+            ret = getattr(returned, comp).amp
+            self.assertArrayEqual(exp, ret)
 
 if __name__ == "__main__":
     unittest.main()
