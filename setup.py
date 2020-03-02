@@ -6,12 +6,12 @@ https://github.com/pypa/sampleproject
 """
 
 from setuptools import setup, find_packages
-with open("README.md") as f:
+with open("README.md", encoding="utf8") as f:
     long_description = f.read()
 
 setup(
     name='hvsrpy',
-    version='0.2.1',
+    version='0.2.2',
     description='A Python package for horizontal-to-vertical spectral ratio processing',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -38,7 +38,7 @@ setup(
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
     python_requires = '>=3.6, <3.9',
-    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy'],
+    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy', 'json'],
     extras_require={
         'dev': ['unittest', 'hypothesis'],
         'test': ['unittest', 'hypothesis'],
