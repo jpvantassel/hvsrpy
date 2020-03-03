@@ -599,27 +599,9 @@ class Hvsr():
         for stat in stats:
             if stat != "":
                 print(stat)
-
-    def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):
-        """Save H/V data to file in Geopsy format.
-
-        Parameters
-        ----------
-        fname : str
-            Name of file to save the results, may be a full or
-            relative path.
-        distribution_f0 : {'log-normal', 'normal'}, optional
-            Assumed distribution of `f0` from the time windows, the
-            default is 'log-normal'.
-        distribution_mc : {'log-normal', 'normal'}, optional
-            Assumed distribution of mean curve, the default is
-            'log-normal'.
-
-        Returns
-        -------
-        None
-            Writes file to disk.
-        """
+            
+    def _geopsy_style_lines(self, distribution_f0, distribution_mc):
+        """Lines for Geopsy-style file."""
         # f0 from windows
         mean = self.mean_f0_frq(distribution_f0)
         lower = self.nstd_f0_frq(-1, distribution_f0)
@@ -643,14 +625,18 @@ class Hvsr():
             f"# Category\tDefault",
             f"# Frequency\tAverage\tMin\tMax",
         ]
-        with open(fname, "w") as f:
-            for line in lines:
-                f.write(line+"\n")
-            for f_i, a_i, n_i, x_i in zip(self.frq, mc, _min, _max):
-                f.write(f"{f_i}\t{a_i}\t{n_i}\t{x_i}\n")
 
-    def to_file(self, fname, distribution_f0, distribution_mc):
-        """Save H/V data to file in hvsrpy format.
+        _lines = []
+        for line in lines:
+            _lines.append(line+"\n")
+
+        for f_i, a_i, n_i, x_i in zip(self.frq, mc, _min, _max):
+            _lines.append(f"{f_i}\t{a_i}\t{n_i}\t{x_i}\n")
+
+        return _lines
+
+    def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):
+        """Save H/V data to file in Geopsy format.
 
         Parameters
         ----------
@@ -669,6 +655,14 @@ class Hvsr():
         None
             Writes file to disk.
         """
+        lines = self._geopsy_style_lines(distribution_f0, distribution_mc)
+        with open(fname, "w") as f:
+            for line in lines:
+                f.write(line)
+                
+    def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
+        """Lines for hvsrpy-style file."""
+
         # f0 from windows
         mean_f = self.mean_f0_frq(distribution_f0)
         sigm_f = self.std_f0_frq(distribution_f0)
@@ -728,8 +722,38 @@ class Hvsr():
             f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
         ]
 
+        _lines = []
+        for line in lines:
+            _lines.append(line+"\n")
+        
+        for f_i, mean_i, bel_i, abv_i in zip(self.frq, mc, _min, _max):
+            _lines.append(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
+
+        return _lines
+
+    def to_file(self, fname, distribution_f0, distribution_mc):
+        """Save H/V data to file in hvsrpy format.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file to save the results, may be a full or
+            relative path.
+        distribution_f0 : {'log-normal', 'normal'}, optional
+            Assumed distribution of `f0` from the time windows, the
+            default is 'log-normal'.
+        distribution_mc : {'log-normal', 'normal'}, optional
+            Assumed distribution of mean curve, the default is
+            'log-normal'.
+
+        Returns
+        -------
+        None
+            Writes file to disk.
+        """
+
+        lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
+
         with open(fname, "w") as f:
             for line in lines:
-                f.write(line+"\n")
-            for f_i, mean_i, bel_i, abv_i in zip(self.frq, mc, _min, _max):
-                f.write(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
+                f.write(line)
