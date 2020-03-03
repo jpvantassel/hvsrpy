@@ -38,7 +38,7 @@ setup(
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
     python_requires = '>=3.6, <3.9',
-    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy', 'json'],
+    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy'],
     extras_require={
         'dev': ['unittest', 'hypothesis'],
         'test': ['unittest', 'hypothesis'],
