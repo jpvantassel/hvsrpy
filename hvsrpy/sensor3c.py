@@ -73,7 +73,6 @@ class Sensor3c():
             msg = f"'ns' must be a `TimeSeries`, not {type(values_dict['ns'])}."
             raise TypeError(msg)
         dt = values_dict["ns"].dt
-        delay = values_dict["ns"].delay
         n_samples = values_dict["ns"].n_samples
         flag_cut = False
         for key, value in values_dict.items():
@@ -81,9 +80,6 @@ class Sensor3c():
                 msg = f"{key} must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
             if value.dt != dt:
-                msg = f"All components must have equal `dt`."
-                raise ValueError(msg)
-            if value.delay != delay:
                 msg = f"All components must have equal `dt`."
                 raise ValueError(msg)
 
@@ -294,11 +290,6 @@ class Sensor3c():
             Redefines attributes `ew_f`, `ns_f`, and `vt_f` as 
             `FourierTransform` objects for each component.
         """
-        # if self.ew.amp.shape[-1] < 8192:
-        #     n = 8192
-        # else:
-        #     n = self.ew.amp.shape[-1]
-
         self.ew_f = FourierTransform.from_timeseries(self.ew)
         self.ns_f = FourierTransform.from_timeseries(self.ns)
         self.vt_f = FourierTransform.from_timeseries(self.vt)

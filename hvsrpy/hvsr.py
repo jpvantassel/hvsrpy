@@ -49,7 +49,7 @@ class Hvsr():
     def _check_input(name, value):
         """Basic check on input values.
 
-        Specifically;
+        Specifically:
             1. `value` must be of type `list`, `tuple`, `ndarray`.
             2. If `value` is not `ndarray`, convert to `ndarray`.
             3. `value` must be >=0.
