@@ -18,31 +18,25 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Create virtualenv
+          command: |
+            virtualenv venv
+            . venv/bin/activate
+      - run:
           name: Install numpy
           command: |
-            python3 -m venv venv
             . venv/bin/activate
-            pip install numpy>=1.16.2
+            pip install numpy
       - run:
           name: Install SigProPy
           command: |
-            python3 -m venv venv
             . venv/bin/activate
             pip install git+ssh://git@github.com/jpvantassel/signal-processing.git
       - run:
-          name: Install remaining dependencies
+          name: Install hvsrpy and dependencies
           command: |
-            python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements.txt
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
-          - v1-dependencies-
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
+            pip install -e .
       - run:
           name: Run tests
           command: |
