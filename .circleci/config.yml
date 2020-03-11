@@ -47,6 +47,7 @@ jobs:
           name: Run tests
           command: |
             . venv/bin/activate
+            pip install -e .
             cd test
             python -m unittest
 
