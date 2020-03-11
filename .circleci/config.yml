@@ -47,6 +47,7 @@ jobs:
           name: Run tests
           command: |
             . venv/bin/activate
+            cd test
             python -m unittest
 
   test-3.7:
