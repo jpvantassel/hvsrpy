@@ -80,6 +80,7 @@ class Hvsr():
             raise TypeError(msg)
         if type(value) in [list, tuple]:
             value = np.array(value)
+        # TODO (jpv): Address "RuntimeWarning: invalid value encountered in less if np.sum(value < 0):"
         if np.sum(value < 0):
             raise ValueError(f"{name} must be >= 0.")
         return value

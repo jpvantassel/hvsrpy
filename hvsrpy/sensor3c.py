@@ -19,7 +19,7 @@
 
 import numpy as np
 from hvsrpy import Hvsr
-from sigpropy import TimeSeries, FourierTransform
+from sigpropy import TimeSeries, FourierTransform, WindowedTimeSeries, FourierTransformSuite
 import obspy
 import logging
 import json
@@ -31,11 +31,11 @@ class Sensor3c():
 
     Attributes
     ----------
-    ns : Timeseries
+    ns : TimeSeries
         North-south component, time domain.
-    ew : Timeseries
+    ew : TimeSeries
         East-west component, time domain.
-    vt : Timeseries
+    vt : TimeSeries
         Vertical component, time domain.
     ns_f : FourierTransform
         North-south component, frequency domain.
@@ -43,9 +43,7 @@ class Sensor3c():
         East-west component, frequency domain.
     vt_f : FourierTransform
         Vertical component, frequency domain.
-    normalization_factor : float
-        Maximum value of `ns`, `ew`, and `vt` amplitude used for
-        normalization when plotting.
+
     """
 
     @staticmethod
@@ -68,6 +66,7 @@ class Sensor3c():
         -------
         Tuple
             Containing checked components.
+
         """
         if not isinstance(values_dict["ns"], TimeSeries):
             msg = f"'ns' must be a `TimeSeries`, not {type(values_dict['ns'])}."
@@ -104,7 +103,7 @@ class Sensor3c():
 
         Parameters
         ----------
-        ns, ew, vt : timeseries
+        ns, ew, vt : TimeSeries
             `TimeSeries` object for each component.
         meta : dict, optional
             Meta information for object, default is None.
@@ -125,7 +124,9 @@ class Sensor3c():
     @property
     def normalization_factor(self):
         """Return sensor time history normalization factor."""
-        return max(max(self.ns.amp.flatten()), max(self.ew.amp.flatten()), max(self.vt.amp.flatten()))
+        return max(max(self.ns.amp.flatten()),
+                   max(self.ew.amp.flatten()),
+                   max(self.vt.amp.flatten()))
 
     @classmethod
     def from_mseed(cls, fname):
@@ -248,17 +249,19 @@ class Sensor3c():
 
         dictionary = json.loads(json_str)
         return cls.from_dict(dictionary)
-        
+
     def split(self, windowlength):
-        """Split component `TimeSeries`.
+        """Split component `TimeSeries` into `WindowedTimeSeries`.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
-        for comp in [self.ew, self.ns, self.vt]:
-            comp.split(windowlength)
+        for attr in ["ew", "ns", "vt"]:
+            wtseries = WindowedTimeSeries.from_timeseries(
+                getattr(self, attr), windowlength)
+            setattr(self, attr, wtseries)
 
     def detrend(self):
-        """Detrend component `TimeSeries`.
+        """Detrend components.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
@@ -266,7 +269,7 @@ class Sensor3c():
             comp.detrend()
 
     def bandpassfilter(self, flow, fhigh, order):
-        """Bandpassfilter component `TimeSeries`.
+        """Bandpassfilter components.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
@@ -274,7 +277,7 @@ class Sensor3c():
             comp.bandpassfilter(flow, fhigh, order)
 
     def cosine_taper(self, width):
-        """Cosine taper component `TimeSeries`.
+        """Cosine taper components.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
@@ -282,7 +285,7 @@ class Sensor3c():
             comp.cosine_taper(width)
 
     def transform(self):
-        """Perform Fourier transform on component `TimeSeries`.
+        """Perform Fourier transform on components.
 
         Returns
         -------
@@ -290,9 +293,15 @@ class Sensor3c():
             Redefines attributes `ew_f`, `ns_f`, and `vt_f` as 
             `FourierTransform` objects for each component.
         """
-        self.ew_f = FourierTransform.from_timeseries(self.ew)
-        self.ns_f = FourierTransform.from_timeseries(self.ns)
-        self.vt_f = FourierTransform.from_timeseries(self.vt)
+        for attr in ["ew", "ns", "vt"]:
+            tseries = getattr(self, attr)
+            if isinstance(tseries, WindowedTimeSeries):
+                fft = FourierTransformSuite.from_timeseries(tseries)
+            elif isinstance(tseries, TimeSeries) :
+                fft = FourierTransform.from_timeseries(tseries)
+            else:
+                raise NotImplementedError
+            setattr(self, f"{attr}_f", fft)
 
     def smooth(self, bandwidth):
         """Smooth component `FourierTransforms`.
@@ -302,13 +311,22 @@ class Sensor3c():
         for comp in [self.ew_f, self.ns_f, self.vt_f]:
             comp.smooth_konno_ohmachi(bandwidth)
 
-    def resample(self, fmin, fmax, fn, res_type, inplace):
+    def smooth_fast(self, frequencies, bandwidth):
+        """Smooth component `FourierTransforms`.
+
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+        """
+        for comp in [self.ew_f, self.ns_f, self.vt_f]:
+            comp.smooth_konno_ohmachi_fast(frequencies, bandwidth)
+
+    # TODO (jpv): I think inplace has to be true?
+    def resample(self, fmin, fmax, fn, res_type):
         """Resample component `FourierTransforms`.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
         for comp in [self.ew_f, self.ns_f, self.vt_f]:
-            comp.resample(fmin, fmax, fn, res_type, inplace)
+            comp.resample(fmin, fmax, fn, res_type, inplace=True)
 
     def combine_horizontals(self, method='squared-average'):
         """Combine two horizontal components (`ns` and `ew`).
@@ -333,9 +351,15 @@ class Sensor3c():
         else:
             msg = f"ratio_type {method} has not been implemented."
             raise NotImplementedError(msg)
-        return FourierTransform(horizontal, self.ns_f.frq)
 
-    def hv(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
+        if isinstance(self.ns, WindowedTimeSeries):
+            return FourierTransformSuite(horizontal, self.ns_f.frq)
+        if isinstance(self.ns, TimeSeries):
+            return FourierTransform(horizontal, self.ns_f.frq)
+        else:
+            raise NotImplementedError
+
+    def hv_slow(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
         """Prepare time series and Fourier transforms then compute H/V.
 
         More information for the all parameters can be found in
@@ -396,13 +420,103 @@ class Sensor3c():
         hvsr.resample(minf=resampling["minf"],
                       maxf=resampling["maxf"],
                       nf=resampling["nf"],
-                      res_type=resampling["res_type"],
-                      inplace=True)
+                      res_type=resampling["res_type"])
 
+        # TODO (jpv): Rewrite.
         if self.ns.n_windows == 1:
             window_length = max(self.ns.time)
         else:
             window_length = max(self.ns.time[0])
+
+        if isinstance(self.meta, dict):
+            self.meta["Window Length"] = window_length
+        else:
+            self.meta = {"Window Length": window_length}
+
+        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
+
+    def hv(self, windowlength, bp_filter, taper_width, bandwidth,
+                resampling, method):
+        """Prepare time series and Fourier transforms then compute H/V.
+
+        More information for the all parameters can be found in
+        the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
+
+        Parameters
+        ----------
+        windowlength : float
+            Length of time windows in seconds.
+        bp_filter : dict
+            Bandpass filter settings, of the form 
+            {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
+            'order':`int`}.
+        taper_width : float
+            Width of cosine taper.
+        bandwidth : float
+            Bandwidth of the Konno and Ohmachi smoothing window.
+        resampling : dict
+            Resampling settings, of the form 
+            {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
+            'res_type':`str`}.
+        method : {'squared-averge', 'geometric-mean'}
+            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
+
+        Returns
+        -------
+        Hvsr
+        """
+        # Time Domain Effects
+        # Filter
+        if bp_filter["flag"]:
+            self.bandpassfilter(flow=bp_filter["flow"],
+                                fhigh=bp_filter["fhigh"],
+                                order=bp_filter["order"])
+
+        # Split
+        self.split(windowlength)
+
+        # Detrend
+        self.detrend()
+
+        # Cosine Taper
+        self.cosine_taper(width=taper_width)
+
+        # Frequency Domain Effects
+        self.transform()
+
+        for comp in [self.ns_f, self.ew_f, self.vt_f]:
+            comp.amp = comp.mag
+
+        # H/V Effects
+        hor = self.combine_horizontals(method=method)
+
+        if resampling["res_type"] == "linear":
+            frq = np.linspace(resampling["minf"],
+                              resmapling["maxf"],
+                              resampling["nf"])
+        elif resampling["res_type"] == "log":
+            frq = np.logspace(np.log10(resampling["minf"]),
+                              np.log10(resampling["maxf"]),
+                              resampling["nf"])
+        else:
+            raise NotImplementedError
+
+        hor.smooth_konno_ohmachi_fast(frq, bandwidth)
+        self.vt_f.smooth_konno_ohmachi_fast(frq, bandwidth)
+
+        if isinstance(hor, FourierTransformSuite):
+            hvsr = FourierTransformSuite(hor.amp/self.vt_f.amp, hor.frq)        
+        elif isinstance(hor, FourierTransform):
+            hvsr = FourierTransform(hor.amp/self.vt_f.amp, hor.frq)
+        else:
+            raise NotImplementedError
+
+        # TODO (jpv): Rewrite.
+        if self.ns.n_windows == 1:
+            window_length = max(self.ns.time)
+        else:
+            window_length = max(self.ns.time[0])
+
         if isinstance(self.meta, dict):
             self.meta["Window Length"] = window_length
         else:
