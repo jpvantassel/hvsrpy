@@ -21,86 +21,40 @@ import numpy as np
 import hvsrpy as hv
 import pandas as pd
 import matplotlib.pyplot as plt
+import json
 from testtools import get_full_path
 
 full_path = get_full_path(__file__)
 
-timerecords = [
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C50.miniseed",
-    "data/a2/UT.STN12.A2_C50.miniseed",
-    "data/a2/UT.STN11.A2_C150.miniseed",
-    "data/a2/UT.STN12.A2_C150.miniseed",
-]
-
-known_solutions = [
-    "data/integration/UT_STN11_c50_single_a.hv",
-    "data/integration/UT_STN11_c50_single_b.hv",
-    "data/integration/UT_STN11_c50_single_c.hv",
-    "data/integration/UT_STN11_c50_single_d.hv",
-    "data/integration/UT_STN11_c50_single_e.hv",
-    "data/integration/UT_STN11_c50_single_f.hv",
-    "data/integration/UT_STN11_c50_single_g.hv",
-    "data/integration/UT_STN11_c50_single_h.hv",
-    "data/integration/UT_STN11_c50_single_i.hv",
-    "data/integration/UT_STN12_c50_single_j.hv",
-    "data/integration/UT_STN11_c150_single_k.hv",
-    "data/integration/UT_STN12_c150_single_l.hv",
-]
-
-settings = [
-    {"length": 60, "width": 0.1, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 120, "width": 0.1, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 60, "width": 0.1, "b": 10,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 60, "width": 0.1, "b": 80,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 60, "width": 0.2, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 60, "width": 0.02, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 60, "width": 0.1, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 512, "res_type": "log"}},
-    {"length": 60, "width": 0.1, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 4096, "res_type": "log"}},
-    {"length": 30, "width": 0.1, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 30, "width": 0.1, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 30, "width": 0.1, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-    {"length": 30, "width": 0.1, "b": 40,
-     "resampling": {"minf": 0.3, "maxf": 40, "nf": 2048, "res_type": "log"}},
-]
+with open(full_path+"int_singlewindow_cases.json", "r") as f:
+    cases = json.load(f)
 
 bp_filter = {"flag": False, "flow": 0.001, "fhigh": 49.9, "order": 5}
-ratio_type = 'squared-average'
-distribution_type = 'log-normal'
 
-for setting, fname, fname_geopsy in zip(settings, timerecords, known_solutions):
+for key, value in cases.items():
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3, 2))
 
-    sensor = hv.Sensor3c.from_mseed(full_path+fname)
-    my_hv = sensor.hv(setting["length"], bp_filter, setting["width"],
-                      setting["b"], setting["resampling"], ratio_type)
+    sensor = hv.Sensor3c.from_mseed(full_path+value["fname_miniseed"])
+
+    settings = value["settings"]
+    my_hv = sensor.hv(settings["length"],
+                      bp_filter, settings["width"],
+                      settings["b"],
+                      settings["resampling"],
+                      settings["method"],
+                      azimuth=settings.get("azimuth"))
+
     ax.plot(my_hv.frq, my_hv.amp[0], color='#aaaaaa', label="hvsrpy")
 
-    geopsy_hv = pd.read_csv(full_path+fname_geopsy, delimiter="\t", comment="#", names=[
-                            "frq", "avg", "min", "max"])
-    ax.plot(geopsy_hv.frq, geopsy_hv["avg"], color='r', linestyle="--", label="Geopsy")
+    geopsy_hv = pd.read_csv(full_path+value["fname_geopsy"], delimiter="\t",
+                            comment="#", names=["frq", "avg", "min", "max"])
+    ax.plot(geopsy_hv.frq, geopsy_hv["avg"],
+            color='r', linestyle="--", label="Geopsy")
 
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel("H/V Ampltidue")
     ax.set_xscale('log')
     ax.legend()
-    plt.savefig(full_path+f"../figs/singlewindow_{fname_geopsy[-4]}.png", dpi=200, bbox_inches='tight')
+    plt.savefig(full_path+f"singlewindow_{key}.png", dpi=200,
+                bbox_inches='tight')
     plt.close()
