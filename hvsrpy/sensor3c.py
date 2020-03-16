@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python module for horizontal-to-vertical
+# This file is part of hvsrpy a Python package for horizontal-to-vertical
 # spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -17,6 +17,7 @@
 
 """This file contains the 3-component sensor (Sensor3c) class."""
 
+import math
 import numpy as np
 from hvsrpy import Hvsr
 from sigpropy import TimeSeries, FourierTransform, WindowedTimeSeries, FourierTransformSuite
@@ -37,12 +38,6 @@ class Sensor3c():
         East-west component, time domain.
     vt : TimeSeries
         Vertical component, time domain.
-    ns_f : FourierTransform
-        North-south component, frequency domain.
-    ew_f : FourierTransform
-        East-west component, frequency domain.
-    vt_f : FourierTransform
-        Vertical component, frequency domain.
 
     """
 
@@ -54,7 +49,7 @@ class Sensor3c():
             1. Ensure all components are `TimeSeries` objects.
             2. Ensure all components have equal `dt`.
             3. Ensure all components have same `n_samples`. If not trim
-            components to a common length.
+            components to the common length.
 
         Parameters
         ----------
@@ -116,9 +111,6 @@ class Sensor3c():
         self.ns, self.ew, self.vt = self._check_input({"ns": ns,
                                                        "ew": ew,
                                                        "vt": vt})
-        self.ns_f = None
-        self.ew_f = None
-        self.vt_f = None
         self.meta = meta
 
     @property
@@ -179,7 +171,6 @@ class Sensor3c():
         dict
             With all of the components of the `Sensor3c`.
         """
-
         dictionary = {}
         for name in ["ns", "ew", "vt", "meta"]:
             value = getattr(self, name)
@@ -206,7 +197,6 @@ class Sensor3c():
         Sensor3c
             Instantiated `Sensor3c` object.
         """
-
         if dictionary.get("meta") is None:
             dictionary["meta"] = None
 
@@ -246,7 +236,6 @@ class Sensor3c():
         Sensor3c
             Instantiated `Sensor3c` object.
         """
-
         dictionary = json.loads(json_str)
         return cls.from_dict(dictionary)
 
@@ -256,8 +245,8 @@ class Sensor3c():
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
         """
         for attr in ["ew", "ns", "vt"]:
-            wtseries = WindowedTimeSeries.from_timeseries(
-                getattr(self, attr), windowlength)
+            wtseries = WindowedTimeSeries.from_timeseries(getattr(self, attr),
+                                                          windowlength)
             setattr(self, attr, wtseries)
 
     def detrend(self):
@@ -289,76 +278,118 @@ class Sensor3c():
 
         Returns
         -------
-        None
-            Redefines attributes `ew_f`, `ns_f`, and `vt_f` as 
-            `FourierTransform` objects for each component.
+        dict
+            With `FourierTransform`-like objects, one for for each
+            component, indicated by the key 'ew','ns', 'vt'.
         """
+        ffts = {}
         for attr in ["ew", "ns", "vt"]:
             tseries = getattr(self, attr)
             if isinstance(tseries, WindowedTimeSeries):
                 fft = FourierTransformSuite.from_timeseries(tseries)
-            elif isinstance(tseries, TimeSeries) :
+            elif isinstance(tseries, TimeSeries):
                 fft = FourierTransform.from_timeseries(tseries)
             else:
                 raise NotImplementedError
-            setattr(self, f"{attr}_f", fft)
+            ffts[attr] = fft
+        return ffts
 
-    def smooth(self, bandwidth):
-        """Smooth component `FourierTransforms`.
+    # def smooth(self, bandwidth):
+    #     """Smooth component `FourierTransforms`.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
-        """
-        for comp in [self.ew_f, self.ns_f, self.vt_f]:
-            comp.smooth_konno_ohmachi(bandwidth)
+    #     Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+    #     """
+    #     for comp in [self.ew_f, self.ns_f, self.vt_f]:
+    #         comp.smooth_konno_ohmachi(bandwidth)
 
-    def smooth_fast(self, frequencies, bandwidth):
-        """Smooth component `FourierTransforms`.
+    # def smooth_fast(self, frequencies, bandwidth):
+    #     """Smooth component `FourierTransforms`.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
-        """
-        for comp in [self.ew_f, self.ns_f, self.vt_f]:
-            comp.smooth_konno_ohmachi_fast(frequencies, bandwidth)
+    #     Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+    #     """
+    #     for comp in [self.ew_f, self.ns_f, self.vt_f]:
+    #         comp.smooth_konno_ohmachi_fast(frequencies, bandwidth)
 
-    # TODO (jpv): I think inplace has to be true?
-    def resample(self, fmin, fmax, fn, res_type):
-        """Resample component `FourierTransforms`.
+    # # TODO (jpv): I think inplace has to be true?
+    # def resample(self, fmin, fmax, fn, res_type):
+    #     """Resample component `FourierTransforms`.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
-        """
-        for comp in [self.ew_f, self.ns_f, self.vt_f]:
-            comp.resample(fmin, fmax, fn, res_type, inplace=True)
+    #     Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+    #     """
+    #     for comp in [self.ew_f, self.ns_f, self.vt_f]:
+    #         comp.resample(fmin, fmax, fn, res_type, inplace=True)
 
-    def combine_horizontals(self, method='squared-average'):
+    def combine_horizontals(self, method, value):
         """Combine two horizontal components (`ns` and `ew`).
 
         Parameters
         ----------
-        method : {'squared-averge', 'geometric-mean'}, optional
+        method : {'squared-averge', 'geometric-mean', 'azimuth'}
             Defines how the two horizontal components are combined 
-            to represent a single horizontal component, the default
-            is 'squared-average'.
+            to represent a single horizontal component.
+        value : {dict, float}
+            If combination is done in the frequency-domain (i.e.,
+            `method` in `['squared-average', 'geometric-mean']`) value
+            is a `dict` off FourierTransform objects, see meth: tranform
+            for details. If combination is done in the time-domain
+            (i.e., `method` in `['azimuth']`) value is `float` defining
+            the desired azimuth measured in degrees (anti-clockwise
+            positive) from North (i.e., 0 degrees).
 
         Returns
         -------
-        FourierTransform
-            Representing the combined horizontal components.
+        FourierTransform or TimeSeries
+            Depending upon whether method is performed in the
+            frequency-domain or time-domain respectively.
+
         """
-        if method == 'squared-average':
-            horizontal = np.sqrt(
-                (self.ns_f.amp*self.ns_f.amp + self.ew_f.amp*self.ew_f.amp)/2)
-        elif method == 'geometric-mean':
-            horizontal = np.sqrt(self.ns_f.amp * self.ew_f.amp)
+        if method in ["squared-average", "geometric-mean"]:
+            return self._combine_horizontal_fd(method, value)
+        elif method == 'azimuth':
+            return self._combine_horizontal_td(method, value)
         else:
-            msg = f"ratio_type {method} has not been implemented."
+            msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
 
-        if isinstance(self.ns, WindowedTimeSeries):
-            return FourierTransformSuite(horizontal, self.ns_f.frq)
-        if isinstance(self.ns, TimeSeries):
-            return FourierTransform(horizontal, self.ns_f.frq)
+    def _combine_horizontal_fd(self, method, value):
+        ns = value["ns"]
+        ew = value["ew"]
+
+        if method == 'squared-average':
+            horizontal = np.sqrt((ns.mag*ns.mag + ew.mag*ew.mag)/2)
+        elif method == 'geometric-mean':
+            horizontal = np.sqrt(ns.mag * ew.mag)
+        else:
+            msg = f"`method`={method} has not been implemented."
+            raise NotImplementedError(msg)
+
+        if isinstance(ns, FourierTransformSuite):
+            return FourierTransformSuite(horizontal, ns.frq)
+        elif isinstance(ns, FourierTransform):
+            return FourierTransform(horizontal, ns.frq)
         else:
             raise NotImplementedError
 
+    def _combine_horizontal_td(self, method, value):
+        az_deg = value
+        az_rad = math.radians(az_deg)
+        ns = self.ns
+        ew = self.ew
+
+        if method == 'azimuth':
+            horizontal = ns.amp*math.cos(az_rad) + ew.amp*math.sin(az_rad)
+        else:
+            msg = f"method={method} has not been implemented."
+            raise NotImplementedError(msg)
+
+        if isinstance(ns, WindowedTimeSeries):
+            return WindowedTimeSeries(horizontal, ns.dt)
+        elif isinstance(ns, TimeSeries):
+            return TimeSeries(horizontal, ns.dt)
+        else:
+            raise NotImplementedError
+
+    # TODO (jpv): Update method for new freq attributes.
     def hv_slow(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
         """Prepare time series and Fourier transforms then compute H/V.
 
@@ -387,6 +418,8 @@ class Sensor3c():
         Returns
         -------
         Hvsr
+            Instantiated `Hvsr` object.
+
         """
         # Time Domain Effects
         # Filter
@@ -436,7 +469,7 @@ class Sensor3c():
         return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
 
     def hv(self, windowlength, bp_filter, taper_width, bandwidth,
-                resampling, method):
+           resampling, method, azimuth=None):
         """Prepare time series and Fourier transforms then compute H/V.
 
         More information for the all parameters can be found in
@@ -458,12 +491,16 @@ class Sensor3c():
             Resampling settings, of the form 
             {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
             'res_type':`str`}.
-        method : {'squared-averge', 'geometric-mean'}
+        method : {'squared-averge', 'geometric-mean', 'azimuth'}
+            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
+        azimuth : float, optional
             Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
 
         Returns
         -------
         Hvsr
+            Instantiated `Hvsr` object.
+
         """
         # Time Domain Effects
         # Filter
@@ -481,15 +518,28 @@ class Sensor3c():
         # Cosine Taper
         self.cosine_taper(width=taper_width)
 
-        # Frequency Domain Effects
-        self.transform()
+        if method in ["squared-average", "geometric-mean"]:
+            ffts = self.transform()
+            hor = self.combine_horizontals(method=method, value=ffts)
+            ver = ffts["vt"]
+            del ffts
 
-        for comp in [self.ns_f, self.ew_f, self.vt_f]:
-            comp.amp = comp.mag
+        elif method in ["azimuth"]:
+            hor = self.combine_horizontals(method=method, value=azimuth)
+            
+            if isinstance(hor, WindowedTimeSeries):
+                hor = FourierTransformSuite.from_timeseries(hor)
+                ver = FourierTransformSuite.from_timeseries(self.vt)
+            elif isinstance(tseries, TimeSeries):
+                hor = FourierTransform.from_timeseries(hor)
+                ver = FourierTransform.from_timeseries(self.vt)
+            else:
+                raise NotImplementedError
 
-        # H/V Effects
-        hor = self.combine_horizontals(method=method)
-
+        else:
+            msg = f"`method`={method} has not been implemented."
+            raise NotImplementedError(msg)
+            
         if resampling["res_type"] == "linear":
             frq = np.linspace(resampling["minf"],
                               resmapling["maxf"],
@@ -502,14 +552,11 @@ class Sensor3c():
             raise NotImplementedError
 
         hor.smooth_konno_ohmachi_fast(frq, bandwidth)
-        self.vt_f.smooth_konno_ohmachi_fast(frq, bandwidth)
+        ver.smooth_konno_ohmachi_fast(frq, bandwidth)
 
-        if isinstance(hor, FourierTransformSuite):
-            hvsr = FourierTransformSuite(hor.amp/self.vt_f.amp, hor.frq)        
-        elif isinstance(hor, FourierTransform):
-            hvsr = FourierTransform(hor.amp/self.vt_f.amp, hor.frq)
-        else:
-            raise NotImplementedError
+        hor.amp /= ver.amp
+        hvsr = hor
+        del ver
 
         # TODO (jpv): Rewrite.
         if self.ns.n_windows == 1:

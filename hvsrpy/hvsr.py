@@ -38,12 +38,6 @@ class Hvsr():
         Number of windows in `Hvsr` object.
     valid_window_indices : ndarray
         Array of indices indicating valid windows.
-    rejected_window_indices : ndarray
-        Array of indices indicating rejected windows.
-    peak_frq : ndarray
-        Frequency peaks, one per valid time window.
-    peak_amp : ndarray
-        Amplitude(s) which correspond to `peak_frq`.
     """
     @staticmethod
     def _check_input(name, value):
