@@ -1,4 +1,4 @@
-# This file is part of hvsrpy, a Python module for
+# This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -55,7 +55,7 @@ for fname, fname_geopsy in zip(timerecords, known_solutions):
 
     sensor = hv.Sensor3c.from_mseed(full_path+fname)
     my_hv = sensor.hv(settings["length"], bp_filter, settings["width"],
-                      settings["b"], settings["resampling"], ratio_type)    
+                      settings["b"], settings["resampling"], ratio_type)
     for amp in my_hv.amp:
         plt.plot(my_hv.frq, amp, color='#aaaaaa')
     ax.plot(my_hv.frq, my_hv.mean_curve(), color='k', label="hvsrpy")
@@ -72,14 +72,18 @@ for fname, fname_geopsy in zip(timerecords, known_solutions):
     else:
         raise ValueError
 
-    geopsy_hv = pd.read_csv(full_path+fname_geopsy, delimiter="\t", comment="#", names=[
-                            "frq", "avg", "min", "max"])
-    ax.plot(geopsy_hv.frq, geopsy_hv["avg"], color='r', linestyle="--", label="Geopsy")
-    ax.plot(geopsy_hv.frq, geopsy_hv["min"], color='r', linestyle=':', label='')
-    ax.plot(geopsy_hv.frq, geopsy_hv["max"], color='r', linestyle=':', label='')
+    geopsy_hv = pd.read_csv(full_path+fname_geopsy, delimiter="\t", comment="#",
+                            names=["frq", "avg", "min", "max"])
+    ax.plot(geopsy_hv.frq, geopsy_hv["avg"],
+            color='r', linestyle="--", label="Geopsy")
+    ax.plot(geopsy_hv.frq, geopsy_hv["min"],
+            color='r', linestyle=':', label='')
+    ax.plot(geopsy_hv.frq, geopsy_hv["max"],
+            color='r', linestyle=':', label='')
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel("H/V Ampltidue")
     ax.set_xscale('log')
     ax.legend()
-    plt.savefig(full_path+f"../figs/multiwindow_{fname_geopsy[-13:-3]}.png", dpi=200, bbox_inches='tight')
+    plt.savefig(
+        full_path+f"../figs/multiwindow_{fname_geopsy[-13:-3]}.png", dpi=200, bbox_inches='tight')
     plt.close()

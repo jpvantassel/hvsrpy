@@ -1,4 +1,4 @@
-# This file is part of hvsrpy, a Python module for
+# This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -32,6 +32,7 @@ with open(full_path+"int_singlewindow_cases.json", "r") as f:
 bp_filter = {"flag": False, "flow": 0.001, "fhigh": 49.9, "order": 5}
 
 for key, value in cases.items():
+    print(f"Running: {key}")
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3, 2))
 
     sensor = hv.Sensor3c.from_mseed(full_path+value["fname_miniseed"])
@@ -55,6 +56,6 @@ for key, value in cases.items():
     ax.set_ylabel("H/V Ampltidue")
     ax.set_xscale('log')
     ax.legend()
-    plt.savefig(full_path+f"singlewindow_{key}.png", dpi=200,
+    plt.savefig(full_path+f"../figs/singlewindow_{key}.png", dpi=200,
                 bbox_inches='tight')
     plt.close()
