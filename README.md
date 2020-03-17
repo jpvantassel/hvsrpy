@@ -88,10 +88,10 @@ of this document.
 ### Installing _hvsrpy_
 
 1. If you do not have Python 3.6 or later installed, you will need to do
-so. A detailed set of instructions can be found [here](https://github.com/jpvantassel/python3-course/blob/master/0_Getting_Started/installing_python.md).
+so. A detailed set of instructions can be found [here](https://jpvantassel.github.io/python3-course/#/intro/installing_python).
 
 2. `pip install hvsrpy`. If you are not familiar with `pip`, a useful tutorial
-can be found [here](https://github.com/jpvantassel/python3-course/blob/master/1_Installing_Packages/pip.md).
+can be found [here](https://jpvantassel.github.io/python3-course/#/intro/pip).
 
 3. Confirm that `hvsrpy` has installed successfully by examining the last few
 lines of the text displayed in the console.
@@ -104,7 +104,7 @@ lines of the text displayed in the console.
 2. Launch the Jupyter notebook (`file with .ipynb extension`) in the examples
   directory for a no-coding-required introduction to the `hvsrpy` package. If
   you have not installed `Jupyter`, detailed instructions can be found
-  [here](https://github.com/jpvantassel/python3-course/blob/master/0_Getting_Started/installing_jupyter.md).
+  [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
 
 3. Enjoy!
 
