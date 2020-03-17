@@ -40,8 +40,7 @@ setup(
     python_requires = '>=3.6, <3.9',
     install_requires=['numpy', 'scipy', 'obspy', 'sigpropy'],
     extras_require={
-        'dev': ['unittest', 'hypothesis'],
-        'test': ['unittest', 'hypothesis'],
+        'dev': ['pandas', 'matplotlib'],
     },
     package_data={
     },
