@@ -511,18 +511,24 @@ class Sensor3c():
         self.cosine_taper(width=taper_width)
 
         if method in ["squared-average", "geometric-mean", "azimuth"]:
-            return self._make_hvsr(method)
+            return self._make_hvsr(method=method,
+                                   resampling=resampling,
+                                   bandwidth=bandwidth,
+                                   azimuth=azimuth)
+        # TODO (jpv): Parallelize loop.
         elif method in ["rotate"]:
             hvsrs = np.empty(len(azimuth), dtype=object)
             for index, az in enumerate(azimuth):
                 hvsrs[index] = self._make_hvsr(method="azimuth",
+                                               resampling=resampling,
+                                               bandwidth=bandwidth,
                                                azimuth=az)
             return HvsrRotated.from_iter(hvsrs, azimuth)
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
 
-    def _make_hvsr(self, method, azimuth=None):
+    def _make_hvsr(self, method, resampling, bandwidth, azimuth=None):
         if method in ["squared-average", "geometric-mean"]:
             ffts = self.transform()
             hor = self.combine_horizontals(method=method, value=ffts)
