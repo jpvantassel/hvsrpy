@@ -19,7 +19,7 @@
 
 import math
 import numpy as np
-from hvsrpy import Hvsr
+from hvsrpy import Hvsr, HvsrRotated
 from sigpropy import TimeSeries, FourierTransform, WindowedTimeSeries, FourierTransformSuite
 import obspy
 import logging
@@ -273,7 +273,7 @@ class Sensor3c():
         for comp in [self.ew, self.ns, self.vt]:
             comp.cosine_taper(width)
 
-    def transform(self):
+    def transform(self, **kwargs):
         """Perform Fourier transform on components.
 
         Returns
@@ -286,9 +286,9 @@ class Sensor3c():
         for attr in ["ew", "ns", "vt"]:
             tseries = getattr(self, attr)
             if isinstance(tseries, WindowedTimeSeries):
-                fft = FourierTransformSuite.from_timeseries(tseries)
+                fft = FourierTransformSuite.from_timeseries(tseries, **kwargs)
             elif isinstance(tseries, TimeSeries):
-                fft = FourierTransform.from_timeseries(tseries)
+                fft = FourierTransform.from_timeseries(tseries, **kwargs)
             else:
                 raise NotImplementedError
             ffts[attr] = fft
@@ -502,22 +502,27 @@ class Sensor3c():
             Instantiated `Hvsr` object.
 
         """
-        # Time Domain Effects
-        # Filter
         if bp_filter["flag"]:
             self.bandpassfilter(flow=bp_filter["flow"],
                                 fhigh=bp_filter["fhigh"],
                                 order=bp_filter["order"])
-
-        # Split
         self.split(windowlength)
-
-        # Detrend
         self.detrend()
-
-        # Cosine Taper
         self.cosine_taper(width=taper_width)
 
+        if method in ["squared-average", "geometric-mean", "azimuth"]:
+            return self._make_hvsr(method)
+        elif method in ["rotate"]:
+            hvsrs = np.empty(len(azimuth), dtype=object)
+            for index, az in enumerate(azimuth):
+                hvsrs[index] = self._make_hvsr(method="azimuth",
+                                               azimuth=az)
+            return HvsrRotated.from_iter(hvsrs, azimuth)
+        else:
+            msg = f"`method`={method} has not been implemented."
+            raise NotImplementedError(msg)
+
+    def _make_hvsr(self, method, azimuth=None):
         if method in ["squared-average", "geometric-mean"]:
             ffts = self.transform()
             hor = self.combine_horizontals(method=method, value=ffts)
@@ -526,7 +531,7 @@ class Sensor3c():
 
         elif method in ["azimuth"]:
             hor = self.combine_horizontals(method=method, value=azimuth)
-            
+
             if isinstance(hor, WindowedTimeSeries):
                 hor = FourierTransformSuite.from_timeseries(hor)
                 ver = FourierTransformSuite.from_timeseries(self.vt)
@@ -539,7 +544,7 @@ class Sensor3c():
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
-            
+
         if resampling["res_type"] == "linear":
             frq = np.linspace(resampling["minf"],
                               resmapling["maxf"],

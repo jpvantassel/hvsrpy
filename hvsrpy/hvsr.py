@@ -437,7 +437,7 @@ class Hvsr():
         if not self._initialized_peaks:
             self.update_peaks()
 
-        for c_iteration in range(max_iterations):
+        for c_iteration in range(1, max_iterations+1):
 
             logger.debug(f"c_iteration: {c_iteration}")
             logger.debug(f"valid_window_indices: {self.valid_window_indices}")
@@ -458,7 +458,7 @@ class Hvsr():
             for c_window, c_peak in zip(self.valid_window_indices, self.peak_frq):
                 if c_peak > lower_bound and c_peak < upper_bound:
                     keep_indices.append(c_window)
-            old_indices = np.array(self.valid_window_indices)
+            # old_indices = np.array(self.valid_window_indices)
             self.valid_window_indices = np.array(keep_indices)
 
             mean_f0_after = self.mean_f0_frq(distribution_f0)
@@ -483,7 +483,7 @@ class Hvsr():
             logger.debug(f"\ts_diff: {s_diff}")
 
             if (d_diff < 0.01) and (s_diff < 0.01):
-                self.valid_window_indices = old_indices
+                # self.valid_window_indices = old_indices
                 logger.info(
                     f"Performed {c_iteration} iterations, returning b/c rejection converged.")
                 return c_iteration

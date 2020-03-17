@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python module for horizontal-to-vertical 
+# This file is part of hvsrpy a Python package for horizontal-to-vertical 
 # spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -15,8 +15,6 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Intialize hvsrpy module."""
-
 from .hvsr import *
-
+from .hvsr_rotated import *
 from .sensor3c import *
