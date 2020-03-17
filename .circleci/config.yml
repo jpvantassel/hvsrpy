@@ -33,7 +33,7 @@ jobs:
           name: Install hvsrpy and dependencies
           command: |
             . venv/bin/activate
-            pip install -e .[dev]
+            pip install -e .
       - run:
           name: Run tests
           command: |
