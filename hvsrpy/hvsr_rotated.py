@@ -22,6 +22,7 @@ from hvsrpy import Hvsr
 import logging
 logger = logging.getLogger(__name__)
 
+
 class HvsrRotated():
     """Class definition for rotated Horizontal-to-Vertical calculations.
 
@@ -64,7 +65,7 @@ class HvsrRotated():
         """
         if not isinstance(hvsr, Hvsr):
             raise TypeError("`hvsr` must be an instance of `Hvsr`.")
-        
+
         az = float(az)
 
         if az < 0:
@@ -74,7 +75,7 @@ class HvsrRotated():
 
     def append(self, hvsr, azimuth):
         """Append `Hvsr` object at a new azimuth.
-        
+
         Parameters
         ----------
         hvsr : Hvsr
@@ -97,7 +98,7 @@ class HvsrRotated():
     def from_iter(cls, hvsrs, azimuths):
         """Create HvsrRotated from iterable of Hvsr objects."""
         obj = cls(hvsrs[0], azimuths[0])
-        if len(azimuths)>1:
+        if len(azimuths) > 1:
             for hvsr, az in zip(hvsrs[1:], azimuths[1:]):
                 obj.append(hvsr, az)
         return obj
@@ -141,7 +142,8 @@ class HvsrRotated():
             If `distribution` does not match the available options.
 
         """
-        return self._mean_factory(distribution=distribution, self.peak_frq)
+        return self._mean_factory(distribution=distribution,
+                                  values=self.peak_frq)
 
     def mean_f0_amp(self, distribution="log-normal"):
         """Mean `f0` amplitude considering all valid timewindows and
@@ -164,7 +166,8 @@ class HvsrRotated():
             If `distribution` does not match the available options.
 
         """
-        return self._mean_factory(distribution=distribution, self.peak_amp)
+        return self._mean_factory(distribution=distribution,
+                                  values=self.peak_amp)
 
     def _mean_factory(self, distribution, values):
         n = self.azimuth_count
@@ -223,7 +226,8 @@ class HvsrRotated():
             If `distribution` does not match the available options.
 
         """
-        return self._std_factory(distribution=distribution, self.peak_frq)
+        return self._std_factory(distribution=distribution,
+                                 values=self.peak_frq)
 
     def std_f0_amp(self, distribution='log-normal'):
         """Sample standard deviation of amplitude of `f0` of valid
@@ -246,7 +250,8 @@ class HvsrRotated():
             If `distribution` does not match the available options.
 
         """
-        return self._std_factory(distribution=distribution, self.peak_amp)
+        return self._std_factory(distribution=distribution,
+                                 values=self.peak_amp)
 
     @property
     def _valid_amps(self):
@@ -272,7 +277,8 @@ class HvsrRotated():
             If `distribution` does not match the available options.
 
         """
-        return self._mean_factory(distribution=distribution, values=self._valid_amps)
+        return self._mean_factory(distribution=distribution,
+                                  values=self._valid_amps)
 
     def std_curve(self, distribution='log-normal'):
         """Sample standard deviation associated with the mean H/V curve.
@@ -295,4 +301,5 @@ class HvsrRotated():
         KeyError
             If `distribution` does not match the available options.
         """
-        return self._std_factory(distribution=distribution, values=self._valid_amps)
+        return self._std_factory(distribution=distribution,
+                                 values=self._valid_amps)
