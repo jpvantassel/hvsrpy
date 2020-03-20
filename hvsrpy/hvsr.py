@@ -230,6 +230,8 @@ class Hvsr():
             msg = f"distribution type {distribution} not recognized."
             raise KeyError(msg)
 
+    # TODO (jpv): Mean factory! Std factory!
+
     def mean_f0_amp(self, distribution='log-normal'):
         """Mean amplitude of `f0` of valid time windows.
 
@@ -248,6 +250,7 @@ class Hvsr():
         ------
         KeyError
             If `distribution` does not match the available options.
+
         """
         if distribution == "normal":
             return np.mean(self.peak_amp)
