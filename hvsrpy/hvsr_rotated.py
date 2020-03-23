@@ -15,12 +15,14 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""This file contains the class HvsrRotated."""
+"""Class definition for HvsrRotated, a rotated Hvsr measurement."""
 
 import numpy as np
 from hvsrpy import Hvsr
 import logging
 logger = logging.getLogger(__name__)
+
+__all__ = ["HvsrRotated"]
 
 
 class HvsrRotated():
@@ -68,8 +70,8 @@ class HvsrRotated():
 
         az = float(az)
 
-        if az < 0:
-            raise ValueError(f"`azimuth` must be greater than 0, not {az}.")
+        if (az < 0) or (az >= 180):
+            raise ValueError(f"`azimuth` must be between 0 and 180, not {az}.")
 
         return hvsr, az
 
@@ -253,10 +255,6 @@ class HvsrRotated():
         return self._std_factory(distribution=distribution,
                                  values=self.peak_amp)
 
-    @property
-    def _valid_amps(self):
-        return [hv.amp[hv.valid_window_indices] for hv in self.hvsrs]
-
     def mean_curve(self, distribution='log-normal'):
         """Return mean H/V curve.
 
@@ -278,7 +276,7 @@ class HvsrRotated():
 
         """
         return self._mean_factory(distribution=distribution,
-                                  values=self._valid_amps)
+                                  values=self.peak_amp)
 
     def std_curve(self, distribution='log-normal'):
         """Sample standard deviation associated with the mean H/V curve.
@@ -302,4 +300,4 @@ class HvsrRotated():
             If `distribution` does not match the available options.
         """
         return self._std_factory(distribution=distribution,
-                                 values=self._valid_amps)
+                                 values=self.peak_amp)

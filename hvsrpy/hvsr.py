@@ -69,12 +69,18 @@ class Hvsr():
             If `value` contains a negative values.
         """
 
-        if type(value) not in [list, tuple, np.ndarray]:
+        try:
+            value = np.array(value, dtype=np.double)
+        except ValueError:
             msg = f"{name} must be of type `ndarray`, not `{type(value)}`."
             raise TypeError(msg)
-        if type(value) in [list, tuple]:
-            value = np.array(value)
-        # TODO (jpv): Address "RuntimeWarning: invalid value encountered in less if np.sum(value < 0):"
+
+        # TODO (jpv): Address "RuntimeWarning: invalid value encountered in less if np.sum(value < 0):"s
+        # if np.isnan(value).any():
+        #     print(name)
+        #     print(value)
+        #     raise ValueError
+
         if np.sum(value < 0):
             raise ValueError(f"{name} must be >= 0.")
         return value

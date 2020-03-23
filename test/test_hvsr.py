@@ -1,4 +1,4 @@
-# This file is part of hvsrpy, a Python module for
+# This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -33,12 +33,17 @@ class Test_Hvsr(TestCase):
         self.assertArrayEqual(frq, myhvsr.frq)
         self.assertArrayEqual(amp, myhvsr.amp)
 
-        # # amp as 2d array
+        # amp as 2d array
         frq = np.linspace(1, 10, 20)
         amp = (np.sin(2*np.pi*5*np.linspace(0, 10, 20))+10)*np.ones((20, 20))
         myhvsr = hv.Hvsr(amp, frq)
         self.assertArrayEqual(frq, myhvsr.frq)
         self.assertArrayEqual(amp, myhvsr.amp)
+
+        # amp as string
+        frq = np.ndarray([1,2,3])
+        amp = "abc" 
+        self.assertRaises(TypeError, hv.Hvsr, amp, frq)
 
     def test_find_peaks(self):
         # amp as 1d array - single peak
