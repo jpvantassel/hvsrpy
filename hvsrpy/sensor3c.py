@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""This file contains the 3-component sensor (Sensor3c) class."""
+"""Class definition for Sensor3c, a 3-component sensor."""
 
 import math
 import numpy as np
@@ -25,6 +25,8 @@ import obspy
 import logging
 import json
 logger = logging.getLogger(__name__)
+
+__all__ = ["Sensor3c"]
 
 
 class Sensor3c():
@@ -63,20 +65,22 @@ class Sensor3c():
             Containing checked components.
 
         """
-        if not isinstance(values_dict["ns"], TimeSeries):
-            msg = f"'ns' must be a `TimeSeries`, not {type(values_dict['ns'])}."
+        ns = values_dict["ns"]
+        if not isinstance(ns, TimeSeries):
+            msg = f"'ns' must be a `TimeSeries`, not {type(ns)}."
             raise TypeError(msg)
-        dt = values_dict["ns"].dt
-        n_samples = values_dict["ns"].n_samples
+        dt = ns.dt
+        n_samples = ns.n_samples
         flag_cut = False
         for key, value in values_dict.items():
+            if key == "ns":
+                continue
             if not isinstance(value, TimeSeries):
-                msg = f"{key} must be a `TimeSeries`, not {type(value)}."
+                msg = f"`{key}`` must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
             if value.dt != dt:
                 msg = f"All components must have equal `dt`."
                 raise ValueError(msg)
-
             if value.n_samples != n_samples:
                 logging.info("Components are not of the same length.")
                 flag_cut = True
@@ -116,9 +120,11 @@ class Sensor3c():
     @property
     def normalization_factor(self):
         """Return sensor time history normalization factor."""
-        return max(max(self.ns.amp.flatten()),
-                   max(self.ew.amp.flatten()),
-                   max(self.vt.amp.flatten()))
+        factor = 1E-6
+        for attr in ["ns", "ew", "vt"]:
+            cmax = np.max(np.abs(getattr(self, attr).amp.flatten()))
+            factor = cmax if cmax > factor else factor
+        return factor
 
     @classmethod
     def from_mseed(cls, fname):
@@ -213,6 +219,7 @@ class Sensor3c():
         -------
         str
             With all of the components of the `Sensor3c`.
+
         """
         dictionary = self.to_dict()
         return json.dumps(dictionary)
@@ -235,6 +242,7 @@ class Sensor3c():
         -------
         Sensor3c
             Instantiated `Sensor3c` object.
+
         """
         dictionary = json.loads(json_str)
         return cls.from_dict(dictionary)
@@ -243,6 +251,7 @@ class Sensor3c():
         """Split component `TimeSeries` into `WindowedTimeSeries`.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+
         """
         for attr in ["ew", "ns", "vt"]:
             wtseries = WindowedTimeSeries.from_timeseries(getattr(self, attr),
@@ -253,6 +262,7 @@ class Sensor3c():
         """Detrend components.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.detrend()
@@ -261,6 +271,7 @@ class Sensor3c():
         """Bandpassfilter components.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+        
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.bandpassfilter(flow, fhigh, order)
@@ -389,91 +400,92 @@ class Sensor3c():
         else:
             raise NotImplementedError
 
-    # TODO (jpv): Update method for new freq attributes.
-    def hv_slow(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
-        """Prepare time series and Fourier transforms then compute H/V.
+    # # TODO (jpv): Update method for new freq attributes.
+    # def hv_slow(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
+    #     """Prepare time series and Fourier transforms then compute H/V.
 
-        More information for the all parameters can be found in
-        the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
+    #     More information for the all parameters can be found in
+    #     the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
 
-        Parameters
-        ----------
-        windowlength : float
-            Length of time windows in seconds.
-        bp_filter : dict
-            Bandpass filter settings, of the form 
-            {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
-            'order':`int`}.
-        taper_width : float
-            Width of cosine taper.
-        bandwidth : float
-            Bandwidth of the Konno and Ohmachi smoothing window.
-        resampling : dict
-            Resampling settings, of the form 
-            {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
-            'res_type':`str`}.
-        method : {'squared-averge', 'geometric-mean'}
-            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
+    #     Parameters
+    #     ----------
+    #     windowlength : float
+    #         Length of time windows in seconds.
+    #     bp_filter : dict
+    #         Bandpass filter settings, of the form 
+    #         {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
+    #         'order':`int`}.
+    #     taper_width : float
+    #         Width of cosine taper.
+    #     bandwidth : float
+    #         Bandwidth of the Konno and Ohmachi smoothing window.
+    #     resampling : dict
+    #         Resampling settings, of the form 
+    #         {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
+    #         'res_type':`str`}.
+    #     method : {'squared-averge', 'geometric-mean'}
+    #         Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
 
-        Returns
-        -------
-        Hvsr
-            Instantiated `Hvsr` object.
+    #     Returns
+    #     -------
+    #     Hvsr
+    #         Instantiated `Hvsr` object.
 
-        """
-        # Time Domain Effects
-        # Filter
-        if bp_filter["flag"]:
-            self.bandpassfilter(flow=bp_filter["flow"],
-                                fhigh=bp_filter["fhigh"],
-                                order=bp_filter["order"])
+    #     """
+    #     # Time Domain Effects
+    #     # Filter
+    #     if bp_filter["flag"]:
+    #         self.bandpassfilter(flow=bp_filter["flow"],
+    #                             fhigh=bp_filter["fhigh"],
+    #                             order=bp_filter["order"])
 
-        # Split
-        self.split(windowlength)
+    #     # Split
+    #     self.split(windowlength)
 
-        # Detrend
-        self.detrend()
+    #     # Detrend
+    #     self.detrend()
 
-        # Cosine Taper
-        self.cosine_taper(width=taper_width)
+    #     # Cosine Taper
+    #     self.cosine_taper(width=taper_width)
 
-        # Frequency Domain Effects
-        self.transform()
+    #     # Frequency Domain Effects
+    #     self.transform()
 
-        for comp in [self.ns_f, self.ew_f, self.vt_f]:
-            comp.amp = comp.mag
+    #     for comp in [self.ns_f, self.ew_f, self.vt_f]:
+    #         comp.amp = comp.mag
 
-        # H/V Effects
-        hor = self.combine_horizontals(method=method)
-        hor.smooth_konno_ohmachi(bandwidth)
-        self.vt_f.smooth_konno_ohmachi(bandwidth)
+    #     # H/V Effects
+    #     hor = self.combine_horizontals(method=method)
+    #     hor.smooth_konno_ohmachi(bandwidth)
+    #     self.vt_f.smooth_konno_ohmachi(bandwidth)
 
-        # H/V
-        hvsr = FourierTransform(hor.amp/self.vt_f.amp, hor.frq)
-        hvsr.resample(minf=resampling["minf"],
-                      maxf=resampling["maxf"],
-                      nf=resampling["nf"],
-                      res_type=resampling["res_type"])
+    #     # H/V
+    #     hvsr = FourierTransform(hor.amp/self.vt_f.amp, hor.frq)
+    #     hvsr.resample(minf=resampling["minf"],
+    #                   maxf=resampling["maxf"],
+    #                   nf=resampling["nf"],
+    #                   res_type=resampling["res_type"])
 
-        # TODO (jpv): Rewrite.
-        if self.ns.n_windows == 1:
-            window_length = max(self.ns.time)
-        else:
-            window_length = max(self.ns.time[0])
+    #     # TODO (jpv): Rewrite.
+    #     if self.ns.n_windows == 1:
+    #         window_length = max(self.ns.time)
+    #     else:
+    #         window_length = max(self.ns.time[0])
 
-        if isinstance(self.meta, dict):
-            self.meta["Window Length"] = window_length
-        else:
-            self.meta = {"Window Length": window_length}
+    #     if isinstance(self.meta, dict):
+    #         self.meta["Window Length"] = window_length
+    #     else:
+    #         self.meta = {"Window Length": window_length}
 
-        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
+    #     return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
 
     def hv(self, windowlength, bp_filter, taper_width, bandwidth,
            resampling, method, azimuth=None):
         """Prepare time series and Fourier transforms then compute H/V.
 
         More information for the all parameters can be found in
-        the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
+        the documenation of
+        `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
 
         Parameters
         ----------
@@ -492,9 +504,11 @@ class Sensor3c():
             {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
             'res_type':`str`}.
         method : {'squared-averge', 'geometric-mean', 'azimuth'}
-            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
+            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
+            for details.
         azimuth : float, optional
-            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
+            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
+            for details.
 
         Returns
         -------
@@ -581,3 +595,6 @@ class Sensor3c():
             self.meta = {"Window Length": window_length}
 
         return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
+
+    def __iter__(self):
+        return iter((self.ns, self.ew, self.vt))

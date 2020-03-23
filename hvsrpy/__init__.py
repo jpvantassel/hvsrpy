@@ -15,6 +15,6 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-from .hvsr import *
-from .hvsr_rotated import *
-from .sensor3c import *
+from .hvsr import Hvsr
+from .hvsr_rotated import HvsrRotated
+from .sensor3c import Sensor3c
