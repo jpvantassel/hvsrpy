@@ -210,6 +210,15 @@ class Hvsr():
                 logger.warning(f"No peak found in window #{c_window}.")
         self.valid_window_indices = np.array(valid_indices)
 
+    def _mean_factory(self, distribution, values, **kwargs):
+        if distribution == "normal":
+            return np.mean(values, **kwargs)
+        elif distribution == "log-normal":
+            return np.exp(np.mean(np.log(values), **kwargs))
+        else:
+            msg = f"distribution type {distribution} not recognized."
+            raise NotImplementedError(msg)
+
     def mean_f0_frq(self, distribution='log-normal'):
         """Mean `f0` of valid time windows.
 
@@ -228,15 +237,7 @@ class Hvsr():
         KeyError
             If `distribution` does not match the available options.
         """
-        if distribution == "normal":
-            return np.mean(self.peak_frq)
-        elif distribution == "log-normal":
-            return np.exp(np.mean(np.log(self.peak_frq)))
-        else:
-            msg = f"distribution type {distribution} not recognized."
-            raise KeyError(msg)
-
-    # TODO (jpv): Mean factory! Std factory!
+        return self._mean_factory(distribution, self.peak_frq)
 
     def mean_f0_amp(self, distribution='log-normal'):
         """Mean amplitude of `f0` of valid time windows.
@@ -258,13 +259,16 @@ class Hvsr():
             If `distribution` does not match the available options.
 
         """
+        return self._mean_factory(distribution, self.peak_amp)
+
+    def _std_factory(self, distribution, values, **kwargs):
         if distribution == "normal":
-            return np.mean(self.peak_amp)
+            return np.std(values, ddof=1, **kwargs)
         elif distribution == "log-normal":
-            return np.exp(np.mean(np.log(self.peak_amp)))
+            return np.std(np.log(values), ddof=1, **kwargs)
         else:
             msg = f"distribution type {distribution} not recognized."
-            raise KeyError(msg)
+            raise NotImplementedError(msg)
 
     def std_f0_frq(self, distribution='log-normal'):
         """Sample standard deviation of `f0` of valid time windows.
@@ -283,13 +287,9 @@ class Hvsr():
         ------
         KeyError
             If `distribution` does not match the available options.
+
         """
-        if distribution == "normal":
-            return np.std(self.peak_frq, ddof=1)
-        elif distribution == "log-normal":
-            return np.std(np.log(self.peak_frq), ddof=1)
-        else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+        return self._std_factory(distribution, self.peak_frq)
 
     def std_f0_amp(self, distribution='log-normal'):
         """Sample standard deviation of amplitude of `f0` of valid
@@ -311,12 +311,7 @@ class Hvsr():
         KeyError
             If `distribution` does not match the available options.
         """
-        if distribution == "normal":
-            return np.std(self.peak_amp, ddof=1)
-        elif distribution == "log-normal":
-            return np.std(np.log(self.peak_amp), ddof=1)
-        else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+        return self._std_factory(distribution, self.peak_amp)
 
     def mean_curve(self, distribution='log-normal'):
         """Return mean H/V curve.
@@ -339,13 +334,8 @@ class Hvsr():
         """
         if self.n_windows == 1:
             return self.amp
-
-        if distribution == "normal":
-            return np.mean(self.amp[self.valid_window_indices], axis=0)
-        elif distribution == "log-normal":
-            return np.exp(np.mean(np.log(self.amp[self.valid_window_indices]), axis=0))
         else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+            return self._mean_factory(distribution, self.amp[self.valid_window_indices], axis=0)
 
     def std_curve(self, distribution='log-normal'):
         """Sample standard deviation associated with the mean H/V curve.
@@ -371,13 +361,8 @@ class Hvsr():
         if self.n_windows == 1:
             msg = "The standard deviation of the mean curve is not defined for a single window."
             raise ValueError(msg)
-
-        if distribution == "normal":
-            return np.std(self.amp[self.valid_window_indices], axis=0, ddof=1)
-        elif distribution == "log-normal":
-            return np.std(np.log(self.amp[self.valid_window_indices]), axis=0, ddof=1)
         else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+            return self._std_factory(distribution, self.amp[self.valid_window_indices], axis=0)
 
     def mc_peak_frq(self, distribution='log-normal'):
         """Frequency of the peak of the mean H/V curve.
@@ -497,6 +482,15 @@ class Hvsr():
                     f"Performed {c_iteration} iterations, returning b/c rejection converged.")
                 return c_iteration
 
+    def _nth_std_factory(self, n, distribution, mean, std):
+        if distribution == "normal":
+            return (mean + n*std)
+        elif distribution == "log-normal":
+            return (np.exp(np.log(mean) + n*std))
+        else:
+            msg = f"distribution type {distribution} not recognized."
+            raise NotImplementedError(msg)
+
     def nstd_f0_frq(self, n, distribution):
         """Return nth standard deviation of `f0`.
 
@@ -514,12 +508,9 @@ class Hvsr():
         float
             nth standard deviation of `f0`.
         """
-        if distribution == "normal":
-            return (self.mean_f0_frq(distribution) + n*self.std_f0_frq(distribution))
-        elif distribution == "log-normal":
-            return (np.exp(np.log(self.mean_f0_frq(distribution)) + n*self.std_f0_frq(distribution)))
-        else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+        return self._nth_std_factory(n, distribution,
+                                     self.mean_f0_frq(distribution),
+                                     self.std_f0_frq(distribution))
 
     def nstd_f0_amp(self, n, distribution):
         """nth sample standard deviation of amplitude of `f0` from time
@@ -539,12 +530,9 @@ class Hvsr():
         float
             nth standard deviation of ampltiude of `f0`.
         """
-        if distribution == "normal":
-            return (self.mean_f0_amp(distribution) + n*self.std_f0_amp(distribution))
-        elif distribution == "log-normal":
-            return (np.exp(np.log(self.mean_f0_amp(distribution)) + n*self.std_f0_amp(distribution)))
-        else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+        return self._nth_std_factory(n, distribution,
+                                     self.mean_f0_amp(distribution),
+                                     self.std_f0_amp(distribution))
 
     def nstd_curve(self, n, distribution):
         """Return nth standard deviation curve.
@@ -562,14 +550,11 @@ class Hvsr():
         ndarray
             nth standard deviation curve.
         """
-        if distribution == "normal":
-            return (self.mean_curve(distribution) + n*self.std_curve(distribution))
-        elif distribution == "log-normal":
-            return (np.exp(np.log(self.mean_curve(distribution)) + n*self.std_curve(distribution)))
-        else:
-            raise KeyError(f"distribution type {distribution} not recognized.")
+        return self._nth_std_factory(n, distribution,
+                                     self.mean_curve(distribution),
+                                     self.std_curve(distribution))
 
-    def print_stats(self, distribution_f0):
+    def print_stats(self, distribution_f0):  # pragma: no cover
         """Print basic statistics of `Hvsr` instance."""
 
         if distribution_f0 == "log-normal":
@@ -603,8 +588,8 @@ class Hvsr():
         for stat in stats:
             if stat != "":
                 print(stat)
-            
-    def _geopsy_style_lines(self, distribution_f0, distribution_mc):
+
+    def _geopsy_style_lines(self, distribution_f0, distribution_mc):  # pragma: no cover
         """Lines for Geopsy-style file."""
         # f0 from windows
         mean = self.mean_f0_frq(distribution_f0)
@@ -639,7 +624,7 @@ class Hvsr():
 
         return _lines
 
-    def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):
+    def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
         """Save H/V data to file in Geopsy format.
 
         Parameters
@@ -663,8 +648,8 @@ class Hvsr():
         with open(fname, "w") as f:
             for line in lines:
                 f.write(line)
-                
-    def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
+
+    def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):  # pragma: no cover
         """Lines for hvsrpy-style file."""
 
         # f0 from windows
@@ -729,13 +714,13 @@ class Hvsr():
         _lines = []
         for line in lines:
             _lines.append(line+"\n")
-        
+
         for f_i, mean_i, bel_i, abv_i in zip(self.frq, mc, _min, _max):
             _lines.append(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
 
         return _lines
 
-    def to_file(self, fname, distribution_f0, distribution_mc):
+    def to_file(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
         """Save H/V data to file in hvsrpy format.
 
         Parameters

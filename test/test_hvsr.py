@@ -25,6 +25,13 @@ logging.basicConfig(level=logging.WARNING)
 
 
 class Test_Hvsr(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        frq = [1, 2, 3, 4]
+        amp = [[1, 2, 1, 1], [1, 2, 4, 1], [1, 1, 5, 1]]
+        cls.hv = hv.Hvsr(amp, frq)
+
     def test_init(self):
         # amp as 1d array
         frq = np.linspace(1, 10, 20)
@@ -41,9 +48,14 @@ class Test_Hvsr(TestCase):
         self.assertArrayEqual(amp, myhvsr.amp)
 
         # amp as string
-        frq = np.ndarray([1,2,3])
-        amp = "abc" 
+        frq = np.ndarray([1, 2, 3])
+        amp = "abc"
         self.assertRaises(TypeError, hv.Hvsr, amp, frq)
+
+        # negative amplitude
+        frq = np.array([1, 2, 3])
+        amp = np.array([1, -1, 3])
+        self.assertRaises(ValueError, hv.Hvsr, amp, frq)
 
     def test_find_peaks(self):
         # amp as 1d array - single peak
@@ -75,6 +87,25 @@ class Test_Hvsr(TestCase):
         for known, test in zip([[1, 3, 5], [2], [2, 4]],
                                hv.Hvsr.find_peaks(myhvsr.amp)[0]):
             self.assertListEqual(known, test.tolist())
+
+    def test_properties(self):
+        # peak_frq
+        expected = [2, 3, 3]
+        self.hv._initialized_peaks = False
+        returned = self.hv.peak_frq
+        self.assertListEqual(expected, returned.tolist())
+
+        # peak_amp
+        expected = [2, 4, 5]
+        self.hv._initialized_peaks = False
+        returned = self.hv.peak_amp
+        self.assertListEqual(expected, returned.tolist())
+
+        # rejected_window_indices -> No rejection
+        expected = []
+        self.hv._initialized_peaks = False
+        returned = self.hv.rejected_window_indices
+        self.assertListEqual(expected, returned.tolist())
 
     def test_update_peaks(self):
         frq = np.arange(0, 1, 0.1)
@@ -137,6 +168,13 @@ class Test_Hvsr(TestCase):
             self.assertEqual(np.mean(amp[:, col]), mean_curve[col])
             self.assertEqual(np.std(amp[:, col], ddof=1), std_curve[col])
 
+        # Single-Window
+        frq = [1, 2]
+        amp = [1, 2]
+        _hv = hv.Hvsr(amp, frq, find_peaks=False)
+        self.assertRaises(ValueError, _hv.std_curve)
+        self.assertListEqual(amp, _hv.mean_curve().tolist())
+
     def test_mc_peak_frq(self):
         frq = np.arange(0, 10, 1)
         amp = np.ones((10, 10))
@@ -144,6 +182,32 @@ class Test_Hvsr(TestCase):
         amp[np.arange(10), col] = 2
         myhv = hv.Hvsr(amp, frq)
         self.assertEqual(1., myhv.mc_peak_frq())
+
+    def test_nth_std(self):
+        frq = np.array([1, 2, 3, 4, 5])
+        amp = np.array([[1, 6, 1, 1, 1],
+                        [6, 1, 1, 1, 1],
+                        [1, 1, 6, 1, 1],
+                        [1, 1, 1, 1, 6],
+                        [1, 1, 1, 6, 1]])
+        _hv = hv.Hvsr(amp, frq)
+
+        # Normal
+        distribution = "normal"
+        mean_curve = _hv.mean_curve(distribution=distribution)
+        std_curve = _hv.std_curve(distribution=distribution)
+        expected = mean_curve + std_curve
+        returned = _hv.nstd_curve(1, distribution=distribution)
+        self.assertArrayEqual(expected, returned)
+
+        # Log-Normal
+        distribution = "log-normal"
+        mean_curve = _hv.mean_curve(distribution=distribution)
+        std_curve = _hv.std_curve(distribution=distribution)
+        expected = np.exp(np.log(mean_curve) + std_curve)
+        returned = _hv.nstd_curve(1, distribution=distribution)
+        self.assertArrayEqual(expected, returned)
+
 
     def test_reject_windows(self):
         # Reject single window, end due to zero stdev
@@ -163,6 +227,15 @@ class Test_Hvsr(TestCase):
         myhv = hv.Hvsr(amp, frq)
         myhv.reject_windows(n=2)
         self.assertArrayEqual(myhv.peak_frq, frq[col[:-1]])
+
+    def test_stat_factories(self):
+        distribution = "exponential"
+        self.assertRaises(NotImplementedError, self.hv._mean_factory,
+                          distribution, np.array([1, 2, 3, 4]))
+        self.assertRaises(NotImplementedError, self.hv._std_factory,
+                          distribution, np.array([1, 2, 3, 4]))
+        self.assertRaises(NotImplementedError, self.hv._nth_std_factory,
+                          distribution, np.array([1, 2, 3, 4]), 0, 0)
 
 
 if __name__ == "__main__":

@@ -83,9 +83,6 @@ class Test_HvsrRotated(unittest.TestCase):
         # azimuth_count
         self.assertEqual(4, self.hvrot.azimuth_count)
 
-    def test_mean_factor(self):
-        pass
-
 
 if __name__ == "__main__":
     unittest.main()
