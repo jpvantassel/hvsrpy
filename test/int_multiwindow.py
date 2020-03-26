@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""This file contains a multi-window integration test for hvsrpy."""
+"""Multi-window integration test for hvsrpy."""
 
 import numpy as np
 import hvsrpy as hv
@@ -84,6 +84,6 @@ for fname, fname_geopsy in zip(timerecords, known_solutions):
     ax.set_ylabel("H/V Ampltidue")
     ax.set_xscale('log')
     ax.legend()
-    plt.savefig(
-        full_path+f"../figs/multiwindow_{fname_geopsy[-13:-3]}.png", dpi=200, bbox_inches='tight')
+    fig_name = full_path+f"multiwindow_{fname_geopsy[-13:-3]}.png"
+    plt.savefig(fig_name, dpi=200, bbox_inches='tight')
     plt.close()

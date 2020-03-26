@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""This file contains a single-window integration test for hvsrpy."""
+"""Single-window integration test for hvsrpy."""
 
 import numpy as np
 import hvsrpy as hv
@@ -56,6 +56,6 @@ for key, value in cases.items():
     ax.set_ylabel("H/V Ampltidue")
     ax.set_xscale('log')
     ax.legend()
-    plt.savefig(full_path+f"../figs/singlewindow_{key}.png", dpi=200,
-                bbox_inches='tight')
+    fig_name = full_path+f"singlewindow_{key}.png"
+    plt.savefig(fig_name, dpi=200, bbox_inches='tight')
     plt.close()
