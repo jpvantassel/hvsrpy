@@ -171,43 +171,46 @@ class HvsrRotated():
         return self._mean_factory(distribution=distribution,
                                   values=self.peak_amp)
 
-    def _mean_factory(self, distribution, values):
-        n = self.azimuth_count
+    @staticmethod
+    def _mean_factory(distribution, values, **kwargs):
+        n = len(values)
         mean = 0
         if distribution == "normal":
             for value in values:
-                mean += np.mean(value, axis=-1)
+                mean += np.mean(value, **kwargs)
             return mean/n
         elif distribution == "log-normal":
             for value in values:
-                mean += np.mean(np.log(value), axis=-1)
+                mean += np.mean(np.log(value), **kwargs)
             return np.exp(mean/n)
         else:
             msg = f"distribution type {distribution} not recognized."
-            raise KeyError(msg)
+            raise NotImplementedError(msg)
 
-    def _std_factory(self, distribution, values):
-        n = self.azimuth_count
-        mean = _mean_factory(distribution, values)
+    @staticmethod
+    def _std_factory(distribution, values, **kwargs):
+        n = len(values)
+        mean = HvsrRotated._mean_factory(distribution, values)
         num = 0
         wi2 = 0
+
         if distribution == "normal":
-            for value in values:
-                diff = np.sum(value - mean, axis=-1)
-                wi = 1/(n*len(value))
-                num += diff*diff*wi
-                wi2 += wi*wi
-            return np.sqrt(num/(1-wi2))
+            def _diff(value, mean):
+                return value - mean
         elif distribution == "log-normal":
-            for value in values:
-                diff = np.sum(np.log(value) - mean, axis=-1)
-                wi = 1/(n*len(value))
-                num += diff*diff*wi
-                wi2 += wi*wi
-            return np.sqrt(num/(1-wi2))
+            def _diff(value, mean):
+                return np.log(value) - np.log(mean)
         else:
             msg = f"distribution type {distribution} not recognized."
-            raise KeyError(msg)
+            raise NotImplementedError(msg)
+
+        for value in values:
+            i = len(value)
+            diff = _diff(value, mean)
+            wi = 1/(n*i)
+            num += np.sum(diff*diff*wi)
+            wi2 += wi*wi*i
+        return np.sqrt(num/(1-wi2))
 
     def std_f0_frq(self, distribution='log-normal'):
         """Sample standard deviation of `f0` of valid time windows.

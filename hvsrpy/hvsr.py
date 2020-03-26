@@ -210,7 +210,8 @@ class Hvsr():
                 logger.warning(f"No peak found in window #{c_window}.")
         self.valid_window_indices = np.array(valid_indices)
 
-    def _mean_factory(self, distribution, values, **kwargs):
+    @staticmethod
+    def _mean_factory(distribution, values, **kwargs):
         if distribution == "normal":
             return np.mean(values, **kwargs)
         elif distribution == "log-normal":
@@ -261,7 +262,8 @@ class Hvsr():
         """
         return self._mean_factory(distribution, self.peak_amp)
 
-    def _std_factory(self, distribution, values, **kwargs):
+    @staticmethod
+    def _std_factory(distribution, values, **kwargs):
         if distribution == "normal":
             return np.std(values, ddof=1, **kwargs)
         elif distribution == "log-normal":

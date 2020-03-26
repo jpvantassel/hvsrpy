@@ -31,19 +31,19 @@ class Test_HvsrRotated(unittest.TestCase):
         frq = np.array([1, 2, 3, 4, 5])
         hv1 = hvsrpy.Hvsr(np.array([[1, 1, 2, 1, 1],
                                     [1, 4, 1, 5, 1]]),
-                                     frq)
+                          frq)
         hv2 = hvsrpy.Hvsr(np.array([[1, 1, 2, 1, 1],
                                     [1, 1, 1, 3, 1]]),
-                                     frq)
+                          frq)
         hv3 = hvsrpy.Hvsr(np.array([[1, 1, 2, 1, 1],
                                     [1, 1, 2, 1, 1]]),
-                                     frq)
+                          frq)
         hv4 = hvsrpy.Hvsr(np.array([[1, 1, 1, 2, 1],
                                     [1, 2, 1, 3, 1]]),
-                                     frq)
+                          frq)
 
         cls.hvrot = hvsrpy.HvsrRotated.from_iter([hv1, hv2, hv3, hv4],
-                                                  [0, 45, 90, 135])
+                                                 [0, 45, 90, 135])
 
     def test_init(self):
         # Simple case
@@ -67,14 +67,14 @@ class Test_HvsrRotated(unittest.TestCase):
 
     def test_properties(self):
         # peak_frq
-        expecteds = [[3,4],[3,4],[3,3],[4,4]]
+        expecteds = [[3, 4], [3, 4], [3, 3], [4, 4]]
         returneds = self.hvrot.peak_frq
 
         for expected, returned in zip(expecteds, returneds):
             self.assertListEqual(expected, returned.tolist())
 
         # peak_amp
-        expecteds = [[2,5],[2,3],[2,2],[2,3]]
+        expecteds = [[2, 5], [2, 3], [2, 2], [2, 3]]
         returneds = self.hvrot.peak_amp
 
         for expected, returned in zip(expecteds, returneds):
@@ -82,6 +82,68 @@ class Test_HvsrRotated(unittest.TestCase):
 
         # azimuth_count
         self.assertEqual(4, self.hvrot.azimuth_count)
+
+    def test_mean_factory(self):
+        # Single-Window
+        values = [np.array([1, 2, 3, 4, 5])]
+        # Normal
+        returned = hvsrpy.HvsrRotated._mean_factory("normal", values)
+        expected = np.mean([np.mean(x) for x in values])
+        self.assertEqual(expected, returned)
+        # Log-normal
+        returned = hvsrpy.HvsrRotated._mean_factory("log-normal", values)
+        expected = np.exp(np.mean([np.mean(np.log(x)) for x in values]))
+        self.assertEqual(expected, returned)
+
+        # Multi-Window
+        values = [np.array([1, 2, 3, 4, 5]),
+                  np.array([2, 1, .5, 1]),
+                  np.array([1, 4, 5, 7, 1, 2, 3, 4, 5]),
+                  np.array([1, 2, 1, 2, 1, 2])]
+        # Normal
+        returned = hvsrpy.HvsrRotated._mean_factory("normal", values)
+        expected = np.mean([np.mean(x) for x in values])
+        self.assertEqual(expected, returned)
+        # Log-normal
+        returned = hvsrpy.HvsrRotated._mean_factory("log-normal", values)
+        expected = np.exp(np.mean([np.mean(np.log(x)) for x in values]))
+        self.assertEqual(expected, returned)
+
+        # Bad distribution
+        self.assertRaises(NotImplementedError,
+                          hvsrpy.HvsrRotated._mean_factory, "exponential",
+                          values)
+
+    def test_std_factory(self):
+        # Single-Window
+        values = [np.array([1, 2, 3, 4, 5])]
+        # Normal
+        returned = hvsrpy.HvsrRotated._std_factory("normal", values)
+        expected = np.std(values[0], ddof=1)
+        self.assertEqual(expected, returned)
+        # Log-normal
+        returned = hvsrpy.HvsrRotated._std_factory("log-normal", values)
+        expected = np.std(np.log(values[0]), ddof=1)
+        self.assertAlmostEqual(expected, returned)
+        
+        # Multi-Window
+        values = [np.array([1, 2, 3, 4, 5]),
+                  np.array([2, 1, .5, 1]),
+                  np.array([1, 4, 5, 7, 1, 2, 3, 4, 5]),
+                  np.array([1, 2, 1, 2, 1, 2])]
+        # Normal
+        returned = hvsrpy.HvsrRotated._std_factory("normal", values)
+        expected = 1.635604659
+        self.assertAlmostEqual(expected, returned)
+        # Log-normal
+        returned = hvsrpy.HvsrRotated._std_factory("log-normal", values)
+        expected = 0.707120567
+        self.assertAlmostEqual(expected, returned)
+
+        # Bad distribution
+        self.assertRaises(NotImplementedError,
+                          hvsrpy.HvsrRotated._std_factory, "exponential",
+                          values)
 
 
 if __name__ == "__main__":
