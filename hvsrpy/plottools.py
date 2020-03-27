@@ -30,7 +30,7 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
                distribution_f0="log-normal",
                distribution_mc="log-normal",
                rejection_bool=True, n=2, n_iteration=50
-               ):
+               ): # pragma: no cover
     """Create standard five panel (3-time histories and 2-Hvsr)
 
     Parameters
