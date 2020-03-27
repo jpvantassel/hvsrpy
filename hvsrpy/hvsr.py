@@ -38,6 +38,7 @@ class Hvsr():
         Number of windows in `Hvsr` object.
     valid_window_indices : ndarray
         Array of indices indicating valid windows.
+
     """
     @staticmethod
     def _check_input(name, value):
@@ -67,6 +68,7 @@ class Hvsr():
             If `value` is not one of the types specified.
         ValueError
             If `value` contains a negative values.
+
         """
 
         try:
@@ -160,6 +162,7 @@ class Hvsr():
             or `list` of `ndarray` (one per window) of peak indices,
             and `settings` is `dict`, refer to `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
             documentation.
+
         """
         if len(amp.shape) == 1:
             peaks, settings = sg.find_peaks(amp, **kwargs)
@@ -184,6 +187,7 @@ class Hvsr():
         -------
         None
             Updates `peaks` attribute.
+
         """
         if not self._initialized_peaks:
             self._initialized_peaks = True
@@ -239,6 +243,7 @@ class Hvsr():
         ------
         KeyError
             If `distribution` does not match the available options.
+
         """
         return self._mean_factory(distribution, self.peak_frq)
 
@@ -314,6 +319,7 @@ class Hvsr():
         ------
         KeyError
             If `distribution` does not match the available options.
+
         """
         return self._std_factory(distribution, self.peak_amp)
 
@@ -335,6 +341,7 @@ class Hvsr():
         ------
         KeyError
             If `distribution` does not match the available options.
+
         """
         if self.n_windows == 1:
             return self.amp
@@ -361,6 +368,7 @@ class Hvsr():
             If only single time window is defined.
         KeyError
             If `distribution` does not match the available options.
+
         """
         if self.n_windows == 1:
             msg = "The standard deviation of the mean curve is not defined for a single window."
@@ -380,6 +388,7 @@ class Hvsr():
         -------
         float
             Frequency associated with the peak of the mean H/V curve.
+
         """
         mc = self.mean_curve(distribution)
         return float(self.frq[np.where(mc == np.max(mc[self.find_peaks(mc)[0]]))])
@@ -396,6 +405,7 @@ class Hvsr():
         -------
         float
             Ampltiude associated with the peak of the mean H/V curve.
+
         """
         mc = self.mean_curve(distribution)
         return np.max(mc[self.find_peaks(mc)[0]])
@@ -425,6 +435,7 @@ class Hvsr():
         -------
         int
             Number of iterations required for convergence.
+
         """
         if isinstance(self.meta, dict):
             self.meta["n"] = n
@@ -486,7 +497,8 @@ class Hvsr():
                     f"Performed {c_iteration} iterations, returning b/c rejection converged.")
                 return c_iteration
 
-    def _nth_std_factory(self, n, distribution, mean, std):
+    @staticmethod
+    def _nth_std_factory(n, distribution, mean, std):
         if distribution == "normal":
             return (mean + n*std)
         elif distribution == "log-normal":
@@ -511,6 +523,7 @@ class Hvsr():
         -------
         float
             nth standard deviation of `f0`.
+
         """
         return self._nth_std_factory(n, distribution,
                                      self.mean_f0_frq(distribution),
@@ -533,6 +546,7 @@ class Hvsr():
         -------
         float
             nth standard deviation of ampltiude of `f0`.
+
         """
         return self._nth_std_factory(n, distribution,
                                      self.mean_f0_amp(distribution),
@@ -553,6 +567,7 @@ class Hvsr():
         -------
         ndarray
             nth standard deviation curve.
+
         """
         return self._nth_std_factory(n, distribution,
                                      self.mean_curve(distribution),
@@ -560,7 +575,6 @@ class Hvsr():
 
     def print_stats(self, distribution_f0):  # pragma: no cover
         """Print basic statistics of `Hvsr` instance."""
-
         if distribution_f0 == "log-normal":
             upper = "                                 | Log-Normal |     Log-Normal     |"
             lower = "|              Name              |   Median   | Standard Deviation |"
@@ -647,6 +661,7 @@ class Hvsr():
         -------
         None
             Writes file to disk.
+
         """
         lines = self._geopsy_style_lines(distribution_f0, distribution_mc)
         with open(fname, "w") as f:
@@ -655,7 +670,6 @@ class Hvsr():
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):  # pragma: no cover
         """Lines for hvsrpy-style file."""
-
         # f0 from windows
         mean_f = self.mean_f0_frq(distribution_f0)
         sigm_f = self.std_f0_frq(distribution_f0)
@@ -743,8 +757,8 @@ class Hvsr():
         -------
         None
             Writes file to disk.
-        """
 
+        """
         lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
 
         with open(fname, "w") as f:

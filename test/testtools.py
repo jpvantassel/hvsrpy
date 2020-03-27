@@ -38,7 +38,8 @@ class TestCase(unittest.TestCase):
         self.assertListEqual(array1.tolist(), array2.tolist())
 
     def assertArrayAlmostEqual(self, array1, array2, **kwargs):
-        assert(array1.size == array2.size)
+        if array1.size != array2.size:
+            self.assertEqual(array1.size, array2.size)
         array1 = array1.flatten()
         array2 = array2.flatten()
         for v1, v2 in zip(array1, array2):

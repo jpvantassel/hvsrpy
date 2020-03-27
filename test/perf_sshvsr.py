@@ -26,7 +26,7 @@ full_path = get_full_path(__file__)
 
 def main():
     windowlength = 60
-    bp_filter = {"flag": True, "flow": 0.1, "fhigh": 45, "order": 5}    
+    bp_filter = {"flag": True, "flow": 0.1, "fhigh": 45, "order": 5}
     width = 0.1
     bandwidth = 40
     resampling = {"minf": 0.1, "maxf": 50, "nf": 256, "res_type": "log"}
@@ -37,7 +37,7 @@ def main():
     sensor = hvsrpy.Sensor3c.from_mseed(full_path+"data/a2/UT.STN11.A2_C50.miniseed")
     hv = sensor.hv(windowlength, bp_filter, width, bandwidth, resampling, method)
     hv.reject_windows(n, max_iter)
-    
+
 fname = full_path+"data/.tmp_profiler_run"
 data = cProfile.run('main()', filename=fname)
 stat = pstats.Stats(fname)

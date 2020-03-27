@@ -153,7 +153,7 @@ class Test_Sensor3c(TestCase):
             ns = sigpropy.TimeSeries(np.ones(10), dt=1)
             ew = sigpropy.TimeSeries(np.ones(10), dt=1)
             vt = sigpropy.TimeSeries(np.ones(10), dt=1)
-            return hvsrpy.Sensor3c(ns, ew, vt) 
+            return hvsrpy.Sensor3c(ns, ew, vt)
 
         # 0% Window - (i.e., no taper)
         sensor = new_sensor()

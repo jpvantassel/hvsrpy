@@ -1,9 +1,4 @@
-"""A setuptools based setup module.
-
-See:
-https://packaging.python.org/guides/distributing-packages-using-setuptools/
-https://github.com/pypa/sampleproject
-"""
+"""A setuptools based setup module."""
 
 from setuptools import setup, find_packages
 with open("README.md", encoding="utf8") as f:
@@ -48,7 +43,7 @@ setup(
         ],
     entry_points={
     },
-    project_urls={ 
+    project_urls={
         'Bug Reports': 'https://github.com/jpvantassel/hvsrpy/issues',
         'Source': 'https://github.com/jpvantassel/hvsrpy',
         'Docs': 'https://hvsrpy.readthedocs.io/en/latest/?badge=latest',

@@ -36,7 +36,7 @@ def main():
     n = 2
     max_iter = 50
 
-    fname = full_path+"data/a2/UT.STN11.A2_C50.miniseed" 
+    fname = full_path+"data/a2/UT.STN11.A2_C50.miniseed"
     sensor = hvsrpy.Sensor3c.from_mseed(fname)
     hv = sensor.hv(windowlength, bp_filter, width,
                    bandwidth, resampling, method, azimuth=azimuth)

@@ -17,7 +17,6 @@
 
 """Single-window integration test for hvsrpy."""
 
-import numpy as np
 import hvsrpy as hv
 import pandas as pd
 import matplotlib.pyplot as plt

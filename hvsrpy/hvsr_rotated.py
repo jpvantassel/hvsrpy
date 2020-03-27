@@ -58,7 +58,8 @@ class HvsrRotated():
         self.hvsrs = [hvsr]
         self.azimuths = [azimuth]
 
-    def _check_input(self, hvsr, az):
+    @staticmethod
+    def _check_input(hvsr, az):
         """Check input, specifically:
             1. `hvsr` is an instance of `Hvsr`.
             2. Cast `az` to float (if it is not already).
@@ -116,7 +117,6 @@ class HvsrRotated():
         return [hv.peak_amp for hv in self.hvsrs]
 
     # TODO (jpv): What if all windows get rejected on an azimuth?
-
     def reject_windows(self, **kwargs):
         for hv in self.hvsrs:
             hv.reject_windows(**kwargs)
@@ -126,7 +126,7 @@ class HvsrRotated():
         return len(self.azimuths)
 
     def mean_f0_frq(self, distribution="log-normal"):
-        """Mean `f0` considering all valid timewindows of all azimuths.
+        """Mean `f0` from all valid timewindows and azimuths.
 
         Parameters
         ----------
@@ -148,8 +148,7 @@ class HvsrRotated():
                                   values=self.peak_frq)
 
     def mean_f0_amp(self, distribution="log-normal"):
-        """Mean `f0` amplitude considering all valid timewindows and
-        azimuths.
+        """Mean `f0` amplitude from all valid timewindows and azimuths.
 
         Parameters
         ----------
@@ -173,12 +172,12 @@ class HvsrRotated():
 
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
-        n = len(values)
         if distribution == "normal":
             mean = np.mean([np.mean(x, **kwargs) for x in values], **kwargs)
             return mean
         elif distribution == "log-normal":
-            mean = np.mean([np.mean(np.log(x), **kwargs) for x in values], **kwargs)
+            mean = np.mean([np.mean(np.log(x), **kwargs)
+                            for x in values], **kwargs)
             return np.exp(mean)
         else:
             msg = f"distribution type {distribution} not recognized."
@@ -229,8 +228,7 @@ class HvsrRotated():
                                  values=self.peak_frq)
 
     def std_f0_amp(self, distribution='log-normal'):
-        """Sample standard deviation of amplitude of `f0` of valid
-        time windows.
+        """Sample standard deviation of `f0` amplitude of valid windows.
 
         Parameters
         ----------
@@ -251,6 +249,7 @@ class HvsrRotated():
         """
         return self._std_factory(distribution=distribution,
                                  values=self.peak_amp)
+
     @property
     def amp(self):
         return [hv.amp[hv.valid_window_indices] for hv in self.hvsrs]

@@ -14,13 +14,13 @@
 
 ---
 
-- [About _hvsrpy_](#About-hvsrpy)
-- [Why use _hvsrpy_](#Why-use-hvsrpy)
-- [A Comparison of _hvsrpy_ with _Geopsy_](#A-comparison-of-hvsrpy-with-Geopsy)
-- [Getting Started](#Getting-Started)
-- [Additional Comparisons between _hvsrpy_ and _Geopsy_](#Additional-Comparisons-between-hvsrpy-and-Geopsy)
-  - [Multiple Windows](#Multiple-Windows)
-  - [Single Window](#Single-Window)
+-   [About _hvsrpy_](#About-hvsrpy)
+-   [Why use _hvsrpy_](#Why-use-hvsrpy)
+-   [A Comparison of _hvsrpy_ with _Geopsy_](#A-comparison-of-hvsrpy-with-Geopsy)
+-   [Getting Started](#Getting-Started)
+-   [Additional Comparisons between _hvsrpy_ and _Geopsy_](#Additional-Comparisons-between-hvsrpy-and-Geopsy)
+  -   [Multiple Windows](#Multiple-Windows)
+  -   [Single Window](#Single-Window)
 
 ## About _hvsrpy_
 
@@ -57,15 +57,15 @@ version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
 `hvsrpy` contains features not currently available in any other commercial or
 open-source software, including:
 
-- A fully-automated frequency-domain window-rejection algorithm, which allows
+-   A fully-automated frequency-domain window-rejection algorithm, which allows
 spurious time windows to be removed in a repeatable and expedient manner.
-- A log-normal distribution for the fundamental site frequency (`f0`) so the
+-   A log-normal distribution for the fundamental site frequency (`f0`) so the
 uncertainty in `f0` can be represented consistently regardless of whether it is
 described in terms of frequency or period.
-- Combining the two horizontal components using the geometric mean.
-- Access to the H/V data from each time window, not only the
+-   Combining the two horizontal components using the geometric mean.
+-   Access to the H/V data from each time window, not only the
 mean/median curve.
-- A performant framework for batch-style processing.
+-   A performant framework for batch-style processing.
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure.png?raw=true" width="775">
 
@@ -87,26 +87,26 @@ of this document.
 
 ### Installing _hvsrpy_
 
-1. If you do not have Python 3.6 or later installed, you will need to do
+1.  If you do not have Python 3.6 or later installed, you will need to do
 so. A detailed set of instructions can be found [here](https://jpvantassel.github.io/python3-course/#/intro/installing_python).
 
-2. `pip install hvsrpy`. If you are not familiar with `pip`, a useful tutorial
+2.  `pip install hvsrpy`. If you are not familiar with `pip`, a useful tutorial
 can be found [here](https://jpvantassel.github.io/python3-course/#/intro/pip).
 
-3. Confirm that `hvsrpy` has installed successfully by examining the last few
+3.  Confirm that `hvsrpy` has installed successfully by examining the last few
 lines of the text displayed in the console.
 
 ### Using _hvsrpy_
 
-1. Download the contents of the [examples](https://github.com/jpvantassel/hvsrpy/tree/master/examples)
+1.  Download the contents of the [examples](https://github.com/jpvantassel/hvsrpy/tree/master/examples)
   directory to any location of your choice.
 
-2. Launch the Jupyter notebook (`file with .ipynb extension`) in the examples
+2.  Launch the Jupyter notebook (`file with .ipynb extension`) in the examples
   directory for a no-coding-required introduction to the `hvsrpy` package. If
   you have not installed `Jupyter`, detailed instructions can be found
   [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
 
-3. Enjoy!
+3.  Enjoy!
 
 ### Looking for more information
 
@@ -129,18 +129,18 @@ and also as part of a large published data set
 
 #### Settings
 
-- __Window Length:__ 60 seconds
-- __Bandpass Filter Boolean:__ False
-- __Cosine Taper Width:__ 10% (i.e., 5% in Geopsy)
-- __Konno and Ohmachi Smoothing Coefficient:__ 40
-- __Resampling:__
-  - __Minimum Frequency:__ 0.3 Hz
-  - __Maximum Frequency:__ 40 Hz
-  - __Number of Points:__ 2048
-  - __Sampling Type:__ 'log'
-- __Method for Combining Horizontal Components:__ 'squared-average'
-- __Distribution for f0 from Time Windows:__ 'normal'
-- __Distribution for Mean Curve:__ 'log-normal'
+-   __Window Length:__ 60 seconds
+-   __Bandpass Filter Boolean:__ False
+-   __Cosine Taper Width:__ 10% (i.e., 5% in Geopsy)
+-   __Konno and Ohmachi Smoothing Coefficient:__ 40
+-   __Resampling:__
+  -   __Minimum Frequency:__ 0.3 Hz
+  -   __Maximum Frequency:__ 40 Hz
+  -   __Number of Points:__ 2048
+  -   __Sampling Type:__ 'log'
+-   __Method for Combining Horizontal Components:__ 'squared-average'
+-   __Distribution for f0 from Time Windows:__ 'normal'
+-   __Distribution for Mean Curve:__ 'log-normal'
 
 #### Multiple Window Results
 

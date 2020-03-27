@@ -18,7 +18,6 @@
 """File for organizing some useful plotting functions."""
 
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import time
 import hvsrpy
 
@@ -53,9 +52,6 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
             Number of samples in resampled curve, default is 128.
         res_type : {"log","linear"}, optional
             Type of resampling, default is "log".
-        method : {'squared-average', 'geometric-mean'}, optional
-            Method for combining the horizontal components, default is
-            `geometric-mean`.
         filter_bool : bool
             Controls where the bandpass filter is applied, default is
             `False`.
@@ -64,10 +60,15 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
             default iare 0.1 and 30 respectively.
         forder : int, optional
             Filter order, default is 5 (i.e., 5th order filter).
-        distribution_mc, distribution_f0 : {"normal", "log-normal"}, optional
-            Distribution assumed to describe the median curve and the
-            fundemental site frequency, repsectively, default is
-            "log-normal".
+        method : {'squared-average', 'geometric-mean'}, optional
+            Method for combining the horizontal components, default is
+            `geometric-mean`.
+        distribution_f0 : {"normal", "log-normal"}, optional
+            Distribution assumed to describe the fundemental site
+            frequency, default is "log-normal".
+        , distribution_mc : {"normal", "log-normal"}, optional
+            Distribution assumed to describe the median curve, default
+            is "log-normal". 
         rejection_bool : bool, optional
             Determines whether the rejection is performed, default is
             True.

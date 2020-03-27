@@ -45,7 +45,7 @@ class Sensor3c():
 
     @staticmethod
     def _check_input(values_dict):
-        """Perform checks on inputs
+        """Perform checks on inputs.
 
         Specifically:
             1. Ensure all components are `TimeSeries` objects.
@@ -111,6 +111,7 @@ class Sensor3c():
         -------
         Sensor3c
             Initialized 3-component sensor object.
+
         """
         self.ns, self.ew, self.vt = self._check_input({"ns": ns,
                                                        "ew": ew,
@@ -135,8 +136,8 @@ class Sensor3c():
         ----------
         fname : str
             Name of miniseed file, full path may be used if desired.
-            The file should contain three traces with the 
-            appropriate channel names. Refer to the `SEED` Manual 
+            The file should contain three traces with the
+            appropriate channel names. Refer to the `SEED` Manual
             `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
             for specifics.
 
@@ -144,6 +145,7 @@ class Sensor3c():
         -------
         Sensor3c
             Initialized 3-component sensor object.
+
         """
         traces = obspy.read(fname)
 
@@ -176,6 +178,7 @@ class Sensor3c():
         -------
         dict
             With all of the components of the `Sensor3c`.
+
         """
         dictionary = {}
         for name in ["ns", "ew", "vt", "meta"]:
@@ -202,6 +205,7 @@ class Sensor3c():
         -------
         Sensor3c
             Instantiated `Sensor3c` object.
+
         """
         if dictionary.get("meta") is None:
             dictionary["meta"] = None
@@ -271,7 +275,7 @@ class Sensor3c():
         """Bandpassfilter components.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
-        
+
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.bandpassfilter(flow, fhigh, order)
@@ -280,6 +284,7 @@ class Sensor3c():
         """Cosine taper components.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+
         """
         for comp in [self.ew, self.ns, self.vt]:
             comp.cosine_taper(width)
@@ -292,6 +297,7 @@ class Sensor3c():
         dict
             With `FourierTransform`-like objects, one for for each
             component, indicated by the key 'ew','ns', 'vt'.
+
         """
         ffts = {}
         for attr in ["ew", "ns", "vt"]:
@@ -336,7 +342,7 @@ class Sensor3c():
         Parameters
         ----------
         method : {'squared-averge', 'geometric-mean', 'azimuth'}
-            Defines how the two horizontal components are combined 
+            Defines how the two horizontal components are combined
             to represent a single horizontal component.
         value : {dict, float}
             If combination is done in the frequency-domain (i.e.,
@@ -362,7 +368,8 @@ class Sensor3c():
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
 
-    def _combine_horizontal_fd(self, method, value):
+    @staticmethod
+    def _combine_horizontal_fd(method, value):
         ns = value["ns"]
         ew = value["ew"]
 
@@ -412,7 +419,7 @@ class Sensor3c():
     #     windowlength : float
     #         Length of time windows in seconds.
     #     bp_filter : dict
-    #         Bandpass filter settings, of the form 
+    #         Bandpass filter settings, of the form
     #         {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
     #         'order':`int`}.
     #     taper_width : float
@@ -420,8 +427,8 @@ class Sensor3c():
     #     bandwidth : float
     #         Bandwidth of the Konno and Ohmachi smoothing window.
     #     resampling : dict
-    #         Resampling settings, of the form 
-    #         {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
+    #         Resampling settings, of the form
+    #         {'minf':`float`, 'maxf':`float`, 'nf':`int`,
     #         'res_type':`str`}.
     #     method : {'squared-averge', 'geometric-mean'}
     #         Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
@@ -492,7 +499,7 @@ class Sensor3c():
         windowlength : float
             Length of time windows in seconds.
         bp_filter : dict
-            Bandpass filter settings, of the form 
+            Bandpass filter settings, of the form
             {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
             'order':`int`}.
         taper_width : float
@@ -500,8 +507,8 @@ class Sensor3c():
         bandwidth : float
             Bandwidth of the Konno and Ohmachi smoothing window.
         resampling : dict
-            Resampling settings, of the form 
-            {'minf':`float`, 'maxf':`float`, 'nf':`int`, 
+            Resampling settings, of the form
+            {'minf':`float`, 'maxf':`float`, 'nf':`int`,
             'res_type':`str`}.
         method : {'squared-averge', 'geometric-mean', 'azimuth'}
             Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
@@ -555,7 +562,7 @@ class Sensor3c():
             if isinstance(hor, WindowedTimeSeries):
                 hor = FourierTransformSuite.from_timeseries(hor)
                 ver = FourierTransformSuite.from_timeseries(self.vt)
-            elif isinstance(tseries, TimeSeries):
+            elif isinstance(hor, TimeSeries):
                 hor = FourierTransform.from_timeseries(hor)
                 ver = FourierTransform.from_timeseries(self.vt)
             else:
@@ -567,7 +574,7 @@ class Sensor3c():
 
         if resampling["res_type"] == "linear":
             frq = np.linspace(resampling["minf"],
-                              resmapling["maxf"],
+                              resampling["maxf"],
                               resampling["nf"])
         elif resampling["res_type"] == "log":
             frq = np.logspace(np.log10(resampling["minf"]),
@@ -597,4 +604,5 @@ class Sensor3c():
         return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
 
     def __iter__(self):
+        """Iterable representation of a Sensor3c object."""
         return iter((self.ns, self.ew, self.vt))
