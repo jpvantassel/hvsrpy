@@ -174,15 +174,12 @@ class HvsrRotated():
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
         n = len(values)
-        mean = 0
         if distribution == "normal":
-            for value in values:
-                mean += np.mean(value, **kwargs)
-            return mean/n
+            mean = np.mean([np.mean(x, **kwargs) for x in values], **kwargs)
+            return mean
         elif distribution == "log-normal":
-            for value in values:
-                mean += np.mean(np.log(value), **kwargs)
-            return np.exp(mean/n)
+            mean = np.mean([np.mean(np.log(x), **kwargs) for x in values], **kwargs)
+            return np.exp(mean)
         else:
             msg = f"distribution type {distribution} not recognized."
             raise NotImplementedError(msg)
@@ -190,8 +187,8 @@ class HvsrRotated():
     @staticmethod
     def _std_factory(distribution, values, **kwargs):
         n = len(values)
-        mean = HvsrRotated._mean_factory(distribution, values)
-        num = 0
+        mean = HvsrRotated._mean_factory(distribution, values, **kwargs)
+        num = np.empty_like(mean) if len(mean.shape) == 2 else 0
         wi2 = 0
 
         if distribution == "normal":
@@ -208,7 +205,7 @@ class HvsrRotated():
             i = len(value)
             diff = _diff(value, mean)
             wi = 1/(n*i)
-            num += np.sum(diff*diff*wi)
+            num += np.sum(diff*diff*wi, **kwargs)
             wi2 += wi*wi*i
         return np.sqrt(num/(1-wi2))
 
@@ -257,6 +254,9 @@ class HvsrRotated():
         """
         return self._std_factory(distribution=distribution,
                                  values=self.peak_amp)
+    @property
+    def amp(self):
+        return [hv.amp[hv.valid_window_indices] for hv in self.hvsrs]
 
     def mean_curve(self, distribution='log-normal'):
         """Return mean H/V curve.
@@ -279,7 +279,7 @@ class HvsrRotated():
 
         """
         return self._mean_factory(distribution=distribution,
-                                  values=self.peak_amp)
+                                  values=self.amp, axis=0)
 
     def std_curve(self, distribution='log-normal'):
         """Sample standard deviation associated with the mean H/V curve.
@@ -303,4 +303,4 @@ class HvsrRotated():
             If `distribution` does not match the available options.
         """
         return self._std_factory(distribution=distribution,
-                                 values=self.peak_amp)
+                                 values=self.amp, axis=0)
