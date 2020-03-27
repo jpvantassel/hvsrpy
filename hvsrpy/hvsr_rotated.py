@@ -197,9 +197,6 @@ class HvsrRotated():
         elif distribution == "log-normal":
             def _diff(value, mean):
                 return np.log(value) - np.log(mean)
-        else:
-            msg = f"distribution type {distribution} not recognized."
-            raise NotImplementedError(msg)
 
         for value in values:
             i = len(value)

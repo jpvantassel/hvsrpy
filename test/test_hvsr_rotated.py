@@ -50,6 +50,8 @@ class Test_HvsrRotated(TestCase):
 
         cls.hvrot = hvsrpy.HvsrRotated.from_iter([hv1, hv2, hv3, hv4],
                                                  [0, 45, 90, 135])
+        cls.hvrot_for_rej = hvsrpy.HvsrRotated.from_iter([hv1, hv2, hv3, hv4],
+                                                         [0, 45, 90, 135])
 
     def test_init(self):
         # Simple case
@@ -156,23 +158,51 @@ class Test_HvsrRotated(TestCase):
         returned = self.hvrot.mean_curve("normal")
         expected = np.array([1.250, 1.875, 2.063, 2.417, 1.333])
         self.assertArrayAlmostEqual(expected, returned, places=2)
-            
-        # # Log-normal
+
+        # Log-normal
         returned = self.hvrot.mean_curve("log-normal")
         expected = np.array([1.122, 1.566, 1.709, 1.830, 1.144])
         self.assertArrayAlmostEqual(expected, returned, places=2)
-
 
     def test_std_curve(self):
         # Normal
         returned = self.hvrot.std_curve("normal")
         expected = np.array([0.8611, 1.318, 1.505, 2.009, 1.148])
         self.assertArrayAlmostEqual(expected, returned, places=2)
-            
+
         # Log-normal
         returned = self.hvrot.std_curve("log-normal")
         expected = np.array([0.3979, 0.5880, 0.602, 0.7457, 0.462])
         self.assertArrayAlmostEqual(expected, returned, places=2)
+
+    # TODO (jpv): More meaningful test here.
+    def test_reject_windows(self):
+        expecteds = self.hvrot.peak_frq
+        self.hvrot_for_rej.reject_windows(n=4)
+        returneds = self.hvrot_for_rej.peak_frq
+        for expected, returned in zip(expecteds, returneds):
+            self.assertArrayEqual(expected, returned)
+
+    def test_basic_stats(self):
+        # Mean f0 - Frequency
+        for dist, expected in zip(["normal", "log-normal"], [3.313, 3.226]):
+            returned = self.hvrot.mean_f0_frq(distribution=dist)
+            self.assertAlmostEqual(expected, returned, places=2)
+
+        # Std f0 - Frequency
+        for dist, expected in zip(["normal", "log-normal"], [0.7392, 0.2471]):
+            returned = self.hvrot.std_f0_frq(distribution=dist)
+            self.assertAlmostEqual(expected, returned, places=2)
+
+        # Mean f0 - Amplitude
+        for dist, expected in zip(["normal", "log-normal"], [3.083, 2.802]):
+            returned = self.hvrot.mean_f0_amp(distribution=dist)
+            self.assertAlmostEqual(expected, returned, places=2)
+
+        # Std f0 - Amplitude
+        for dist, expected in zip(["normal", "log-normal"], [1.584, 0.4282]):
+            returned = self.hvrot.std_f0_amp(distribution=dist)
+            self.assertAlmostEqual(expected, returned, places=2)
 
 
 if __name__ == "__main__":
