@@ -205,9 +205,11 @@ class Hvsr():
                 self._master_peak_amp[c_window] = self.amp[c_window, c_index]
                 self._master_peak_frq[c_window] = self.frq[c_index]
                 valid_indices.append(c_window)
-            except:
-                assert(c_window_peaks.size == 0)
-                logger.warning(f"No peak found in window #{c_window}.")
+            except ValueError as e:
+                if c_window_peaks.size == 0:
+                    logger.warning(f"No peak found in window #{c_window}.")
+                else:
+                    raise e
         self.valid_window_indices = np.array(valid_indices)
 
     @staticmethod
@@ -601,7 +603,7 @@ class Hvsr():
         # mean curve
         mc = self.mean_curve(distribution_mc)
         mc_peak_frq = self.mc_peak_frq(distribution_mc)
-        mc_peak_amp = self.mc_peak_amp(distribution_mc)
+        # mc_peak_amp = self.mc_peak_amp(distribution_mc)
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 

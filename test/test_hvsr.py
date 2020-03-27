@@ -21,7 +21,7 @@ import numpy as np
 import hvsrpy as hv
 from testtools import unittest, TestCase
 import logging
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.CRITICAL)
 
 
 class Test_Hvsr(TestCase):
@@ -235,7 +235,7 @@ class Test_Hvsr(TestCase):
         self.assertRaises(NotImplementedError, self.hv._std_factory,
                           distribution, np.array([1, 2, 3, 4]))
         self.assertRaises(NotImplementedError, self.hv._nth_std_factory,
-                          distribution, np.array([1, 2, 3, 4]), 0, 0)
+                          1, distribution, 0, 0)
 
 
 if __name__ == "__main__":
