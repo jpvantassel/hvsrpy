@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python package for horizontal-to-vertical
+# This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -536,7 +536,6 @@ class Sensor3c():
                                    resampling=resampling,
                                    bandwidth=bandwidth,
                                    azimuth=azimuth)
-        # TODO (jpv): Parallelize loop.
         elif method in ["rotate"]:
             hvsrs = np.empty(len(azimuth), dtype=object)
             for index, az in enumerate(azimuth):
@@ -585,7 +584,6 @@ class Sensor3c():
 
         hor.smooth_konno_ohmachi_fast(frq, bandwidth)
         ver.smooth_konno_ohmachi_fast(frq, bandwidth)
-
         hor.amp /= ver.amp
         hvsr = hor
         del ver

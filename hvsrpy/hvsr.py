@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python package for horizontal-to-vertical
+# This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -15,12 +15,14 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""File for Horizontal-to-Vertical Spectral Ratio (Hvsr) class."""
+"""Hvsr class definition."""
+
+import logging
 
 import numpy as np
 import scipy.signal as sg
-import logging
-logger = logging.getLogger(__name__)
+
+logger = logging.getLogger(name=__name__)
 
 
 class Hvsr():
@@ -70,18 +72,14 @@ class Hvsr():
             If `value` contains a negative values.
 
         """
-
         try:
             value = np.array(value, dtype=np.double)
         except ValueError:
             msg = f"{name} must be of type `ndarray`, not `{type(value)}`."
             raise TypeError(msg)
 
-        # TODO (jpv): Address "RuntimeWarning: invalid value encountered in less if np.sum(value < 0):"s
-        # if np.isnan(value).any():
-        #     print(name)
-        #     print(value)
-        #     raise ValueError
+        if np.isnan(value).any():
+            raise ValueError
 
         if np.sum(value < 0):
             raise ValueError(f"{name} must be >= 0.")

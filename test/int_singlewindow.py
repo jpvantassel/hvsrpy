@@ -17,13 +17,16 @@
 
 """Single-window integration test for hvsrpy."""
 
-import hvsrpy as hv
+import json
+
 import pandas as pd
 import matplotlib.pyplot as plt
-import json
+
+import hvsrpy as hv
 from testtools import get_full_path
 
 full_path = get_full_path(__file__)
+
 
 with open(full_path+"int_singlewindow_cases.json", "r") as f:
     cases = json.load(f)
