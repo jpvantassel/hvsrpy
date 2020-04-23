@@ -29,7 +29,7 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
                distribution_f0="log-normal",
                distribution_mc="log-normal",
                rejection_bool=True, n=2, n_iteration=50
-               ): # pragma: no cover
+               ):  # pragma: no cover
     """Create standard five panel (3-time histories and 2-Hvsr)
 
     Parameters
@@ -222,3 +222,33 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
     fig.tight_layout(h_pad=1, w_pad=2, rect=(0, 0.08, 1, 1))
 
     return (fig, (ax0, ax1, ax2, ax3, ax4))
+
+
+def quick_voronoi_plot(points, vertice_set, boundary, ax=None,
+                       fig_kwargs=None):
+    """Plot Voronoi regions with boundary."""
+
+    ax_was_none = False
+    if ax is None:
+        ax_was_none = True
+
+        default_fig_kwargs = dict(figsize=(4, 4), dpi=150)
+        if fig_kwargs is not None:
+            fig_kwargs = {*fig_kwargs, *default_fig_kwargs}
+
+        fig, ax = plt.subplots(**default_fig_kwargs)
+
+    for vertices in vertice_set:
+        ax.fill(vertices[:, 0], vertices[:, 1], alpha=0.4)
+
+    # for number, (_x, _y) in enumerate(points):
+    #     ax.text(_x, _y+1, number, ha="center", va="bottom")
+
+    ax.plot(points[:, 0], points[:, 1], 'ko')
+    ax.plot(boundary[:, 0], boundary[:, 1], color="k")
+
+    ax.set_xlabel("Relative Northing (m)")
+    ax.set_ylabel("Relative Easting (m)")
+
+    if ax_was_none:
+        return fig, ax
