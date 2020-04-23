@@ -20,11 +20,70 @@
 import logging
 
 import numpy as np
+import numpy.random as random
 from scipy.spatial import Voronoi
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Point, Polygon
 
 logger = logging.getLogger(name=__name__)
+
+
+def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
+                  dist_spatial="lognormal", nrealizations=1000):
+    """MonteCarlo calculation for spatial distribution of f0.
+
+    Parameters
+    ----------
+    mean, stddev : ndarray
+        Mean and standard deviation of each generating point.
+        Meaning of these parameters are dictated by `dist_generators`.
+    weights : ndarray
+        Weights for each generating point.
+    dist_generators : {'lognormal', 'normal'}, optional
+        Assumed distribution of each generating point, default is
+        `lognormal`.
+    dist_spatial : {'lognormal', 'normal'}, optional
+        Assumed distribution of spatial statistics on f0, default is
+        `lognormal`.
+
+    Returns
+    -------
+    tuple
+        Of the form (f0_mean, f0_stddev, f0s_spatial, f0s_generators).
+
+    """
+    if dist_generators == "normal":
+        def realization(mean, stddev):
+            return random.normal(mean, stddev, size=nrealizations)
+    elif dist_generators == "lognormal":
+        def realization(_lambda, _zeta):
+            # mean = np.exp(_lambda + _zeta*_zeta*0.5)
+            # stddev = mean*np.sqrt(np.exp(_zeta*_zeta)-1)
+            # return random.lognormal(mean, stddev, size=nrealizations)
+            return np.log(random.lognormal(_lambda, _zeta))
+    else:
+        raise NotImplementedError
+
+    realizations = np.empty((mean.size, nrealizations))
+    for r, (_mean, _stddev) in enumerate(zip(mean, stddev)):
+        realizations[r, :] = realization(_mean, _stddev)
+
+    # Mean
+    norm_weights = weights/np.sum(weights)/nrealizations
+    f0_mean = 0
+    for r, weight in enumerate(norm_weights):
+        f0_mean += weight*np.sum(realizations[r, :])
+
+    # Stddev
+    numerator = 0
+    w2 = 0
+    for r, weight in enumerate(norm_weights):
+        diff = realizations[r, :] - f0_mean
+        numerator += weight*np.sum(diff*diff)
+        w2 += np.sum(weight*weight)
+    f0_stddev = np.sqrt(numerator/(1-w2))
+
+    return (f0_mean, f0_stddev, realizations)
 
 
 class HvsrVault():
@@ -46,15 +105,15 @@ class HvsrVault():
 
         Parameters
         ----------
-        points : ndarray
+        points: ndarray
             With the relative x and y coordinates of the Voronoi generators,
             where each row is of the `ndarray` represents an x, y pair.
-        boudary : ndarray
+        boudary: ndarray
             Points which define the unique bounding points for the Voronoi
             tesselations.
-        f0 : ndarray
+        f0: ndarray
             f0 for each point.
-        sigmalnf0 : ndarray, optional
+        sigmalnf0: ndarray, optional
             sigmalnf0 for each point
 
         """
@@ -71,20 +130,20 @@ class HvsrVault():
 
     def spatial_weights(self, boundary, dc_method="voronoi"):
         """Calculate the weights for each voronoi region.
-        
+
         Parameters
         ----------
-        boundary : ndarray
+        boundary: ndarray
             x, y points defining the boundary boundary.shape must be
             (N, 2)
-        dc_method : {"voronoi"}, optional
+        dc_method: {"voronoi"}, optional
             Declustering method, default is 'voronoi'.
-        
+
         Return
         ------
         ndarray
             Statistical weights for each point.
-        
+
         """
         if dc_method == "voronoi":
             weights, indices = self._voronoi_weights(boundary)
@@ -116,7 +175,7 @@ class HvsrVault():
             areas[i] = poly.area
 
         return (areas/total_area, indices)
-            
+
     def _culled_points(self, mask):
         # Remove points not within bounding region
         culled_points, passing_indices = [], []
@@ -138,7 +197,7 @@ class HvsrVault():
 
         Parameters
         ----------
-        points : ndarray
+        points: ndarray
             With the relative x and y coordinates of the Voronoi generators,
             where each row is of the `ndarray` represents an x, y pair.
 
@@ -176,16 +235,16 @@ class HvsrVault():
 
         Parameters
         ----------
-        vor : Voronoi
+        vor: Voronoi
             Voronoi object
-        radius : float, optional
+        radius: float, optional
             Distance to 'points at infinity'.
 
         Returns
         -------
-        regions : list of tuples
+        regions: list of tuples
             Indices of vertices in each revised Voronoi regions.
-        vertices : list of tuples
+        vertices: list of tuples
             Coordinates for revised Voronoi vertices. Same as coordinates
             of input vertices, with 'points at infinity' appended to the
             end.
@@ -193,7 +252,7 @@ class HvsrVault():
         Notes
         -----
         This function modified a function originally released by Pauli
-        Virtanen. (https://gist.github.com/pv/8036995).
+        Virtanen. (https: // gist.github.com/pv/8036995).
 
         """
         if vor.points.shape[1] != 2:
