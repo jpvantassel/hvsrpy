@@ -20,13 +20,35 @@
 import logging
 
 import numpy as np
-import numpy.random as random
+from numpy.random import default_rng
 from scipy.spatial import Voronoi
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Point, Polygon
 
 logger = logging.getLogger(name=__name__)
 
+
+def statistics(values, weights):
+    norm_weights = weights/np.sum(weights)
+
+    # Mean
+    mean = 0
+    for row_value, weight in zip(values, norm_weights):
+        mean += weight*np.sum(row_value)
+    mean /= len(row_value)
+
+    # Stddev
+    numerator = 0
+    w2 = 0
+    for row_value, weight in zip(values, norm_weights):
+        diff = row_value - mean
+        numerator += weight*np.sum(diff*diff)
+        w2 += np.sum(weight*weight)
+    numerator /= len(row_value)
+    w2 /= len(row_value)
+    stddev = np.sqrt(numerator/(1-w2))
+
+    return (mean, stddev)
 
 def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
                   dist_spatial="lognormal", nrealizations=1000):
@@ -52,15 +74,16 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
         Of the form (f0_mean, f0_stddev, f0s_spatial, f0s_generators).
 
     """
+    rng = default_rng()
     if dist_generators == "normal":
         def realization(mean, stddev):
-            return random.normal(mean, stddev, size=nrealizations)
+            return rng.normal(mean, stddev, size=nrealizations)
     elif dist_generators == "lognormal":
         def realization(_lambda, _zeta):
             # mean = np.exp(_lambda + _zeta*_zeta*0.5)
             # stddev = mean*np.sqrt(np.exp(_zeta*_zeta)-1)
             # return random.lognormal(mean, stddev, size=nrealizations)
-            return np.log(random.lognormal(_lambda, _zeta))
+            return np.log(rng.lognormal(_lambda, _zeta))
     else:
         raise NotImplementedError
 
@@ -68,20 +91,7 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
     for r, (_mean, _stddev) in enumerate(zip(mean, stddev)):
         realizations[r, :] = realization(_mean, _stddev)
 
-    # Mean
-    norm_weights = weights/np.sum(weights)/nrealizations
-    f0_mean = 0
-    for r, weight in enumerate(norm_weights):
-        f0_mean += weight*np.sum(realizations[r, :])
-
-    # Stddev
-    numerator = 0
-    w2 = 0
-    for r, weight in enumerate(norm_weights):
-        diff = realizations[r, :] - f0_mean
-        numerator += weight*np.sum(diff*diff)
-        w2 += np.sum(weight*weight)
-    f0_stddev = np.sqrt(numerator/(1-w2))
+    f0_mean, f0_stddev = statistics(realizations, weights)
 
     return (f0_mean, f0_stddev, realizations)
 
