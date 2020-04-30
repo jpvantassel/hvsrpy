@@ -69,7 +69,7 @@ class Test_HvsrRotated(TestCase):
 
         # Bad azimuths
         hv = hvsrpy.Hvsr(np.array([1, 2, 1]), frq)
-        bad_azs = [-5, 180, 190]
+        bad_azs = [-5, 181, 190]
         for az in bad_azs:
             self.assertRaises(ValueError, hvsrpy.HvsrRotated, hv, az)
 

@@ -1,4 +1,6 @@
 numpy
 scipy
 obspy
-sigpropy
+pandas
+shapely
+coverage

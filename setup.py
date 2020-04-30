@@ -33,7 +33,7 @@ setup(
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
     python_requires = '>=3.6, <3.9',
-    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy'],
+    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy', 'shapely'],
     extras_require={
         'dev': ['pandas', 'matplotlib', 'coverage'],
     },

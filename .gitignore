@@ -15,3 +15,5 @@ build
 .tox
 scratch
 env
+test/.coverage
+test/htmlcov
