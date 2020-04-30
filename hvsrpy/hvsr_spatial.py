@@ -20,7 +20,7 @@
 import logging
 
 import numpy as np
-from numpy.random import default_rng
+from numpy.random import default_rng, PCG64, MT19937
 from scipy.spatial import Voronoi
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Point, Polygon
@@ -83,7 +83,7 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
             # mean = np.exp(_lambda + _zeta*_zeta*0.5)
             # stddev = mean*np.sqrt(np.exp(_zeta*_zeta)-1)
             # return random.lognormal(mean, stddev, size=nrealizations)
-            return np.log(rng.lognormal(_lambda, _zeta))
+            return np.log(rng.lognormal(_lambda, _zeta, size=nrealizations))
     else:
         raise NotImplementedError
 

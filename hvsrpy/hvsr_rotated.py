@@ -71,7 +71,7 @@ class HvsrRotated():
 
         az = float(az)
 
-        if (az < 0) or (az >= 180):
+        if (az < 0) or (az > 180):
             raise ValueError(f"`azimuth` must be between 0 and 180, not {az}.")
 
         return hvsr, az
@@ -254,6 +254,17 @@ class HvsrRotated():
     def amp(self):
         return [hv.amp[hv.valid_window_indices] for hv in self.hvsrs]
 
+    @property
+    def frq(self):
+        return self.hvsrs[0].frq
+
+    def mean_curves(self, distribution='log-normal'):
+        """Mean curve for each azimuth row=azimuth, col=frq."""
+        array = np.empty((self.azimuth_count, len(self.frq)))
+        for az_cnt, hvsr in enumerate(self.hvsrs):
+            array[az_cnt, :] = hvsr.mean_curve(distribution=distribution)
+        return array
+
     def mean_curve(self, distribution='log-normal'):
         """Return mean H/V curve.
 
@@ -300,3 +311,56 @@ class HvsrRotated():
         """
         return self._std_factory(distribution=distribution,
                                  values=self.amp, axis=0)
+
+    @staticmethod
+    def _nth_std_factory(n, distribution, mean, std):
+        return Hvsr._nth_std_factory(n=n, distribution=distribution,
+                                     mean=mean, std=std)
+
+    def nstd_mean_curve(self, n, distribution):
+        """Nth standard deviation on mean curve from all azimuths"""
+        return self._nth_std_factory(n=n, distribution=distribution,
+                                     mean=self.mean_curve(distribution=distribution),
+                                     std=self.std_curve(distribution=distribution))
+
+    def nstd_f0_frq(self, n, distribution):
+        """Nth standard deviation on f0 from all azimuths"""
+        return self._nth_std_factory(n=n, distribution=distribution,
+                                     mean=self.mean_f0_frq(distribution=distribution),
+                                     std=self.std_f0_amp(distribution=distribution))
+
+    def mc_peak_amp(self, distribution='log-normal'):
+        """Amplitude of the peak of the mean H/V curve.
+
+        Parameters
+        ----------
+        distribution : {'normal', 'log-normal'}, optional
+            Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
+
+        Returns
+        -------
+        float
+            Ampltiude associated with the peak of the mean H/V curve.
+
+        """
+        mc = self.mean_curve(distribution)
+        return np.max(mc[Hvsr.find_peaks(mc)[0]])
+
+    def mc_peak_frq(self, distribution='log-normal'):
+        """Frequency of the peak of the mean H/V curve.
+
+        Parameters
+        ----------
+        distribution : {'normal', 'log-normal'}, optional
+            Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
+
+        Returns
+        -------
+        float
+            Frequency associated with the peak of the mean H/V curve.
+
+        """
+        mc = self.mean_curve(distribution)
+        return float(self.frq[np.where(mc == np.max(mc[Hvsr.find_peaks(mc)[0]]))])
+
+

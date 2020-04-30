@@ -550,7 +550,7 @@ class Hvsr():
                                      self.mean_f0_amp(distribution),
                                      self.std_f0_amp(distribution))
 
-    def nstd_curve(self, n, distribution):
+    def nstd_curve(self, n, distribution="log-normal"):
         """Return nth standard deviation curve.
 
         Parameters
