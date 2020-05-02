@@ -225,7 +225,7 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
 
 
 def quick_voronoi_plot(points, vertice_set, boundary, ax=None,
-                       fig_kwargs=None):
+                       fig_kwargs=None):  # pragma: no cover
     """Plot Voronoi regions with boundary."""
 
     ax_was_none = False
