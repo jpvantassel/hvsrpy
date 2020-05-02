@@ -18,7 +18,7 @@
 """Tests for Hvsr object."""
 
 import numpy as np
-import hvsrpy as hv
+import hvsrpy
 from testtools import unittest, TestCase
 import logging
 logging.basicConfig(level=logging.CRITICAL)
@@ -30,62 +30,68 @@ class Test_Hvsr(TestCase):
     def setUpClass(cls):
         frq = [1, 2, 3, 4]
         amp = [[1, 2, 1, 1], [1, 2, 4, 1], [1, 1, 5, 1]]
-        cls.hv = hv.Hvsr(amp, frq)
+        cls.hv = hvsrpy.Hvsr(amp, frq)
 
     def test_init(self):
         # amp as 1d array
         frq = np.linspace(1, 10, 20)
         amp = np.sin(2*np.pi*5*np.linspace(0, 10, 20))+10
-        myhvsr = hv.Hvsr(amp, frq)
+        myhvsr = hvsrpy.Hvsr(amp, frq)
         self.assertArrayEqual(frq, myhvsr.frq)
         self.assertArrayEqual(amp, myhvsr.amp)
 
         # amp as 2d array
         frq = np.linspace(1, 10, 20)
         amp = (np.sin(2*np.pi*5*np.linspace(0, 10, 20))+10)*np.ones((20, 20))
-        myhvsr = hv.Hvsr(amp, frq)
+        myhvsr = hvsrpy.Hvsr(amp, frq)
         self.assertArrayEqual(frq, myhvsr.frq)
         self.assertArrayEqual(amp, myhvsr.amp)
 
         # amp as string
         frq = np.ndarray([1, 2, 3])
         amp = "abc"
-        self.assertRaises(TypeError, hv.Hvsr, amp, frq)
+        self.assertRaises(TypeError, hvsrpy.Hvsr, amp, frq)
 
         # negative amplitude
         frq = np.array([1, 2, 3])
         amp = np.array([1, -1, 3])
-        self.assertRaises(ValueError, hv.Hvsr, amp, frq)
+        self.assertRaises(ValueError, hvsrpy.Hvsr, amp, frq)
+
+        # nan value
+        frq = np.array([1, 2, 3])
+        amp = np.array([1, 2, np.nan])
+        self.assertRaises(ValueError, hvsrpy.Hvsr, amp, frq)
 
     def test_find_peaks(self):
         # amp as 1d array - single peak
         frq = np.array([1, 2, 3, 4, 5])
         amp = np.array([0, 0, 1, 0, 0])
-        myhvsr = hv.Hvsr(amp, frq)
-        self.assertListEqual([2], hv.Hvsr.find_peaks(myhvsr.amp)[0].tolist())
+        myhvsr = hvsrpy.Hvsr(amp, frq)
+        self.assertListEqual(
+            [2], hvsrpy.Hvsr.find_peaks(myhvsr.amp)[0].tolist())
 
         # amp as 2d array - single peak
         frq = np.array([1, 2, 3, 4, 5])
         amp = np.array([[0, 0, 1, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0]])
-        myhvsr = hv.Hvsr(amp, frq)
+        myhvsr = hvsrpy.Hvsr(amp, frq)
         self.assertListEqual(
-            [[2], [1], [2]], hv.Hvsr.find_peaks(myhvsr.amp)[0])
+            [[2], [1], [2]], hvsrpy.Hvsr.find_peaks(myhvsr.amp)[0])
 
         # amp as 1d array - multiple peak
         frq = np.array([1, 2, 3, 4, 5])
         amp = np.array([0, 1, 0, 1, 0])
-        myhvsr = hv.Hvsr(amp, frq)
+        myhvsr = hvsrpy.Hvsr(amp, frq)
         self.assertListEqual(
-            [1, 3], hv.Hvsr.find_peaks(myhvsr.amp)[0].tolist())
+            [1, 3], hvsrpy.Hvsr.find_peaks(myhvsr.amp)[0].tolist())
 
         # amp as 2d array - multiple peak
         frq = np.array([1, 2, 3, 4, 5, 6, 7])
         amp = np.array([[0, 1, 0, 1, 0, 5, 0],
                         [0, 2, 6, 5, 0, 0, 0],
                         [0, 0, 7, 6, 8, 0, 0]])
-        myhvsr = hv.Hvsr(amp, frq)
+        myhvsr = hvsrpy.Hvsr(amp, frq)
         for known, test in zip([[1, 3, 5], [2], [2, 4]],
-                               hv.Hvsr.find_peaks(myhvsr.amp)[0]):
+                               hvsrpy.Hvsr.find_peaks(myhvsr.amp)[0]):
             self.assertListEqual(known, test.tolist())
 
     def test_properties(self):
@@ -110,17 +116,18 @@ class Test_Hvsr(TestCase):
     def test_update_peaks(self):
         frq = np.arange(0, 1, 0.1)
         amp = np.zeros((10, 10))
-        col = np.array([1, 2, 4, 6, 8, 1, 3, 5, 7, 9])
-        amp[np.arange(10), col] = 1
-        myhv = hv.Hvsr(amp, frq)
-        self.assertArrayEqual(myhv.peak_frq, frq[col[:-1]])
+        peak_ids = np.array([1, 2, 4, 6, 8, 1, 3, 5, 7, 6])
+        amp[np.arange(10), peak_ids] = 1
+        myhv = hvsrpy.Hvsr(amp, frq)
+
+        self.assertArrayEqual(myhv.peak_frq, frq[peak_ids])
 
     def test_mean_std_f0_frq(self):
         frq = np.arange(0, 10, 1)
         amp = np.zeros((10, 10))
         col = np.array([1, 2, 4, 6, 8, 1, 3, 5, 7, 6])
         amp[np.arange(10), col] = 1
-        myhv = hv.Hvsr(amp, frq)
+        myhv = hvsrpy.Hvsr(amp, frq)
         self.assertEqual(myhv.mean_f0_frq(distribution='log-normal'),
                          np.exp(np.mean(np.log(col))))
         self.assertEqual(myhv.mean_f0_frq(distribution='normal'), np.mean(col))
@@ -135,7 +142,7 @@ class Test_Hvsr(TestCase):
         col = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
         peak_amp = np.array([1, 2, 4, 6, 8, 1, 3, 5, 7, 6])
         amp[np.arange(10), col] = peak_amp
-        myhv = hv.Hvsr(amp, frq)
+        myhv = hvsrpy.Hvsr(amp, frq)
         self.assertEqual(myhv.mean_f0_amp(distribution='log-normal'),
                          np.exp(np.mean(np.log(peak_amp))))
         self.assertEqual(myhv.mean_f0_amp(distribution='normal'),
@@ -150,7 +157,7 @@ class Test_Hvsr(TestCase):
         amp = np.array([[1, 1],
                         [3, 4],
                         [5, 7]])
-        myhv = hv.Hvsr(amp, frq, find_peaks=False)
+        myhv = hvsrpy.Hvsr(amp, frq, find_peaks=False)
 
         # Log-normal
         mean_curve = myhv.mean_curve(distribution='log-normal')
@@ -171,7 +178,7 @@ class Test_Hvsr(TestCase):
         # Single-Window
         frq = [1, 2]
         amp = [1, 2]
-        _hv = hv.Hvsr(amp, frq, find_peaks=False)
+        _hv = hvsrpy.Hvsr(amp, frq, find_peaks=False)
         self.assertRaises(ValueError, _hv.std_curve)
         self.assertListEqual(amp, _hv.mean_curve().tolist())
 
@@ -180,34 +187,33 @@ class Test_Hvsr(TestCase):
         amp = np.ones((10, 10))
         col = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 7])
         amp[np.arange(10), col] = 2
-        myhv = hv.Hvsr(amp, frq)
+        myhv = hvsrpy.Hvsr(amp, frq)
         self.assertEqual(1., myhv.mc_peak_frq())
 
-    def test_nth_std(self):
+    def test_nstd_curve(self):
         frq = np.array([1, 2, 3, 4, 5])
         amp = np.array([[1, 6, 1, 1, 1],
                         [6, 1, 1, 1, 1],
                         [1, 1, 6, 1, 1],
                         [1, 1, 1, 1, 6],
                         [1, 1, 1, 6, 1]])
-        _hv = hv.Hvsr(amp, frq)
+        hv = hvsrpy.Hvsr(amp, frq)
 
-        # Normal
+        # Curve - Normal
         distribution = "normal"
-        mean_curve = _hv.mean_curve(distribution=distribution)
-        std_curve = _hv.std_curve(distribution=distribution)
+        mean_curve = hv.mean_curve(distribution=distribution)
+        std_curve = hv.std_curve(distribution=distribution)
         expected = mean_curve + std_curve
-        returned = _hv.nstd_curve(1, distribution=distribution)
+        returned = hv.nstd_curve(1, distribution=distribution)
         self.assertArrayEqual(expected, returned)
 
-        # Log-Normal
+        # Curve - Log-Normal
         distribution = "log-normal"
-        mean_curve = _hv.mean_curve(distribution=distribution)
-        std_curve = _hv.std_curve(distribution=distribution)
+        mean_curve = hv.mean_curve(distribution=distribution)
+        std_curve = hv.std_curve(distribution=distribution)
         expected = np.exp(np.log(mean_curve) + std_curve)
-        returned = _hv.nstd_curve(1, distribution=distribution)
+        returned = hv.nstd_curve(1, distribution=distribution)
         self.assertArrayEqual(expected, returned)
-
 
     def test_reject_windows(self):
         # Reject single window, end due to zero stdev
@@ -215,7 +221,7 @@ class Test_Hvsr(TestCase):
         amp = np.ones((10, 10))
         col = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 7])
         amp[np.arange(10), col] = 2
-        myhv = hv.Hvsr(amp, frq)
+        myhv = hvsrpy.Hvsr(amp, frq)
         myhv.reject_windows(n=2)
         self.assertEqual(myhv.mean_f0_frq(), 1.0)
 
@@ -224,7 +230,7 @@ class Test_Hvsr(TestCase):
         amp = np.ones((10, 10))
         col = np.array([1, 2, 2, 2, 2, 1, 2, 2, 1, 9])
         amp[np.arange(10), col] = 2
-        myhv = hv.Hvsr(amp, frq)
+        myhv = hvsrpy.Hvsr(amp, frq, find_peaks=False, meta={})
         myhv.reject_windows(n=2)
         self.assertArrayEqual(myhv.peak_frq, frq[col[:-1]])
 
@@ -236,6 +242,43 @@ class Test_Hvsr(TestCase):
                           distribution, np.array([1, 2, 3, 4]))
         self.assertRaises(NotImplementedError, self.hv._nth_std_factory,
                           1, distribution, 0, 0)
+
+    def test_mc_peak(self):
+        frq = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+        amp = np.array([[1, 1, 2, 3, 2, 1, 1, 1, 1],
+                        [1, 1.5, 3, 5, 3, 1.5, 1, 1, 1],
+                        [1, 1, 5, 1, 1, 1, 1, 1, 1]])
+        hv = hvsrpy.Hvsr(amp, frq)
+
+        distribution = "normal"
+        expected = np.mean(amp, axis=0)
+        returned = hv.mean_curve(distribution=distribution)
+        self.assertArrayEqual(expected, returned)
+
+        self.assertEqual(10/3, hv.mc_peak_amp(distribution=distribution))
+        self.assertEqual(3, hv.mc_peak_frq(distribution=distribution))
+
+    def test_nstd_f0(self):
+        frq = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+        amp = np.array([[1, 1, 2, 3, 5, 1, 1, 1, 1],
+                        [1, 2, 3, 7, 3, 1, 1, 1, 1],
+                        [1, 1, 12, 1, 1, 1, 1, 1, 1]])
+        hv = hvsrpy.Hvsr(amp, frq)
+
+        distribution = "normal"
+        n = 1.5
+
+        # nstd_f0_frq
+        f0s = [3,4,5]
+        expected = np.mean(f0s) + n*np.std(f0s, ddof=1)
+        returned = hv.nstd_f0_frq(n=n, distribution=distribution)
+        self.assertEqual(expected, returned)
+
+        # nstd_f0_amp
+        amps = [5, 7, 12]
+        expected = np.mean(amps) + n*np.std(amps, ddof=1)
+        returned = hv.nstd_f0_amp(n=n, distribution=distribution)
+        self.assertEqual(expected, returned)
 
 
 if __name__ == "__main__":
