@@ -94,10 +94,12 @@ class Test_HvsrRotated(TestCase):
     def test_mean_factory(self):
         # Single-Window
         values = [np.array([1, 2, 3, 4, 5])]
+
         # Normal
         returned = hvsrpy.HvsrRotated._mean_factory("normal", values)
         expected = np.mean([np.mean(x) for x in values])
         self.assertEqual(expected, returned)
+
         # Log-normal
         returned = hvsrpy.HvsrRotated._mean_factory("log-normal", values)
         expected = np.exp(np.mean([np.mean(np.log(x)) for x in values]))
@@ -125,33 +127,82 @@ class Test_HvsrRotated(TestCase):
     def test_std_factory(self):
         # Single-Window
         values = [np.array([1, 2, 3, 4, 5])]
+
         # Normal
         returned = hvsrpy.HvsrRotated._std_factory("normal", values)
         expected = np.std(values[0], ddof=1)
         self.assertEqual(expected, returned)
+
         # Log-normal
         returned = hvsrpy.HvsrRotated._std_factory("log-normal", values)
         expected = np.std(np.log(values[0]), ddof=1)
         self.assertAlmostEqual(expected, returned)
 
-        # Multi-Window
-        values = [np.array([1, 2, 3, 4, 5]),
-                  np.array([2, 1, .5, 1]),
-                  np.array([1, 4, 5, 7, 1, 2, 3, 4, 5]),
-                  np.array([1, 2, 1, 2, 1, 2])]
+        ## Multi-Window Example 1
+        values = [np.array([1 ]),
+                  np.array([2, 1, .5]),
+                  np.array([1, 7, 2]),
+                  np.array([1, 2])]
+
         # Normal
         returned = hvsrpy.HvsrRotated._std_factory("normal", values)
-        expected = 1.635604659
+        expected = 1.783458127
         self.assertAlmostEqual(expected, returned)
+
         # Log-normal
-        returned = hvsrpy.HvsrRotated._std_factory("log-normal", values)
-        expected = 0.707120567
+        adj_vals = [np.exp(vals) for vals in values]
+        returned = hvsrpy.HvsrRotated._std_factory("log-normal", adj_vals)
+        expected = 1.783458127
         self.assertAlmostEqual(expected, returned)
 
         # Bad distribution
         self.assertRaises(NotImplementedError,
                           hvsrpy.HvsrRotated._std_factory, "exponential",
                           values)
+
+        ## Multi-Winodw Exampe 2
+        values = [np.array([1, 3]),
+                  np.array([1, 5, 6]),
+                  np.array([1, 1]),
+                  np.array([3, 2])]
+        
+        # Normal - Mean
+        returned = hvsrpy.HvsrRotated._mean_factory("normal", values)
+        expected = 2.375
+        self.assertAlmostEqual(expected, returned)
+        # Normal - Stddev
+        returned = hvsrpy.HvsrRotated._std_factory("normal", values)
+        expected = 1.73035188
+        self.assertAlmostEqual(expected, returned)
+
+        ## Multi-Winodw Exampe 3
+        values = [np.array([1]),
+                  np.array([2, 1, 0.5]),
+                  np.array([1, 7, 2]),
+                  np.array([1, 2])]
+        
+        # Normal - Mean
+        returned = hvsrpy.HvsrRotated._mean_factory("normal", values)
+        expected = 1.75
+        self.assertAlmostEqual(expected, returned)
+
+        # Log-Normal - Mean
+        adj_values = [ np.exp(vals) for vals in values]
+        returned = hvsrpy.HvsrRotated._mean_factory("log-normal", adj_values)
+        expected = 1.75
+        self.assertAlmostEqual(expected, np.log(returned))
+
+        # Normal - Stddev
+        returned = hvsrpy.HvsrRotated._std_factory("normal", values)
+        expected = 1.783458127
+        self.assertAlmostEqual(expected, returned)
+
+        # Log-Normal - Stddev
+        adj_values = [ np.exp(vals) for vals in values]
+        returned = hvsrpy.HvsrRotated._std_factory("log-normal", adj_values)
+        expected = 1.783458127
+        self.assertAlmostEqual(expected, returned)
+
 
     def test_mean_curve(self):
         # Normal

@@ -17,9 +17,12 @@
 
 """Class definition for HvsrRotated, a rotated Hvsr measurement."""
 
-import numpy as np
-from hvsrpy import Hvsr
 import logging
+
+import numpy as np
+
+from hvsrpy import Hvsr
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["HvsrRotated"]
@@ -187,7 +190,7 @@ class HvsrRotated():
     def _std_factory(distribution, values, **kwargs):
         n = len(values)
         mean = HvsrRotated._mean_factory(distribution, values, **kwargs)
-        num = np.empty_like(mean) if len(mean.shape) == 2 else 0
+        num = 0
         wi2 = 0
 
         if distribution == "normal":
@@ -203,6 +206,7 @@ class HvsrRotated():
             wi = 1/(n*i)
             num += np.sum(diff*diff*wi, **kwargs)
             wi2 += wi*wi*i
+            
         return np.sqrt(num/(1-wi2))
 
     def std_f0_frq(self, distribution='log-normal'):
