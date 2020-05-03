@@ -331,7 +331,7 @@ class HvsrRotated():
         """Nth standard deviation on f0 from all azimuths"""
         return self._nth_std_factory(n=n, distribution=distribution,
                                      mean=self.mean_f0_frq(distribution=distribution),
-                                     std=self.std_f0_amp(distribution=distribution))
+                                     std=self.std_f0_frq(distribution=distribution))
 
     def mc_peak_amp(self, distribution='log-normal'):
         """Amplitude of the peak of the mean H/V curve.
