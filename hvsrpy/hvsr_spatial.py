@@ -20,15 +20,36 @@
 import logging
 
 import numpy as np
-from numpy.random import default_rng, PCG64, MT19937
+from numpy.random import default_rng, PCG64, MT19937, BitGenerator
 from scipy.spatial import Voronoi
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Point, Polygon
 
 logger = logging.getLogger(name=__name__)
 
+__all__ = ["montecarlo_f0", "HvsrVault"]
 
-def statistics(values, weights):
+def _statistics(values, weights):
+    """Calculate weighted mean and stddev.
+
+    Parameters
+    ----------
+    values : ndarray
+        Of shape `(M, N)`, where the rows are the realizations at each
+        location and the columns are a given realization for the
+        entire region.
+    weights : ndarray
+        Of size `N`, where `N` is the number of generating locations.
+        `N`. Note that the weights will be normalized such that their
+        sum is equal to 1.
+
+    Returns
+    -------
+    tuple
+        Of the form `(mean, stddev)` where `mean` is the weighted
+        mean and `stddev` the weighted standard deviation.
+
+    """
     norm_weights = weights/np.sum(weights)
 
     # Mean
@@ -51,7 +72,8 @@ def statistics(values, weights):
     return (mean, stddev)
 
 def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
-                  dist_spatial="lognormal", nrealizations=1000):
+                  dist_spatial="lognormal", nrealizations=1000,
+                  generator="PCG64"):
     """MonteCarlo calculation for spatial distribution of f0.
 
     Parameters
@@ -67,6 +89,8 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
     dist_spatial : {'lognormal', 'normal'}, optional
         Assumed distribution of spatial statistics on f0, default is
         `lognormal`.
+    generator : {'PCG64', 'MT19937'}, optional
+        Bit generator, default is `PCG64`.
 
     Returns
     -------
@@ -74,15 +98,21 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
         Of the form (f0_mean, f0_stddev, f0s_spatial, f0s_generators).
 
     """
-    rng = default_rng()
+    if generator == "PCG64":
+        rng = default_rng(PCG64())
+    elif generator == "MT19937":
+        rng = default_rng(MT19937())
+    elif isinstance(generator, BitGenerator):
+        rng = default_rng(generator)
+    else:
+        raise ValueError(f"generator type {generator} not recognized.")
+
     if dist_generators == "normal":
         def realization(mean, stddev):
             return rng.normal(mean, stddev, size=nrealizations)
     elif dist_generators == "lognormal":
         def realization(_lambda, _zeta):
-            # mean = np.exp(_lambda + _zeta*_zeta*0.5)
-            # stddev = mean*np.sqrt(np.exp(_zeta*_zeta)-1)
-            # return random.lognormal(mean, stddev, size=nrealizations)
+            print("Howdy")
             return np.log(rng.lognormal(_lambda, _zeta, size=nrealizations))
     else:
         raise NotImplementedError
@@ -91,7 +121,7 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
     for r, (_mean, _stddev) in enumerate(zip(mean, stddev)):
         realizations[r, :] = realization(_mean, _stddev)
 
-    f0_mean, f0_stddev = statistics(realizations, weights)
+    f0_mean, f0_stddev = _statistics(realizations, weights)
 
     return (f0_mean, f0_stddev, realizations)
 
