@@ -19,6 +19,5 @@
 
 from .hvsr import Hvsr
 from .hvsr_rotated import HvsrRotated
-from .hvsr_spatial import *
 from .sensor3c import Sensor3c
 from .plottools import quick_plot

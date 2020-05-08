@@ -22,7 +22,7 @@ import logging
 import numpy as np
 from numpy.random import PCG64
 
-import hvsrpy
+import hvsrpy.hvsr_spatial as spatial
 from testtools import unittest, TestCase
 
 logging.basicConfig(level=logging.WARNING)
@@ -35,12 +35,12 @@ class Test_Spatial(TestCase):
 
         # Mean
         expected = 2.4
-        returned, _ = hvsrpy.hvsr_spatial._statistics(values, weights)
+        returned, _ = spatial._statistics(values, weights)
         self.assertEqual(expected, returned)
 
         # Stddev
         expected = 1.776388346
-        _, returned = hvsrpy.hvsr_spatial._statistics(values, weights)
+        _, returned = spatial._statistics(values, weights)
 
     def test_montecarlo_f0(self):
         means = np.array([0.2, 0.4, 0.6, 0.5])
@@ -49,7 +49,7 @@ class Test_Spatial(TestCase):
 
         # Normal
         generator = PCG64(1994)
-        vals = hvsrpy.hvsr_spatial.montecarlo_f0(means, stds, weights,
+        vals = spatial.montecarlo_f0(means, stds, weights,
                                                  dist_generators="normal",
                                                  dist_spatial="normal",
                                                  nrealizations=3,
@@ -76,7 +76,7 @@ class Test_Spatial(TestCase):
 
         # LogNormal
         generator = PCG64(1994)
-        vals = hvsrpy.hvsr_spatial.montecarlo_f0(means, stds, weights,
+        vals = spatial.montecarlo_f0(means, stds, weights,
                                                  dist_generators="lognormal",
                                                  dist_spatial="lognormal",
                                                  nrealizations=3,
@@ -103,19 +103,25 @@ class Test_Spatial(TestCase):
 
         # Other generators
         for generator in ["PCG64", "MT19937"]:
-            hvsrpy.hvsr_spatial.montecarlo_f0(means, stds, weights,
+            spatial.montecarlo_f0(means, stds, weights,
                                               generator=generator)
 
         # Bad generator
         generator = "my fancy generator"
-        self.assertRaises(ValueError, hvsrpy.hvsr_spatial.montecarlo_f0,
+        self.assertRaises(ValueError, spatial.montecarlo_f0,
                           means, stds, weights, generator=generator)
 
         # Bad dist_generator
         dist_generators = "my fancy generator"
         self.assertRaises(NotImplementedError,
-                          hvsrpy.hvsr_spatial.montecarlo_f0, means, stds,
+                          spatial.montecarlo_f0, means, stds,
                           weights, dist_generators=dist_generators)
+
+        # Bad dist_spatial
+        dist_spatial = "my fancy distribution"
+        self.assertRaises(NotImplementedError,
+                          spatial.montecarlo_f0, means, stds,
+                          weights, dist_spatial=dist_generators)
 
 
 if __name__ == "__main__":

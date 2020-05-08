@@ -127,6 +127,8 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
     for r, (_mean, _stddev) in enumerate(zip(mean, stddev)):
         realizations[r, :] = realization(_mean, _stddev)
 
+    # TODO (jpv): Add factory design pattern.
+    # TODO (jpv): This is not quite right if generators are lognormal and spatial is normal.
     f0_mean, f0_stddev = _statistics(realizations, weights)
 
     if dist_spatial == "normal":
@@ -143,7 +145,7 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
         realizations = np.exp(realizations)
     else:
         pass
-    
+
     return (f0_mean, f0_stddev, realizations)
 
 
@@ -156,38 +158,45 @@ class HvsrVault():
 
     """
 
-    @staticmethod
-    def lat_lon_to_x_y(lat, lon):
-        raise NotImplementedError
-        # TODO (jpv): Will be quite useful.
+    # @staticmethod
+    # def lat_lon_to_x_y(lat, lon):
+    #     raise NotImplementedError
+    #     # TODO (jpv): Will be quite useful.
 
-    def __init__(self, points, f0, sigmalnf0=None):
+    def __init__(self, points, means, stddevs=None, distribution='lognormal'):
         """For now we are just going to store the statistis.
 
         Parameters
         ----------
-        points: ndarray
-            With the relative x and y coordinates of the Voronoi generators,
-            where each row is of the `ndarray` represents an x, y pair.
-        boudary: ndarray
-            Points which define the unique bounding points for the Voronoi
-            tesselations.
-        f0: ndarray
-            f0 for each point.
-        sigmalnf0: ndarray, optional
-            sigmalnf0 for each point
+        points : ndarray
+            With the relative x and y coordinates of the Voronoi
+            generators, where each row is of the `ndarray` represents
+            an x, y pair.
+        boudary : ndarray
+            Points which define the unique bounding points for the
+            Voronoi tesselation.
+        means : ndarray
+            Mean f0 values for each point. Meaning is determined by
+            `distribution`.
+        stddevs : ndarray, optional
+            Standard deviation for each point. Meaningn is determined by
+            `distribution`.
+        distribution : {'normal', 'lognormal'}, optional
+            Distribution to which the mean and stddev for each point
+            corresponds, default is 'lognormal'.
 
         """
+        points = np.array(points, dtype=np.double)
+        npts, dim = points.shape
+        if dim != 2:
+            msg = f"points must have shape (N,2), not {points.shape}."
+            raise ValueError(msg)
+        if npts < 3:
+            raise ValueError(f"Requires at least three points")
 
-        # Validate points
-        points = np.array(points)
-        if points.shape[1] != 2:
-            raise ValueError(
-                f"points must have shape (N,2), not {points.shape}.")
         self.points = points
-
-        self.f0 = f0
-        self.siglnf0 = sigmalnf0
+        self.means = np.array(means, dtype=np.double)
+        self.stddevs = np.array(stddevs, dtype=np.double)
 
     def spatial_weights(self, boundary, dc_method="voronoi"):
         """Calculate the weights for each voronoi region.
@@ -238,7 +247,7 @@ class HvsrVault():
         return (areas/total_area, indices)
 
     def _culled_points(self, mask):
-        # Remove points not within bounding region
+        """Remove points not within bounding region"""
         culled_points, passing_indices = [], []
         for index, (x, y) in enumerate(self.points):
             p = Point(x, y)
