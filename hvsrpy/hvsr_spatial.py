@@ -29,6 +29,7 @@ logger = logging.getLogger(name=__name__)
 
 __all__ = ["montecarlo_f0", "HvsrVault"]
 
+
 def _statistics(values, weights):
     """Calculate weighted mean and stddev.
 
@@ -71,21 +72,26 @@ def _statistics(values, weights):
 
     return (mean, stddev)
 
+
 def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
                   dist_spatial="lognormal", nrealizations=1000,
                   generator="PCG64"):
-    """MonteCarlo calculation for spatial distribution of f0.
+    """MonteCarlo simulation for spatial distribution of f0.
 
     Parameters
     ----------
     mean, stddev : ndarray
         Mean and standard deviation of each generating point.
-        Meaning of these parameters are dictated by `dist_generators`.
+        Meaning of these parameters is dictated by `dist_generators`.
     weights : ndarray
         Weights for each generating point.
     dist_generators : {'lognormal', 'normal'}, optional
         Assumed distribution of each generating point, default is
         `lognormal`.
+          dist    | mean    | stddev
+        ---------------------------------------------------------
+        Normal    | \mu     | \sigma  -> mean and stddev
+        Lognormal | \lambda | \zeta   -> \mu and \sigma of log(x)
     dist_spatial : {'lognormal', 'normal'}, optional
         Assumed distribution of spatial statistics on f0, default is
         `lognormal`.
@@ -95,7 +101,7 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
     Returns
     -------
     tuple
-        Of the form (f0_mean, f0_stddev, f0s_spatial, f0s_generators).
+        Of the form `(f0_mean, f0_stddev, f0_realizations)`.
 
     """
     if generator == "PCG64":
@@ -108,21 +114,36 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
         raise ValueError(f"generator type {generator} not recognized.")
 
     if dist_generators == "normal":
-        def realization(mean, stddev):
-            return rng.normal(mean, stddev, size=nrealizations)
+        def realization(_mu, _sigma):
+            return rng.normal(_mu, _sigma, size=nrealizations)
     elif dist_generators == "lognormal":
         def realization(_lambda, _zeta):
-            print("Howdy")
-            return np.log(rng.lognormal(_lambda, _zeta, size=nrealizations))
+            return rng.normal(_lambda, _zeta, size=nrealizations)
     else:
-        raise NotImplementedError
+        msg = f"dist_generators = {dist_generators} not recognized."
+        raise NotImplementedError(msg)
 
-    realizations = np.empty((mean.size, nrealizations))
+    realizations = np.empty((len(mean), nrealizations))
     for r, (_mean, _stddev) in enumerate(zip(mean, stddev)):
         realizations[r, :] = realization(_mean, _stddev)
 
     f0_mean, f0_stddev = _statistics(realizations, weights)
 
+    if dist_spatial == "normal":
+        pass
+    elif dist_spatial == "lognormal":
+        f0_mean = np.exp(f0_mean)
+    else:
+        msg = f"dist_spatial = {dist_spatial} not recognized."
+        raise NotImplementedError(msg)
+
+    if dist_generators == "normal":
+        pass
+    elif dist_generators == "lognormal":
+        realizations = np.exp(realizations)
+    else:
+        pass
+    
     return (f0_mean, f0_stddev, realizations)
 
 

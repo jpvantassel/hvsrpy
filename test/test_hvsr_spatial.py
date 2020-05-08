@@ -74,7 +74,7 @@ class Test_Spatial(TestCase):
         returned = stddev
         self.assertAlmostEqual(expected, returned, places=3)
 
-        # Normal
+        # LogNormal
         generator = PCG64(1994)
         vals = hvsrpy.hvsr_spatial.montecarlo_f0(means, stds, weights,
                                                  dist_generators="lognormal",
@@ -83,24 +83,23 @@ class Test_Spatial(TestCase):
                                                  generator=generator)
         mean, stddev, realizations = vals
 
-        print(realizations)
-        # # Realizations
-        # expected = np.array([[0.2165,  0.2017,  0.2639],
-        #                      [0.4322,  0.3953,  0.4572],
-        #                      [0.5411,  0.6164,  0.6436],
-        #                      [0.5244,  0.5015,  0.5080]])
-        # returned = realizations
-        # self.assertArrayAlmostEqual(expected, returned, places=3)
+        # Realizations
+        expected = np.exp(np.array([[0.2165,  0.2017,  0.2639],
+                                    [0.4322,  0.3953,  0.4572],
+                                    [0.5411,  0.6164,  0.6436],
+                                    [0.5244,  0.5015,  0.5080]]))
+        returned = realizations
+        self.assertArrayAlmostEqual(expected, returned, places=3)
 
-        # # Mean
-        # expected = 0.5035
-        # returned = mean
-        # self.assertAlmostEqual(expected, returned, places=3)
+        # Mean
+        expected = np.exp(0.5035)
+        returned = mean
+        self.assertAlmostEqual(expected, returned, places=3)
 
-        # # Stddev
-        # expected = 0.1124
-        # returned = stddev
-        # self.assertAlmostEqual(expected, returned, places=3)
+        # Stddev
+        expected = 0.1124
+        returned = stddev
+        self.assertAlmostEqual(expected, returned, places=3)
 
         # Other generators
         for generator in ["PCG64", "MT19937"]:
@@ -111,6 +110,12 @@ class Test_Spatial(TestCase):
         generator = "my fancy generator"
         self.assertRaises(ValueError, hvsrpy.hvsr_spatial.montecarlo_f0,
                           means, stds, weights, generator=generator)
+
+        # Bad dist_generator
+        dist_generators = "my fancy generator"
+        self.assertRaises(NotImplementedError,
+                          hvsrpy.hvsr_spatial.montecarlo_f0, means, stds,
+                          weights, dist_generators=dist_generators)
 
 
 if __name__ == "__main__":
