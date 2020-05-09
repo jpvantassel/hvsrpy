@@ -269,6 +269,14 @@ class HvsrRotated():
             array[az_cnt, :] = hvsr.mean_curve(distribution=distribution)
         return array
 
+    def mean_curves_peak(self, distribution="log-normal"):
+        """Peak from each mean curve on a per azimuth basis."""
+        frqs, amps = np.empty(self.azimuth_count), np.empty(self.azimuth_count)
+        for az_cnt, hvsr in enumerate(self.hvsrs):
+            frqs[az_cnt] = hvsr.mc_peak_frq(distribution=distribution)
+            amps[az_cnt] = hvsr.mc_peak_amp(distribution=distribution)
+        return (frqs, amps)
+
     def mean_curve(self, distribution='log-normal'):
         """Return mean H/V curve.
 
