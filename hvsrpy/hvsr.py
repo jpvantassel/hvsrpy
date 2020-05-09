@@ -21,6 +21,7 @@ import logging
 
 import numpy as np
 import scipy.signal as sg
+from pandas import DataFrame
 
 logger = logging.getLogger(name=__name__)
 
@@ -571,39 +572,31 @@ class Hvsr():
                                      self.mean_curve(distribution),
                                      self.std_curve(distribution))
 
-    def print_stats(self, distribution_f0):  # pragma: no cover
-        """Print basic statistics of `Hvsr` instance."""
+    def _define_stats(self, distribution_f0):
         if distribution_f0 == "log-normal":
-            upper = "                                 | Log-Normal |     Log-Normal     |"
-            lower = "|              Name              |   Median   | Standard Deviation |"
-
-            f0 = (f"|   {str(self.mean_f0_frq(distribution_f0))[:4]} Hz  " +
-                  f"|        {str(self.std_f0_frq(distribution_f0))[:4]}        |")
-            T0 = (f"|   {str(1/self.mean_f0_frq(distribution_f0))[:4]} s   " +
-                  f"|        {str(self.std_f0_frq(distribution_f0))[:4]}        |")
+            columns = ["Lognormal Median", "Lognormal Standard Deviation"]
+            data = np.array([[self.mean_f0_frq(distribution_f0),
+                              self.std_f0_frq(distribution_f0)],
+                             [1/self.mean_f0_frq(distribution_f0),
+                              self.std_f0_frq(distribution_f0)]])
 
         elif distribution_f0 == "normal":
-            upper = ""
-            lower = "|              Name              |    Mean    | Standard Deviation |"
-
-            f0 = (f"|   {str(self.mean_f0_frq(distribution_f0))[:4]} Hz  " +
-                  f"|      {str(self.std_f0_frq(distribution_f0))[:4]} Hz       |")
-            T0 = (f"|     -      |         -          |")
-
+            columns = ["Mean", "Standard Deviation"]
+            data = np.array([[self.mean_f0_frq(distribution_f0),
+                              self.std_f0_frq(distribution_f0)],
+                             [np.nan, np.nan]])
         else:
             msg = f"`distribution_f0` of {distribution_f0} is not implemented."
             raise NotImplementedError(msg)
 
-        stats = [
-            upper,
-            lower,
-            "|--------------------------------+------------+--------------------|",
-            "| Fundemental Site Frequency, f0 "+f0,
-            "|   Fundemental Site Period, T0  "+T0
-        ]
-        for stat in stats:
-            if stat != "":
-                print(stat)
+        df = DataFrame(data=data, columns=columns,
+                       index=["Fundemental Site Frequency, f0",
+                              "Fundemental Site Period, T0"])
+        return df
+
+    def print_stats(self, distribution_f0, places=2):  # pragma: no cover
+        """Print basic statistics of `Hvsr` instance."""
+        display(self._define_stats(distribution_f0=distribution_f0).round(places))
 
     def _geopsy_style_lines(self, distribution_f0, distribution_mc):  # pragma: no cover
         """Lines for Geopsy-style file."""
