@@ -149,7 +149,7 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
     return (f0_mean, f0_stddev, realizations)
 
 
-class HvsrVault():
+class HvsrVault(): # pragma: no cover
     """A container for Hvsr objects.
 
     Attributes
@@ -163,7 +163,7 @@ class HvsrVault():
     #     raise NotImplementedError
     #     # TODO (jpv): Will be quite useful.
 
-    def __init__(self, points, means, stddevs=None, distribution='lognormal'):
+    def __init__(self, points, means, stddevs=None, distribution='lognormal'): # pragma: no cover
         """For now we are just going to store the statistis.
 
         Parameters
@@ -198,7 +198,7 @@ class HvsrVault():
         self.means = np.array(means, dtype=np.double)
         self.stddevs = np.array(stddevs, dtype=np.double)
 
-    def spatial_weights(self, boundary, dc_method="voronoi"):
+    def spatial_weights(self, boundary, dc_method="voronoi"): # pragma: no cover
         """Calculate the weights for each voronoi region.
 
         Parameters
@@ -222,7 +222,7 @@ class HvsrVault():
         return (weights, indices)
 
     @staticmethod
-    def _boundary_to_mask(boundary):
+    def _boundary_to_mask(boundary): # pragma: no cover
         boundary = np.array(boundary)
         if boundary.shape[1] != 2:
             msg = f"boudary must have shape (N,2), not {boundary.shape}."
@@ -231,7 +231,7 @@ class HvsrVault():
         mask = bounding_pts.convex_hull
         return mask
 
-    def _voronoi_weights(self, boundary):
+    def _voronoi_weights(self, boundary): # pragma: no cover
         """Calculate the voronoi geometry weights."""
         mask = self._boundary_to_mask(boundary)
         total_area = mask.area
@@ -246,7 +246,7 @@ class HvsrVault():
 
         return (areas/total_area, indices)
 
-    def _culled_points(self, mask):
+    def _culled_points(self, mask): # pragma: no cover
         """Remove points not within bounding region"""
         culled_points, passing_indices = [], []
         for index, (x, y) in enumerate(self.points):
@@ -258,11 +258,11 @@ class HvsrVault():
                 logger.info(f"Discarding point ({x}, {y})")
         return np.array(culled_points), passing_indices
 
-    def bounded_voronoi(self, boundary):
+    def bounded_voronoi(self, boundary): # pragma: no cover
         mask = self._boundary_to_mask(boundary)
         return self._bounded_voronoi(mask)
 
-    def _bounded_voronoi(self, mask):
+    def _bounded_voronoi(self, mask): # pragma: no cover
         """Vertices of bounded voronoi region.
 
         Parameters
@@ -300,7 +300,7 @@ class HvsrVault():
         return new_vertices, indices
 
     @staticmethod
-    def _voronoi_finite_polygons_2d(vor, radius=None):
+    def _voronoi_finite_polygons_2d(vor, radius=None): # pragma: no cover
         """Convert infinite 2D Voronoi regions a finite regions.
 
         Parameters
