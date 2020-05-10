@@ -17,11 +17,14 @@
 
 """Tests for Hvsr object."""
 
-import numpy as np
-import hvsrpy
-from testtools import unittest, TestCase
 import logging
-logging.basicConfig(level=logging.CRITICAL)
+
+import numpy as np
+
+import hvsrpy
+from testtools import unittest, TestCase, get_full_path
+
+logging.basicConfig(level=logging.ERROR)
 
 
 class Test_Hvsr(TestCase):
@@ -31,6 +34,7 @@ class Test_Hvsr(TestCase):
         frq = [1, 2, 3, 4]
         amp = [[1, 2, 1, 1], [1, 2, 4, 1], [1, 1, 5, 1]]
         cls.hv = hvsrpy.Hvsr(amp, frq)
+        cls.full_path = get_full_path(__file__)
 
     def test_init(self):
         # amp as 1d array
@@ -269,7 +273,7 @@ class Test_Hvsr(TestCase):
         n = 1.5
 
         # nstd_f0_frq
-        f0s = [3,4,5]
+        f0s = [3, 4, 5]
         expected = np.mean(f0s) + n*np.std(f0s, ddof=1)
         returned = hv.nstd_f0_frq(n=n, distribution=distribution)
         self.assertEqual(expected, returned)
@@ -279,6 +283,51 @@ class Test_Hvsr(TestCase):
         expected = np.mean(amps) + n*np.std(amps, ddof=1)
         returned = hv.nstd_f0_amp(n=n, distribution=distribution)
         self.assertEqual(expected, returned)
+
+    def test_io(self):
+        fname = self.full_path + "data/a2/UT.STN11.A2_C150.miniseed"
+        windowlength = 60
+        bp_filter = {"flag": False, "flow": 0.1, "maxf": 30, "order": 5}
+        width = 0.1
+        bandwidth = 40
+        resampling = {"minf": 0.2, "maxf": 20, "nf": 128, "res_type": "log"}
+        method = "geometric-mean"
+        sensor = hvsrpy.Sensor3c.from_mseed(fname)
+        sensor.meta["File Name"] = "UT.STN11.A2_C150.miniseed"
+        hv = sensor.hv(windowlength, bp_filter, width,
+                       bandwidth, resampling, method)
+        distribution_f0 = "log-normal"
+        distribution_mc = "log-normal"
+
+        # Pre-rejection
+        df = hv._stats(distribution_f0)
+        returned = np.round(df.to_numpy(), 2)
+        expected = np.array([[0.64, 0.28], [1.57, 0.28]])
+        self.assertArrayEqual(expected, returned)
+
+        n = 2
+        n_iteration = 50
+        hv.reject_windows(n, max_iterations=n_iteration,
+                          distribution_f0=distribution_f0,
+                          distribution_mc=distribution_mc)
+
+        # Post-rejection
+        df = hv._stats(distribution_f0)
+        returned = np.round(df.to_numpy(), 2)
+        expected = np.array([[0.72, 0.10], [1.39, 0.1]])
+        self.assertArrayEqual(expected, returned)
+
+        # data_format == "hvsrpy"
+        returned = hv._hvsrpy_style_lines(distribution_f0, distribution_mc)
+        with open(self.full_path+"data/output/example_output_hvsrpy.hv") as f:
+            expected = f.readlines()
+        self.assertListEqual(expected, returned)
+
+        # data_format == "geopsy"
+        returned = hv._geopsy_style_lines(distribution_f0, distribution_mc)
+        with open(self.full_path+"data/output/example_output_geopsy.hv") as f:
+            expected = f.readlines()
+        self.assertListEqual(expected, returned)
 
 
 if __name__ == "__main__":

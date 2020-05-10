@@ -17,10 +17,13 @@
 
 """Tests for HvsrRotated object."""
 
-import numpy as np
-import hvsrpy
-from testtools import unittest, TestCase
 import logging
+
+import numpy as np
+
+import hvsrpy
+from testtools import unittest, TestCase, get_full_path
+
 logging.basicConfig(level=logging.WARNING)
 
 
@@ -56,6 +59,7 @@ class Test_HvsrRotated(TestCase):
                                                  cls.azi)
         cls.hvrot_for_rej = hvsrpy.HvsrRotated.from_iter([hv1, hv2, hv3, hv4],
                                                          cls.azi)
+        cls.full_path = get_full_path(__file__)
 
     def test_init(self):
         # Simple case
@@ -277,7 +281,7 @@ class Test_HvsrRotated(TestCase):
             mean = self.hvrot.mean_curve("log-normal")
             stddev = self.hvrot.std_curve("log-normal")
             expected = np.exp(np.log(mean) + n*stddev)
-            returned = self.hvrot.nstd_mean_curve(n, "log-normal")
+            returned = self.hvrot.nstd_curve(n, "log-normal")
             self.assertArrayEqual(expected, returned)
 
             # f0_frq
@@ -307,6 +311,41 @@ class Test_HvsrRotated(TestCase):
         for dist, expected in zip(["normal", "log-normal"], [1.584, 0.4282]):
             returned = self.hvrot.std_f0_amp(distribution=dist)
             self.assertAlmostEqual(expected, returned, places=2)
+
+    def test_io(self):
+        fname = self.full_path + "data/a2/UT.STN11.A2_C150.miniseed"
+        windowlength = 60
+        bp_filter = {"flag": False, "flow": 0.1, "maxf": 30, "order": 5}
+        width = 0.1
+        bandwidth = 40
+        resampling = {"minf": 0.2, "maxf": 20, "nf": 128, "res_type": "log"}
+        method = "rotate"
+        azimuthal_interval = 15
+        azimuth = np.arange(0,180+azimuthal_interval, azimuthal_interval)
+        sensor = hvsrpy.Sensor3c.from_mseed(fname)
+        sensor.meta["File Name"] = "UT.STN11.A2_C150.miniseed"
+        hv = sensor.hv(windowlength, bp_filter, width,
+                       bandwidth, resampling, method, azimuth=azimuth)
+        distribution_f0 = "log-normal"
+        distribution_mc = "log-normal"
+
+        n = 2
+        n_iteration = 50
+        hv.reject_windows(n=n, max_iterations=n_iteration,
+                          distribution_f0=distribution_f0,
+                          distribution_mc=distribution_mc)
+
+        # Post-rejection
+        df = hv._stats(distribution_f0)
+        returned = np.round(df.to_numpy(), 2)
+        expected = np.array([[0.67, 0.18], [1.50, 0.18]])
+        self.assertArrayEqual(expected, returned)
+
+        # data_format == "hvsrpy"
+        returned = hv._hvsrpy_style_lines(distribution_f0, distribution_mc)
+        with open(self.full_path+"data/output/example_output_hvsrpy_az.hv") as f:
+            expected = f.readlines()
+        self.assertListEqual(expected, returned)
 
 
 if __name__ == "__main__":
