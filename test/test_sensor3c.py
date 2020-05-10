@@ -17,11 +17,16 @@
 
 """Tests for Sensor3c."""
 
-from testtools import unittest, TestCase, get_full_path
-import numpy as np
-import sigpropy
-import hvsrpy
 import logging
+import json
+
+import numpy as np
+import pandas as pd
+import sigpropy
+
+import hvsrpy
+from testtools import unittest, TestCase, get_full_path
+
 logging.basicConfig(level=logging.WARNING)
 
 
@@ -184,6 +189,70 @@ class Test_Sensor3c(TestCase):
         for returned in sensor:
             self.assertArrayAlmostEqual(expected, returned.amp, places=6)
 
+    def test_transform(self):
+        amp = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
+        dt = 1
+
+        expected_frq = np.array([0.00000000000000000, 0.09090909090909091,
+                                 0.18181818181818182, 0.2727272727272727,
+                                 0.36363636363636365, 0.4545454545454546])
+        expected_amp = np.array([25.0+0.0*1j,
+                                 -11.843537519677056+-3.477576385886737*1j,
+                                 0.22844587066117938+0.14681324646918337*1j,
+                                 -0.9486905697966428+-1.0948472814948405*1j,
+                                 0.1467467171062613+0.3213304885841657*1j,
+                                 -0.08296449829374097+-0.5770307602665046*1j])
+        expected_amp *= 2/len(amp)
+
+        # TimeSeries
+        tseries = sigpropy.TimeSeries(amp, dt)
+        sensor = hvsrpy.Sensor3c(tseries, tseries, tseries)
+        fft = sensor.transform()
+
+        for val in fft.values():
+            for expected, returned in [(expected_frq, val.frq), (expected_amp, val.amp)]:
+                self.assertArrayAlmostEqual(expected, returned)
+
+        # WindowedTimeSeries
+        amps = np.array([amp, amp])
+        tseries = sigpropy.WindowedTimeSeries(amps, dt)
+        sensor = hvsrpy.Sensor3c(tseries, tseries, tseries)
+        fft = sensor.transform()
+
+        for val in fft.values():
+            for expected, returned in [(expected_frq, val.frq), (expected_amp, val.amp[0])]:
+                self.assertArrayAlmostEqual(expected, returned)
+
+        # Bad TimeSeries
+        sensor.ew = "bad TimeSeries"
+        self.assertRaises(NotImplementedError, sensor.transform)
+
+    def test_hv(self):
+        with open(self.full_path+"int_singlewindow_cases.json", "r") as f:
+            cases = json.load(f)
+
+        bp_filter = {"flag": False, "flow": 0.001, "fhigh": 49.9, "order": 5}
+
+        for key, value in cases.items():
+            if key in ["f", "k", "l"]:
+                continue
+            fname = self.full_path+value["fname_miniseed"]
+            sensor = hvsrpy.Sensor3c.from_mseed(fname)
+            settings = value["settings"]
+            my_hv = sensor.hv(settings["length"],
+                              bp_filter,
+                              settings["width"],
+                              settings["b"],
+                              settings["resampling"],
+                              settings["method"],
+                              azimuth=settings.get("azimuth"))
+            geopsy_hv = pd.read_csv(self.full_path+value["fname_geopsy"],
+                                    delimiter="\t",
+                                    comment="#",
+                                    names=["frq", "avg", "min", "max"])
+            self.assertArrayAlmostEqual(my_hv.amp[0],
+                                        geopsy_hv["avg"].to_numpy(),
+                                        delta=0.375)
 
 
 if __name__ == "__main__":
