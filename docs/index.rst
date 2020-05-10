@@ -1,14 +1,11 @@
-.. hvsrpy documentation master file, created by sphinx-quickstart on
-   Tue Nov 12 10:00:56 2019. You can adapt this file completely to your
-   liking, but it should at least contain the root `toctree` directive.
-
 hvsrpy Documentation
 ====================
 
 `hvsrpy` is a Python package for horizontal-to-vertical spectral ratio
-processing. It includes two main class definitons `Sensor3c` and `Hvsr`. These
-classes include various methods for creating and manipulating 3-component
-sensor and horizontal-to-vertical spectral ratio objects, respectively.
+processing. It includes three main class definitions `Sensor3c`, `Hvsr`, and
+`HvsrRotated`. These classes include various methods for creating and
+manipulating 3-component sensor and horizontal-to-vertical spectral ratio
+objects.
 
 This package and the classes therein are actively being developed, so if you
 do not see a feature you would like it may very well be under development and

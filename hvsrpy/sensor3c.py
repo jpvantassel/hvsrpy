@@ -101,7 +101,7 @@ class Sensor3c():
         return (values_dict["ns"], values_dict["ew"], values_dict["vt"])
 
     def __init__(self, ns, ew, vt, meta=None):
-        """Initalize a 3-component sensor (Sensor3c) object.
+        """Initialize a 3-component sensor (Sensor3c) object.
 
         Parameters
         ----------
@@ -123,7 +123,7 @@ class Sensor3c():
 
     @property
     def normalization_factor(self):
-        """Return sensor time history normalization factor."""
+        """Time history normalization factor across all components."""
         factor = 1E-6
         for attr in ["ns", "ew", "vt"]:
             cmax = np.max(np.abs(getattr(self, attr).amp.flatten()))
@@ -257,7 +257,8 @@ class Sensor3c():
     def split(self, windowlength):
         """Split component `TimeSeries` into `WindowedTimeSeries`.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+        documentation for details.
 
         """
         for attr in ["ew", "ns", "vt"]:
@@ -268,7 +269,8 @@ class Sensor3c():
     def detrend(self):
         """Detrend components.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+        documentation for details.
 
         """
         for comp in [self.ew, self.ns, self.vt]:
@@ -277,7 +279,8 @@ class Sensor3c():
     def bandpassfilter(self, flow, fhigh, order):  # pragma: no cover
         """Bandpassfilter components.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+        documentation for details.
 
         """
         for comp in [self.ew, self.ns, self.vt]:
@@ -286,7 +289,8 @@ class Sensor3c():
     def cosine_taper(self, width):
         """Cosine taper components.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
+        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+        documentation for details.
 
         """
         for comp in [self.ew, self.ns, self.vt]:
@@ -319,15 +323,15 @@ class Sensor3c():
 
         Parameters
         ----------
-        method : {'squared-averge', 'geometric-mean', 'azimuth'}
+        method : {'squared-average', 'geometric-mean', 'azimuth'}
             Defines how the two horizontal components are combined
             to represent a single horizontal component.
         horizontals : dict
             If combination is done in the frequency-domain (i.e.,
-            `method` in `['squared-average', 'geometric-mean']`)
-            horizontals is a `dict` off `FourierTransform` objects,
+            `method in ['squared-average', 'geometric-mean']`)
+            horizontals is a `dict` of `FourierTransform` objects,
             see meth: tranform for details. If combination is done in
-            the time-domain (i.e., `method` in `['azimuth']`)
+            the time-domain (i.e., `method in ['azimuth']`)
             horizontals is a `dict` of `TimeSeries` objects.
         azimuth : float, optional
             Valid only if `method` is `azimuth` in which case an azimuth
@@ -392,7 +396,7 @@ class Sensor3c():
         """Prepare time series and Fourier transforms then compute H/V.
 
         More information for the all parameters can be found in
-        the documenation of
+        the documentation of
         `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
 
         Parameters

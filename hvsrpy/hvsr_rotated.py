@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python package for horizontal-to-vertical
+# This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -49,8 +49,8 @@ class HvsrRotated():
         hvsr : Hvsr
             `Hvsr` object.
         azimuth : float
-            Rotation angle in degrees measured anti-clockwise positve
-            from north (i.e., 0 degrees).
+            Rotation angle in degrees measured clockwise positive from
+            north (i.e., 0 degrees).
 
         Returns
         -------
@@ -66,7 +66,7 @@ class HvsrRotated():
     def _check_input(hvsr, az):
         """Check input, specifically:
             1. `hvsr` is an instance of `Hvsr`.
-            2. Cast `az` to float (if it is not already).
+            2. `az` is `float`.
             3. `az` is greater than 0.
 
         """
@@ -88,8 +88,8 @@ class HvsrRotated():
         hvsr : Hvsr
             `Hvsr` object.
         az : float
-            Rotation angle in degrees measured anti-clockwise positve
-            from north (i.e., 0 degrees).
+            Rotation angle in degrees measured clockwise from north
+            (i.e., 0 degrees).
 
         Returns
         -------
@@ -156,7 +156,7 @@ class HvsrRotated():
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}
+        distribution : {'normal', 'log-normal'}, optional
             Assumed distribution of `f0`, default is 'log-normal'.
 
         Returns
@@ -211,17 +211,18 @@ class HvsrRotated():
         return np.sqrt(num/(1-wi2))
 
     def std_f0_frq(self, distribution='log-normal'):
-        """Sample standard deviation of `f0` of valid time windows.
+        """Sample standard deviation of `f0` for all valid time windows
+        across all azimuths.
 
         Parameters
         ----------
-            distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of `f0`, default is 'log-normal'.
+        distribution : {'normal', 'log-normal'}, optional
+            Assumed distribution of `f0`, default is 'log-normal'.
 
         Returns
         -------
-            Sample standard deviation of `f0` according to the
-            distribution specified.
+        float
+            Sample standard deviation of `f0`.
 
         Raises
         ------
@@ -233,7 +234,8 @@ class HvsrRotated():
                                  values=self.peak_frq)
 
     def std_f0_amp(self, distribution='log-normal'):
-        """Sample standard deviation of `f0` amplitude of valid windows.
+        """Sample standard deviation of `f0` amplitude for all valid
+        time windows across all azimuths.
 
         Parameters
         ----------
@@ -243,7 +245,7 @@ class HvsrRotated():
         Returns
         -------
         float
-            Sample standard deviation of the amplitude of f0 according
+            Sample standard deviation of the amplitude of `f0` according
             to the distribution specified.
 
         Raises
@@ -264,14 +266,27 @@ class HvsrRotated():
         return self.hvsrs[0].frq
 
     def mean_curves(self, distribution='log-normal'):
-        """Mean curve for each azimuth row=azimuth, col=frq."""
+        """Mean curve for each azimuth
+
+        Parameters
+        ----------
+        distribution : {'normal', 'log-normal'}, optional
+            Assumed distribution of mean curve, default is 'log-normal'.
+
+        Returns
+        -------
+        ndarray
+            Each row corresponds to an azimuth and each column a
+            frequency.
+
+        """
         array = np.empty((self.azimuth_count, len(self.frq)))
         for az_cnt, hvsr in enumerate(self.hvsrs):
             array[az_cnt, :] = hvsr.mean_curve(distribution=distribution)
         return array
 
     def mean_curves_peak(self, distribution="log-normal"):
-        """Peak from each mean curve on a per azimuth basis."""
+        """Peak from each mean curve, one per azimuth."""
         frqs, amps = np.empty(self.azimuth_count), np.empty(self.azimuth_count)
         for az_cnt, hvsr in enumerate(self.hvsrs):
             frqs[az_cnt] = hvsr.mc_peak_frq(distribution=distribution)
@@ -279,13 +294,12 @@ class HvsrRotated():
         return (frqs, amps)
 
     def mean_curve(self, distribution='log-normal'):
-        """Return mean H/V curve.
+        """Mean H/V curve considering all valid windows and azimuths.
 
         Parameters
         ----------
-            distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of mean curve, default is
-                'log-normal'.
+        distribution : {'normal', 'log-normal'}, optional
+            Assumed distribution of mean curve, default is 'log-normal'.
 
         Returns
         -------
@@ -305,9 +319,9 @@ class HvsrRotated():
         """Sample standard deviation associated with the mean H/V curve.
 
         Parameters
-            distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of H/V curve, default is
-                'log-normal'.
+        ----------
+        distribution : {'normal', 'log-normal'}, optional
+            Assumed distribution of H/V curve, default is 'log-normal'.
 
         Returns
         -------
@@ -321,6 +335,7 @@ class HvsrRotated():
             If only single time window is defined.
         KeyError
             If `distribution` does not match the available options.
+
         """
         return self._std_factory(distribution=distribution,
                                  values=self.amp, axis=0)
@@ -338,7 +353,7 @@ class HvsrRotated():
                                      std=self.std_curve(distribution=distribution))
 
     def nstd_f0_frq(self, n, distribution):
-        """Nth standard deviation on f0 from all azimuths"""
+        """Nth standard deviation on `f0` from all azimuths"""
         return self._nth_std_factory(n=n, distribution=distribution,
                                      mean=self.mean_f0_frq(
                                          distribution=distribution),
@@ -355,7 +370,7 @@ class HvsrRotated():
         Returns
         -------
         float
-            Ampltiude associated with the peak of the mean H/V curve.
+            Amplitude associated with the peak of the mean H/V curve.
 
         """
         mc = self.mean_curve(distribution)
@@ -396,8 +411,8 @@ class HvsrRotated():
             raise NotImplementedError(msg)
 
         df = DataFrame(data=data, columns=columns,
-                       index=["Fundemental Site Frequency, f0,AZ",
-                              "Fundemental Site Period, T0,AZ"])
+                       index=["Fundamental Site Frequency, f0,AZ",
+                              "Fundamental Site Period, T0,AZ"])
         return df
 
     def print_stats(self, distribution_f0, places=2):  # pragma: no cover
@@ -406,7 +421,7 @@ class HvsrRotated():
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""
-        # f0 from windows
+        # `f0` from windows
         mean_f = self.mean_f0_frq(distribution_f0)
         sigm_f = self.std_f0_frq(distribution_f0)
         ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
@@ -432,7 +447,7 @@ class HvsrRotated():
             f"# Number of Standard Deviations Used for Rejection () [n],{ex.meta.get('n')}",
             # f"# Number of Accepted Windows (),{self.n_windows-n_rejected}"
             # f"# Number of Rejected Windows (),{n_rejected}",
-            f"# Distribution of f0 (),{distribution_f0}"]
+            f"# Distribution of `f0` (),{distribution_f0}"]
 
         if distribution_f0 == "log-normal":
             mean_t = 1/mean_f
@@ -441,9 +456,9 @@ class HvsrRotated():
             ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
 
             lines += [
-                f"# Median f0 (Hz) [LMf0,AZ],{mean_f}",
-                f"# Log-normal standard deviation f0 () [SigmaLNf0,AZ],{sigm_f}",
-                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Median `f0` (Hz) [LMf0,AZ],{mean_f}",
+                f"# Log-normal standard deviation `f0` () [SigmaLNf0,AZ],{sigm_f}",
+                f"# 68 % Confidence Interval `f0` (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
                 f"# Median T0 (s) [LMT0,AZ],{mean_t}",
                 f"# Log-normal standard deviation T0 () [SigmaLNT0,AZ],{sigm_t}",
                 f"# 68 % Confidence Interval T0 (s),{ci_68_lower_t},to,{ci_68_upper_t}",
@@ -451,9 +466,9 @@ class HvsrRotated():
 
         else:
             lines += [
-                f"# Mean f0 (Hz) [f0,AZ],{mean_f}",
-                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{sigm_f}",
-                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Mean `f0` (Hz) [f0,AZ],{mean_f}",
+                f"# Standard deviation `f0` (Hz) [Sigmaf0,AZ],{sigm_f}",
+                f"# 68 % Confidence Interval `f0` (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
                 f"# Mean T0 (s) [LMT0,AZ],NAN",
                 f"# Standard deviation T0 () [SigmaT0,AZ],NAN",
                 f"# 68 % Confidence Interval T0 (s),NAN",
@@ -477,12 +492,12 @@ class HvsrRotated():
         return _lines
 
     def to_file(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
-        """Save H/V data to file in hvsrpy format.
+        """Save H/V data to file.
 
         Parameters
         ----------
         fname : str
-            Name of file to save the results, may be a full or
+            Name of file to save the results, may be the full or a
             relative path.
         distribution_f0 : {'log-normal', 'normal'}, optional
             Assumed distribution of `f0` from the time windows, the

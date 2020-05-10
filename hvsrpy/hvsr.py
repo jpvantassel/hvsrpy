@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Hvsr class definition."""
+"""Class definition for Hvsr object."""
 
 import logging
 
@@ -87,7 +87,7 @@ class Hvsr():
         return value
 
     def __init__(self, amplitude, frequency, find_peaks=True, meta=None):
-        """Initialize a `Hvsr` oject from an amplitude and frequency
+        """Initialize a `Hvsr` object from an amplitude and frequency
         vector.
 
         Parameters
@@ -99,14 +99,14 @@ class Hvsr():
             Vector of frequencies, corresponding to each column.
         find_peaks : bool, optional
             Indicates whether peaks of Hvsr will be found when created,
-            default is True.
+            default is `True`.
         meta : dict, optional
-            Meta information about the object, default is None.
+            Meta information about the object, default is `None`.
 
         Returns
         -------
         Hvsr
-            Initialized with `amplitdue` and `frequency`.
+            Initialized with `amplitude` and `frequency`.
         """
         self.amp = self._check_input("amplitude", amplitude)
         self.frq = self._check_input("frequency", frequency)
@@ -142,7 +142,7 @@ class Hvsr():
     def find_peaks(amp, **kwargs):
         """Indices of all peaks in `amp`.
 
-        Wrapper method for scipy.signal.find_peaks function.
+        Wrapper method for `scipy.signal.find_peaks` function.
 
         Parameters
         ----------
@@ -157,10 +157,11 @@ class Hvsr():
         Returns
         -------
         Tuple
-            Of the form (peaks, settings). Where `peaks` is an `ndarray`
-            or `list` of `ndarray` (one per window) of peak indices,
-            and `settings` is `dict`, refer to `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            documentation.
+            Of the form `(peaks, settings)`. Where `peaks` is an 
+            `ndarray` or `list` of `ndarray` (one per window) of peak
+            indices, and `settings` is `dict`, refer to
+            `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
+            documentation for details.
 
         """
         if len(amp.shape) == 1:
@@ -283,13 +284,13 @@ class Hvsr():
 
         Parameters
         ----------
-            distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of `f0`, default is 'log-normal'.
+        distribution : {'normal', 'log-normal'}, optional
+            Assumed distribution of `f0`, default is 'log-normal'.
 
         Returns
         -------
-            Sample standard deviation of `f0` according to the
-            distribution specified.
+        float
+            Sample standard deviation of `f0`.
 
         Raises
         ------
@@ -311,8 +312,7 @@ class Hvsr():
         Returns
         -------
         float
-            Sample standard deviation of the amplitude of f0 according
-            to the distribution specified.
+            Sample standard deviation of the amplitude of f0.
 
         Raises
         ------
@@ -327,9 +327,8 @@ class Hvsr():
 
         Parameters
         ----------
-            distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of mean curve, default is
-                'log-normal'.
+        distribution : {'normal', 'log-normal'}, optional
+            Assumed distribution of mean curve, default is 'log-normal'.
 
         Returns
         -------
@@ -351,9 +350,9 @@ class Hvsr():
         """Sample standard deviation associated with the mean H/V curve.
 
         Parameters
-            distribution : {'normal', 'log-normal'}, optional
-                Assumed distribution of H/V curve, default is
-                'log-normal'.
+        ----------
+        distribution : {'normal', 'log-normal'}, optional
+            Assumed distribution of H/V curve, default is 'log-normal'.
 
         Returns
         -------
@@ -403,7 +402,7 @@ class Hvsr():
         Returns
         -------
         float
-            Ampltiude associated with the peak of the mean H/V curve.
+            Amplitude associated with the peak of the mean H/V curve.
 
         """
         mc = self.mean_curve(distribution)
@@ -412,8 +411,7 @@ class Hvsr():
     def reject_windows(self, n=2, max_iterations=50,
                        distribution_f0='log-normal',
                        distribution_mc='log-normal'):
-        """Perform rejection of H/V windows using the method proposed by
-        Cox et al. (in review).
+        """Perform rejection of spurious H/V windows.
 
         Parameters
         ----------
@@ -507,21 +505,20 @@ class Hvsr():
             raise NotImplementedError(msg)
 
     def nstd_f0_frq(self, n, distribution):
-        """Return nth standard deviation of `f0`.
+        """Value n standard deviations from mean `f0`.
 
         Parameters
         ----------
         n : float
-            Number of standard deviations away from the mean `f0`
-            from the valid time windows.
+            Number of standard deviations away from the mean `f0` from
+            the valid time windows.
         distribution : {'log-normal', 'normal'}, optional
-            Assumed distribution of `f0`, the default is
-            'log-normal'.
+            Assumed distribution of `f0`, the default is 'log-normal'.
 
         Returns
         -------
         float
-            nth standard deviation of `f0`.
+            Value n standard deviations from mean `f0`.
 
         """
         return self._nth_std_factory(n, distribution,
@@ -529,22 +526,20 @@ class Hvsr():
                                      self.std_f0_frq(distribution))
 
     def nstd_f0_amp(self, n, distribution):
-        """nth sample standard deviation of amplitude of `f0` from time
-        windows.
+        """Value n standard deviations from mean `f0` amplitude.
 
         Parameters
         ----------
         n : float
-            Number of standard deviations away from the mean
-            amplitude of `f0` from valid time windows.
+            Number of standard deviations away from the mean amplitude
+            of `f0` from valid time windows.
         distribution : {'log-normal', 'normal'}, optional
-            Assumed distribution of `f0`, the default is
-            'log-normal'.
+            Assumed distribution of `f0`, the default is 'log-normal'.
 
         Returns
         -------
         float
-            nth standard deviation of ampltiude of `f0`.
+            Value n standard deviations from mean `f0` amplitude.
 
         """
         return self._nth_std_factory(n, distribution,
@@ -552,14 +547,14 @@ class Hvsr():
                                      self.std_f0_amp(distribution))
 
     def nstd_curve(self, n, distribution="log-normal"):
-        """Return nth standard deviation curve.
+        """nth standard deviation curve.
 
         Parameters
         ----------
         n : float
             Number of standard deviations away from the mean curve.
         distribution : {'log-normal', 'normal'}, optional
-            Assumed distribution of mean curve, the default is
+            Assumed distribution of mean curve, the default is\
             'log-normal'.
 
         Returns
@@ -590,8 +585,8 @@ class Hvsr():
             raise NotImplementedError(msg)
 
         df = DataFrame(data=data, columns=columns,
-                       index=["Fundemental Site Frequency, f0",
-                              "Fundemental Site Period, T0"])
+                       index=["Fundamental Site Frequency, f0",
+                              "Fundamental Site Period, T0"])
         return df
 
     def print_stats(self, distribution_f0, places=2):  # pragma: no cover
