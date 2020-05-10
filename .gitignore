@@ -4,7 +4,6 @@
 *.tmp_profiler_run
 .vscode
 html
-examples/azmuthal_hvsrpy_interface.ipynb
 examples/spatial_hvsrpy_interface.ipynb
 
 # Folders

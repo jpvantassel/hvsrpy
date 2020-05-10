@@ -31,16 +31,11 @@ ratio (H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
 Cox at The University of Texas at Austin. The automated frequency-domain
 window-rejection algorithm and log-normal statistics implemented in `hvsrpy`
-were developed by Tianjian Cheng under the supervision of Professor Brady R. Cox
-at The University of Texas at Austin and detailed in Cox et al. (2020), citation
-below.
+are detailed in Cox et al. (2020). The statistical approach to incorporate
+azimuth variability implemented in `hvsrpy` are detailed in Cheng et al. (2020).
 
-If you use _hvsrpy_ in your research, we ask you please cite the following:
-
->Cox, B. R., Cheng, T., Vantassel, J. P., and Manuel, L. (2020). “A Statistical
-Representation and Frequency-Domain Window-Rejection Algorithm for
-Single-Station HVSR Measurements.” _Geophysical Journal International._
-In review.
+If you use `hvsrpy` in your research or consulting, we ask you please cite the
+following:
 
 >Joseph Vantassel. (2020). jpvantassel/hvsrpy: latest (Concept). Zenodo.
 [http://doi.org/10.5281/zenodo.3666956](http://doi.org/10.5281/zenodo.3666956)
@@ -50,6 +45,17 @@ general concept citations, such as that listed above. To generate a version
 specific citation for `hvsrpy`, please use the citation tool for that specific
 version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
 
+These works provide background for the calculations performed by `hvsrpy`.
+
+> Cox, B. R., Cheng, T., Vantassel, J. P., and Manuel, L. (2020). “A statistical
+representation and frequency-domain window-rejection algorithm for
+single-station HVSR measurements.” _Geophysical Journal International_, 221(3),
+2170-2183.
+
+> Cheng, T., Cox, B. R., Vantassel, J. P., and Manuel, L. (2020). "A
+statistical approach to account for azimuthal variability in single-station
+HVSR measurements." _Geophysical Journal International_, In Review.
+
 ## Why use _hvsrpy_
 
 ---
@@ -57,27 +63,35 @@ version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
 `hvsrpy` contains features not currently available in any other commercial or
 open-source software, including:
 
--   A fully-automated frequency-domain window-rejection algorithm, which allows
-spurious time windows to be removed in a repeatable and expedient manner.
+-   A method to calculate statistics on `f0` that incorporates azimuthal
+variability.
+-   A fully-automated frequency-domain window-rejection algorithm.
 -   A log-normal distribution for the fundamental site frequency (`f0`) so the
-uncertainty in `f0` can be represented consistently regardless of whether it is
-described in terms of frequency or period.
--   Combining the two horizontal components using the geometric mean.
--   Access to the H/V data from each time window, not only the
-mean/median curve.
+uncertainty in `f0` can be represented consistently in frequency or period.
+-   Ability to use the geometric-mean, squared-average, or any azimuth of your
+choice.
+-   Access to the H/V data from each time window (and azimuth in the case of
+azimuthal calculations), and not only the mean/median curve.
 -   A performant framework for batch-style processing.
 
+### Example output from `hvsrpy` when considering the geometric-mean of the horizontal components
+
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure.png?raw=true" width="775">
+
+### Example output from `hvsrpy` when considering azimuthal variability
+
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_az.png?raw=true" width="775">
 
 ## A comparison of _hvsrpy_ with _Geopsy_
 
 ---
 
-To illustrate that `hvsrpy` can exactly reproduce the results from the popular
-open-source software `Geopsy` two comparisons are shown below. One for a single
-time window (left) and one for multiple time windows (right). Additional
-examples and the information necessary to reproduce them are provided at the end
-of this document.
+Some of the functionality available in `hvsrpy` overlaps with the popular
+open-source software `Geopsy`. And so to encourage standardization, wherever
+their functionality coincides we have sought to ensure consistency. Two such
+comparisons are shown below. One for a single time window (left) and one for
+multiple time windows (right). Additional examples and the information
+necessary to reproduce them are provided at the end of this document.
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_a.png?raw=true" width="425"> <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN11_c050.png?raw=true" width="425">
 
@@ -85,28 +99,36 @@ of this document.
 
 ---
 
-### Installing _hvsrpy_
+### Installing or Upgrading _hvsrpy_
 
 1.  If you do not have Python 3.6 or later installed, you will need to do
-so. A detailed set of instructions can be found [here](https://jpvantassel.github.io/python3-course/#/intro/installing_python).
+so. A detailed set of instructions can be found
+[here](https://jpvantassel.github.io/python3-course/#/intro/installing_python).
 
-2.  `pip install hvsrpy`. If you are not familiar with `pip`, a useful tutorial
-can be found [here](https://jpvantassel.github.io/python3-course/#/intro/pip).
+2.  If you have not installed `hvsrpy` previously use `pip install hvsrpy`.
+If you are not familiar with `pip`, a useful tutorial can be found
+[here](https://jpvantassel.github.io/python3-course/#/intro/pip). If you have
+an earlier version and would like to upgrade to the latest version of `hvsrpy`
+use `pip install hvsrpy --upgrade`.
 
-3.  Confirm that `hvsrpy` has installed successfully by examining the last few
-lines of the text displayed in the console.
+3.  Confirm that `hvsrpy` has installed/updated successfully by examining the
+last few lines of the text displayed in the console.
 
 ### Using _hvsrpy_
 
 1.  Download the contents of the [examples](https://github.com/jpvantassel/hvsrpy/tree/master/examples)
   directory to any location of your choice.
 
-2.  Launch the Jupyter notebook (`file with .ipynb extension`) in the examples
-  directory for a no-coding-required introduction to the `hvsrpy` package. If
-  you have not installed `Jupyter`, detailed instructions can be found
-  [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
+2.  Launch the Jupyter notebook (`simple_hvsrpy_interface.ipynb`) in the examples
+  directory for a no-coding-required introduction to the basics of the `hvsrpy`
+  package. If you have not installed `Jupyter`, detailed instructions can be
+  found [here](https://jpvantassel.github.io/python3-course/#/intro/installing_jupyter).
 
-3.  Enjoy!
+3.  Launch the Jupyter notebook (`azimuthal_hvsrpy_interface.ipynb`) in the
+  examples directory to perform more rigorous calculations which incorporate
+  azimuthal variability.
+
+4.  Enjoy!
 
 ### Looking for more information
 

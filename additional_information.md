@@ -31,7 +31,7 @@ Currently _hvsrpy_ is able to easily (i.e., no coding required) process
 there are plans to extend this functionality to other common data formats in the
 near future.
 
-## Do I need to pre-process my ambient noise recording before using _hvsrpy?
+## Do I need to pre-process my ambient noise recording before using _hvsrpy_?
 
 In general, good quality ambient noise data (i.e., the sensor was allowed to
 record undisturbed for the full record length) does not need to be
