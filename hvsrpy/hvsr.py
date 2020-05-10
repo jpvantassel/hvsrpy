@@ -572,7 +572,7 @@ class Hvsr():
                                      self.mean_curve(distribution),
                                      self.std_curve(distribution))
 
-    def _define_stats(self, distribution_f0):
+    def _stats(self, distribution_f0):
         if distribution_f0 == "log-normal":
             columns = ["Lognormal Median", "Lognormal Standard Deviation"]
             data = np.array([[self.mean_f0_frq(distribution_f0),
@@ -596,9 +596,9 @@ class Hvsr():
 
     def print_stats(self, distribution_f0, places=2):  # pragma: no cover
         """Print basic statistics of `Hvsr` instance."""
-        display(self._define_stats(distribution_f0=distribution_f0).round(places))
+        display(self._stats(distribution_f0=distribution_f0).round(places))
 
-    def _geopsy_style_lines(self, distribution_f0, distribution_mc):  # pragma: no cover
+    def _geopsy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for Geopsy-style file."""
         # f0 from windows
         mean = self.mean_f0_frq(distribution_f0)
@@ -613,7 +613,7 @@ class Hvsr():
         _max = self.nstd_curve(+1, distribution_mc)
 
         lines = [
-            f"# hvsrpy output version 0.2.2",
+            f"# hvsrpy output version 0.3.0",
             f"# Number of windows = {len(self.valid_window_indices)}",
             f"# f0 from average\t{mc_peak_frq}",
             f"# Number of windows for f0 = {len(self.valid_window_indices)}",
@@ -633,33 +633,7 @@ class Hvsr():
 
         return _lines
 
-    def to_file_like_geopsy(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
-        """Save H/V data to file in Geopsy format.
-
-        Parameters
-        ----------
-        fname : str
-            Name of file to save the results, may be a full or
-            relative path.
-        distribution_f0 : {'log-normal', 'normal'}, optional
-            Assumed distribution of `f0` from the time windows, the
-            default is 'log-normal'.
-        distribution_mc : {'log-normal', 'normal'}, optional
-            Assumed distribution of mean curve, the default is
-            'log-normal'.
-
-        Returns
-        -------
-        None
-            Writes file to disk.
-
-        """
-        lines = self._geopsy_style_lines(distribution_f0, distribution_mc)
-        with open(fname, "w") as f:
-            for line in lines:
-                f.write(line)
-
-    def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):  # pragma: no cover
+    def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""
         # f0 from windows
         mean_f = self.mean_f0_frq(distribution_f0)
@@ -677,7 +651,7 @@ class Hvsr():
         n_rejected = self.n_windows - len(self.valid_window_indices)
         rejection = self.meta.get('Performed Rejection')
         lines = [
-            f"# hvsrpy output version 0.2.2",
+            f"# hvsrpy output version 0.3.0",
             f"# File Name (),{self.meta.get('File Name')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
             f"# Total Number of Windows (),{self.n_windows}",
@@ -729,8 +703,8 @@ class Hvsr():
 
         return _lines
 
-    def to_file(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
-        """Save H/V data to file in hvsrpy format.
+    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):  # pragma: no cover
+        """Save H/V data to summary file.
 
         Parameters
         ----------
@@ -743,6 +717,8 @@ class Hvsr():
         distribution_mc : {'log-normal', 'normal'}, optional
             Assumed distribution of mean curve, the default is
             'log-normal'.
+        data_format : {'hvsrpy', 'geopsy'}, optional
+            Format of output data file, default is 'hvsrpy'.
 
         Returns
         -------
@@ -750,7 +726,12 @@ class Hvsr():
             Writes file to disk.
 
         """
-        lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
+        if data_format=="geopsy":
+            lines = self._geopsy_style_lines(distribution_f0, distribution_mc)
+        elif data_format =="hvsrpy":
+            lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
+        else:
+            raise NotImplementedError(f"data_format={data_format} is unknown.")
 
         with open(fname, "w") as f:
             for line in lines:

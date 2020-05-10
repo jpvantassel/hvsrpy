@@ -20,6 +20,7 @@
 import logging
 
 import numpy as np
+from pandas import DataFrame
 
 from hvsrpy import Hvsr
 
@@ -206,7 +207,7 @@ class HvsrRotated():
             wi = 1/(n*i)
             num += np.sum(diff*diff*wi, **kwargs)
             wi2 += wi*wi*i
-            
+
         return np.sqrt(num/(1-wi2))
 
     def std_f0_frq(self, distribution='log-normal'):
@@ -329,16 +330,18 @@ class HvsrRotated():
         return Hvsr._nth_std_factory(n=n, distribution=distribution,
                                      mean=mean, std=std)
 
-    def nstd_mean_curve(self, n, distribution):
+    def nstd_curve(self, n, distribution):
         """Nth standard deviation on mean curve from all azimuths"""
         return self._nth_std_factory(n=n, distribution=distribution,
-                                     mean=self.mean_curve(distribution=distribution),
+                                     mean=self.mean_curve(
+                                         distribution=distribution),
                                      std=self.std_curve(distribution=distribution))
 
     def nstd_f0_frq(self, n, distribution):
         """Nth standard deviation on f0 from all azimuths"""
         return self._nth_std_factory(n=n, distribution=distribution,
-                                     mean=self.mean_f0_frq(distribution=distribution),
+                                     mean=self.mean_f0_frq(
+                                         distribution=distribution),
                                      std=self.std_f0_frq(distribution=distribution))
 
     def mc_peak_amp(self, distribution='log-normal'):
@@ -375,4 +378,127 @@ class HvsrRotated():
         mc = self.mean_curve(distribution)
         return float(self.frq[np.where(mc == np.max(mc[Hvsr.find_peaks(mc)[0]]))])
 
+    def _stats(self, distribution_f0):
+        if distribution_f0 == "log-normal":
+            columns = ["Lognormal Median", "Lognormal Standard Deviation"]
+            data = np.array([[self.mean_f0_frq(distribution_f0),
+                              self.std_f0_frq(distribution_f0)],
+                             [1/self.mean_f0_frq(distribution_f0),
+                              self.std_f0_frq(distribution_f0)]])
 
+        elif distribution_f0 == "normal":
+            columns = ["Means", "Standard Deviation"]
+            data = np.array([[self.mean_f0_frq(distribution_f0),
+                              self.std_f0_frq(distribution_f0)],
+                             [np.nan, np.nan]])
+        else:
+            msg = f"`distribution_f0` of {distribution_f0} is not implemented."
+            raise NotImplementedError(msg)
+
+        df = DataFrame(data=data, columns=columns,
+                       index=["Fundemental Site Frequency, f0,AZ",
+                              "Fundemental Site Period, T0,AZ"])
+        return df
+
+    def print_stats(self, distribution_f0, places=2):  # pragma: no cover
+        """Print basic statistics of `Hvsr` instance."""
+        display(self._stats(distribution_f0=distribution_f0).round(places))
+
+    def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
+        """Lines for hvsrpy-style file."""
+        # f0 from windows
+        mean_f = self.mean_f0_frq(distribution_f0)
+        sigm_f = self.std_f0_frq(distribution_f0)
+        ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
+        ci_68_upper_f = self.nstd_f0_frq(+1, distribution_f0)
+
+        # mean curve
+        mc = self.mean_curve(distribution_mc)
+        mc_peak_frq = self.mc_peak_frq(distribution_mc)
+        mc_peak_amp = self.mc_peak_amp(distribution_mc)
+        _min = self.nstd_curve(-1, distribution_mc)
+        _max = self.nstd_curve(+1, distribution_mc)
+
+        # n_rejected = self.n_windows - len(self.valid_window_indices)
+        ex = self.hvsrs[0]
+        rejection = ex.meta.get('Performed Rejection')
+        lines = [
+            f"# hvsrpy output version 0.3.0",
+            f"# File Name (),{ex.meta.get('File Name')}",
+            f"# Window Length (s),{ex.meta.get('Window Length')}",
+            f"# Total Number of Windows (),{ex.n_windows}",
+            f"# Total Number of Azimuths (),{self.azimuth_count}",
+            f"# Frequency Domain Window Rejection Performed (),{'False' if rejection is None else rejection}",
+            f"# Number of Standard Deviations Used for Rejection () [n],{ex.meta.get('n')}",
+            # f"# Number of Accepted Windows (),{self.n_windows-n_rejected}"
+            # f"# Number of Rejected Windows (),{n_rejected}",
+            f"# Distribution of f0 (),{distribution_f0}"]
+
+        if distribution_f0 == "log-normal":
+            mean_t = 1/mean_f
+            sigm_t = sigm_f
+            ci_68_lower_t = np.exp(np.log(mean_t) - sigm_t)
+            ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
+
+            lines += [
+                f"# Median f0 (Hz) [LMf0,AZ],{mean_f}",
+                f"# Log-normal standard deviation f0 () [SigmaLNf0,AZ],{sigm_f}",
+                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Median T0 (s) [LMT0,AZ],{mean_t}",
+                f"# Log-normal standard deviation T0 () [SigmaLNT0,AZ],{sigm_t}",
+                f"# 68 % Confidence Interval T0 (s),{ci_68_lower_t},to,{ci_68_upper_t}",
+            ]
+
+        else:
+            lines += [
+                f"# Mean f0 (Hz) [f0,AZ],{mean_f}",
+                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{sigm_f}",
+                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Mean T0 (s) [LMT0,AZ],NAN",
+                f"# Standard deviation T0 () [SigmaT0,AZ],NAN",
+                f"# 68 % Confidence Interval T0 (s),NAN",
+            ]
+
+        c_type = "Median" if distribution_mc == "log-normal" else "Mean"
+        lines += [
+            f"# {c_type} Curve Distribution (),{distribution_mc}",
+            f"# {c_type} Curve Peak Frequency (Hz) [f0mc,AZ],{mc_peak_frq}",
+            f"# {c_type} Curve Peak Amplitude (),{mc_peak_amp}",
+            f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
+        ]
+
+        _lines = []
+        for line in lines:
+            _lines.append(line+"\n")
+
+        for f_i, mean_i, bel_i, abv_i in zip(self.frq, mc, _min, _max):
+            _lines.append(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
+
+        return _lines
+
+    def to_file(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
+        """Save H/V data to file in hvsrpy format.
+
+        Parameters
+        ----------
+        fname : str
+            Name of file to save the results, may be a full or
+            relative path.
+        distribution_f0 : {'log-normal', 'normal'}, optional
+            Assumed distribution of `f0` from the time windows, the
+            default is 'log-normal'.
+        distribution_mc : {'log-normal', 'normal'}, optional
+            Assumed distribution of mean curve, the default is
+            'log-normal'.
+
+        Returns
+        -------
+        None
+            Writes file to disk.
+
+        """
+        lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
+
+        with open(fname, "w") as f:
+            for line in lines:
+                f.write(line)
