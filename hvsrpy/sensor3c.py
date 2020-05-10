@@ -53,7 +53,7 @@ class Sensor3c():
         Specifically:
             1. Ensure all components are `TimeSeries` objects.
             2. Ensure all components have equal `dt`.
-            3. Ensure all components have same `n_samples`. If not trim
+            3. Ensure all components have same `nsamples`. If not trim
             components to the common length.
 
         Parameters
@@ -73,7 +73,7 @@ class Sensor3c():
             msg = f"'ns' must be a `TimeSeries`, not {type(ns)}."
             raise TypeError(msg)
         dt = ns.dt
-        n_samples = ns.n_samples
+        nsamples = ns.nsamples
         flag_cut = False
         for key, value in values_dict.items():
             if key == "ns":
@@ -84,7 +84,7 @@ class Sensor3c():
             if value.dt != dt:
                 msg = f"All components must have equal `dt`."
                 raise ValueError(msg)
-            if value.n_samples != n_samples:
+            if value.nsamples != nsamples:
                 logging.info("Components are not of the same length.")
                 flag_cut = True
 
