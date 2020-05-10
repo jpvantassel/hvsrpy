@@ -18,12 +18,15 @@
 """Class definition for Sensor3c, a 3-component sensor."""
 
 import math
-import numpy as np
-from hvsrpy import Hvsr, HvsrRotated
-from sigpropy import TimeSeries, FourierTransform, WindowedTimeSeries, FourierTransformSuite
-import obspy
 import logging
 import json
+
+import numpy as np
+import obspy
+from sigpropy import TimeSeries, FourierTransform, WindowedTimeSeries, FourierTransformSuite
+
+from hvsrpy import Hvsr, HvsrRotated
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["Sensor3c"]
@@ -271,7 +274,7 @@ class Sensor3c():
         for comp in [self.ew, self.ns, self.vt]:
             comp.detrend()
 
-    def bandpassfilter(self, flow, fhigh, order):
+    def bandpassfilter(self, flow, fhigh, order):  # pragma: no cover
         """Bandpassfilter components.
 
         Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
@@ -311,32 +314,7 @@ class Sensor3c():
             ffts[attr] = fft
         return ffts
 
-    # def smooth(self, bandwidth):
-    #     """Smooth component `FourierTransforms`.
-
-    #     Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
-    #     """
-    #     for comp in [self.ew_f, self.ns_f, self.vt_f]:
-    #         comp.smooth_konno_ohmachi(bandwidth)
-
-    # def smooth_fast(self, frequencies, bandwidth):
-    #     """Smooth component `FourierTransforms`.
-
-    #     Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
-    #     """
-    #     for comp in [self.ew_f, self.ns_f, self.vt_f]:
-    #         comp.smooth_konno_ohmachi_fast(frequencies, bandwidth)
-
-    # # TODO (jpv): I think inplace has to be true?
-    # def resample(self, fmin, fmax, fn, res_type):
-    #     """Resample component `FourierTransforms`.
-
-    #     Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_ documentation for details.
-    #     """
-    #     for comp in [self.ew_f, self.ns_f, self.vt_f]:
-    #         comp.resample(fmin, fmax, fn, res_type, inplace=True)
-
-    def combine_horizontals(self, method, value):
+    def combine_horizontals(self, method, horizontals, azimuth=None):
         """Combine two horizontal components (`ns` and `ew`).
 
         Parameters
@@ -344,34 +322,37 @@ class Sensor3c():
         method : {'squared-averge', 'geometric-mean', 'azimuth'}
             Defines how the two horizontal components are combined
             to represent a single horizontal component.
-        value : {dict, float}
+        horizontals : dict
             If combination is done in the frequency-domain (i.e.,
-            `method` in `['squared-average', 'geometric-mean']`) value
-            is a `dict` off FourierTransform objects, see meth: tranform
-            for details. If combination is done in the time-domain
-            (i.e., `method` in `['azimuth']`) value is `float` defining
-            the desired azimuth measured in degrees (anti-clockwise
-            positive) from North (i.e., 0 degrees).
+            `method` in `['squared-average', 'geometric-mean']`)
+            horizontals is a `dict` off `FourierTransform` objects,
+            see meth: tranform for details. If combination is done in
+            the time-domain (i.e., `method` in `['azimuth']`)
+            horizontals is a `dict` of `TimeSeries` objects.
+        azimuth : float, optional
+            Valid only if `method` is `azimuth` in which case an azimuth
+            (clockwise positive) from North (i.e., 0 degrees) is
+            required.
 
         Returns
         -------
         FourierTransform or TimeSeries
             Depending upon whether method is performed in the
-            frequency-domain or time-domain respectively.
+            frequency-domain or time-domain, respectively.
 
         """
         if method in ["squared-average", "geometric-mean"]:
-            return self._combine_horizontal_fd(method, value)
+            return self._combine_horizontal_fd(method, horizontals)
         elif method == 'azimuth':
-            return self._combine_horizontal_td(method, value)
+            return self._combine_horizontal_td(method, horizontals, azimuth=azimuth)
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
 
     @staticmethod
-    def _combine_horizontal_fd(method, value):
-        ns = value["ns"]
-        ew = value["ew"]
+    def _combine_horizontal_fd(method, horizontals, **kwargs):
+        ns = horizontals["ns"]
+        ew = horizontals["ew"]
 
         if method == 'squared-average':
             horizontal = np.sqrt((ns.mag*ns.mag + ew.mag*ew.mag)/2)
@@ -388,11 +369,10 @@ class Sensor3c():
         else:
             raise NotImplementedError
 
-    def _combine_horizontal_td(self, method, value):
-        az_deg = value
-        az_rad = math.radians(az_deg)
-        ns = self.ns
-        ew = self.ew
+    def _combine_horizontal_td(self, method, horizontals, azimuth):
+        az_rad = math.radians(azimuth)
+        ns = horizontals["ns"]
+        ew = horizontals["ew"]
 
         if method == 'azimuth':
             horizontal = ns.amp*math.cos(az_rad) + ew.amp*math.sin(az_rad)
@@ -406,85 +386,6 @@ class Sensor3c():
             return TimeSeries(horizontal, ns.dt)
         else:
             raise NotImplementedError
-
-    # # TODO (jpv): Update method for new freq attributes.
-    # def hv_slow(self, windowlength, bp_filter, taper_width, bandwidth, resampling, method):
-    #     """Prepare time series and Fourier transforms then compute H/V.
-
-    #     More information for the all parameters can be found in
-    #     the documenation of `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
-
-    #     Parameters
-    #     ----------
-    #     windowlength : float
-    #         Length of time windows in seconds.
-    #     bp_filter : dict
-    #         Bandpass filter settings, of the form
-    #         {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
-    #         'order':`int`}.
-    #     taper_width : float
-    #         Width of cosine taper.
-    #     bandwidth : float
-    #         Bandwidth of the Konno and Ohmachi smoothing window.
-    #     resampling : dict
-    #         Resampling settings, of the form
-    #         {'minf':`float`, 'maxf':`float`, 'nf':`int`,
-    #         'res_type':`str`}.
-    #     method : {'squared-averge', 'geometric-mean'}
-    #         Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>` for details.
-
-    #     Returns
-    #     -------
-    #     Hvsr
-    #         Instantiated `Hvsr` object.
-
-    #     """
-    #     # Time Domain Effects
-    #     # Filter
-    #     if bp_filter["flag"]:
-    #         self.bandpassfilter(flow=bp_filter["flow"],
-    #                             fhigh=bp_filter["fhigh"],
-    #                             order=bp_filter["order"])
-
-    #     # Split
-    #     self.split(windowlength)
-
-    #     # Detrend
-    #     self.detrend()
-
-    #     # Cosine Taper
-    #     self.cosine_taper(width=taper_width)
-
-    #     # Frequency Domain Effects
-    #     self.transform()
-
-    #     for comp in [self.ns_f, self.ew_f, self.vt_f]:
-    #         comp.amp = comp.mag
-
-    #     # H/V Effects
-    #     hor = self.combine_horizontals(method=method)
-    #     hor.smooth_konno_ohmachi(bandwidth)
-    #     self.vt_f.smooth_konno_ohmachi(bandwidth)
-
-    #     # H/V
-    #     hvsr = FourierTransform(hor.amp/self.vt_f.amp, hor.frq)
-    #     hvsr.resample(minf=resampling["minf"],
-    #                   maxf=resampling["maxf"],
-    #                   nf=resampling["nf"],
-    #                   res_type=resampling["res_type"])
-
-    #     # TODO (jpv): Rewrite.
-    #     if self.ns.n_windows == 1:
-    #         window_length = max(self.ns.time)
-    #     else:
-    #         window_length = max(self.ns.time[0])
-
-    #     if isinstance(self.meta, dict):
-    #         self.meta["Window Length"] = window_length
-    #     else:
-    #         self.meta = {"Window Length": window_length}
-
-    #     return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
 
     def hv(self, windowlength, bp_filter, taper_width, bandwidth,
            resampling, method, azimuth=None):
@@ -551,13 +452,14 @@ class Sensor3c():
     def _make_hvsr(self, method, resampling, bandwidth, azimuth=None):
         if method in ["squared-average", "geometric-mean"]:
             ffts = self.transform()
-            hor = self.combine_horizontals(method=method, value=ffts)
+            hor = self.combine_horizontals(method=method, horizontals=ffts)
             ver = ffts["vt"]
             del ffts
-
-        elif method in ["azimuth"]:
-            hor = self.combine_horizontals(method=method, value=azimuth)
-
+        elif method == "azimuth":
+            hor = self.combine_horizontals(method=method,
+                                           horizontals={"ew": self.ew,
+                                                        "ns": self.ns},
+                                           azimuth=azimuth)
             if isinstance(hor, WindowedTimeSeries):
                 hor = FourierTransformSuite.from_timeseries(hor)
                 ver = FourierTransformSuite.from_timeseries(self.vt)
@@ -566,7 +468,6 @@ class Sensor3c():
                 ver = FourierTransform.from_timeseries(self.vt)
             else:
                 raise NotImplementedError
-
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
@@ -576,9 +477,9 @@ class Sensor3c():
                               resampling["maxf"],
                               resampling["nf"])
         elif resampling["res_type"] == "log":
-            frq = np.logspace(np.log10(resampling["minf"]),
-                              np.log10(resampling["maxf"]),
-                              resampling["nf"])
+            frq = np.geomspace(resampling["minf"],
+                               resampling["maxf"],
+                               resampling["nf"])
         else:
             raise NotImplementedError
 
@@ -588,7 +489,6 @@ class Sensor3c():
         hvsr = hor
         del ver
 
-        # TODO (jpv): Rewrite.
         if self.ns.n_windows == 1:
             window_length = max(self.ns.time)
         else:
