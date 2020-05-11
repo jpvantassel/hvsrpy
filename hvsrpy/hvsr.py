@@ -610,10 +610,10 @@ class Hvsr():
         lines = [
             f"# hvsrpy output version 0.3.0",
             f"# Number of windows = {len(self.valid_window_indices)}",
-            f"# f0 from average\t{mc_peak_frq}",
+            f"# f0 from average\t{np.round(mc_peak_frq,4)}",
             f"# Number of windows for f0 = {len(self.valid_window_indices)}",
-            f"# f0 from windows\t{mean}\t{lower}\t{upper}",
-            f"# Peak amplitude\t{mc[np.where(self.frq == mc_peak_frq)][0]}",
+            f"# f0 from windows\t{np.round(mean,4)}\t{np.round(lower,4)}\t{np.round(upper,4)}",
+            f"# Peak amplitude\t{np.round(mc[np.where(self.frq == mc_peak_frq)][0],4)}",
             f"# Position\t{0} {0} {0}",
             f"# Category\tDefault",
             f"# Frequency\tAverage\tMin\tMax",
@@ -623,7 +623,7 @@ class Hvsr():
         for line in lines:
             _lines.append(line+"\n")
 
-        for f_i, a_i, n_i, x_i in zip(self.frq, mc, _min, _max):
+        for f_i, a_i, n_i, x_i in zip(np.round(self.frq, 4), np.round(mc, 4), np.round(_min, 4), np.round(_max, 4)):
             _lines.append(f"{f_i}\t{a_i}\t{n_i}\t{x_i}\n")
 
         return _lines
@@ -663,19 +663,19 @@ class Hvsr():
             ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
 
             lines += [
-                f"# Median f0 (Hz) [LMf0],{mean_f}",
-                f"# Log-normal standard deviation f0 () [SigmaLNf0],{sigm_f}",
-                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
-                f"# Median T0 (s) [LMT0],{mean_t}",
-                f"# Log-normal standard deviation T0 () [SigmaLNT0],{sigm_t}",
-                f"# 68 % Confidence Interval T0 (s),{ci_68_lower_t},to,{ci_68_upper_t}",
+                f"# Median f0 (Hz) [LMf0],{np.round(mean_f,4)}",
+                f"# Log-normal standard deviation f0 () [SigmaLNf0],{np.round(sigm_f,4)}",
+                f"# 68 % Confidence Interval f0 (Hz),{np.round(ci_68_lower_f,4)},to,{np.round(ci_68_upper_f,4)}",
+                f"# Median T0 (s) [LMT0],{np.round(mean_t,4)}",
+                f"# Log-normal standard deviation T0 () [SigmaLNT0],{np.round(sigm_t,4)}",
+                f"# 68 % Confidence Interval T0 (s),{np.round(ci_68_lower_t,4)},to,{np.round(ci_68_upper_t,4)}",
             ]
 
         else:
             lines += [
-                f"# Mean f0 (Hz),{mean_f}",
-                f"# Standard deviation f0 (Hz) [Sigmaf0],{sigm_f}",
-                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Mean f0 (Hz),{np.round(mean_f,4)}",
+                f"# Standard deviation f0 (Hz) [Sigmaf0],{np.round(sigm_f,4)}",
+                f"# 68 % Confidence Interval f0 (Hz),{np.round(ci_68_lower_f,4)},to,{np.round(ci_68_upper_f,4)}",
                 f"# Mean T0 (s) [LMT0],NA",
                 f"# Standard deviation T0 () [SigmaT0],NA",
                 f"# 68 % Confidence Interval T0 (s),NA",
@@ -684,8 +684,8 @@ class Hvsr():
         c_type = "Median" if distribution_mc == "log-normal" else "Mean"
         lines += [
             f"# {c_type} Curve Distribution (),{distribution_mc}",
-            f"# {c_type} Curve Peak Frequency (Hz) [f0mc],{mc_peak_frq}",
-            f"# {c_type} Curve Peak Amplitude (),{mc_peak_amp}",
+            f"# {c_type} Curve Peak Frequency (Hz) [f0mc],{np.round(mc_peak_frq,4)}",
+            f"# {c_type} Curve Peak Amplitude (),{np.round(mc_peak_amp,4)}",
             f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
         ]
 
@@ -693,7 +693,7 @@ class Hvsr():
         for line in lines:
             _lines.append(line+"\n")
 
-        for f_i, mean_i, bel_i, abv_i in zip(self.frq, mc, _min, _max):
+        for f_i, mean_i, bel_i, abv_i in zip(np.round(self.frq, 4), np.round(mc, 4), np.round(_min, 4), np.round(_max, 4)):
             _lines.append(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
 
         return _lines
@@ -721,9 +721,9 @@ class Hvsr():
             Writes file to disk.
 
         """
-        if data_format=="geopsy":
+        if data_format == "geopsy":
             lines = self._geopsy_style_lines(distribution_f0, distribution_mc)
-        elif data_format =="hvsrpy":
+        elif data_format == "hvsrpy":
             lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
         else:
             raise NotImplementedError(f"data_format={data_format} is unknown.")

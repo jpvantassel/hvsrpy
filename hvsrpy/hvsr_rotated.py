@@ -456,19 +456,19 @@ class HvsrRotated():
             ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
 
             lines += [
-                f"# Median f0 (Hz) [LMf0,AZ],{mean_f}",
-                f"# Log-normal standard deviation f0 () [SigmaLNf0,AZ],{sigm_f}",
-                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
-                f"# Median T0 (s) [LMT0,AZ],{mean_t}",
-                f"# Log-normal standard deviation T0 () [SigmaLNT0,AZ],{sigm_t}",
-                f"# 68 % Confidence Interval T0 (s),{ci_68_lower_t},to,{ci_68_upper_t}",
+                f"# Median f0 (Hz) [LMf0,AZ],{np.round(mean_f,4)}",
+                f"# Log-normal standard deviation f0 () [SigmaLNf0,AZ],{np.round(sigm_f,4)}",
+                f"# 68 % Confidence Interval f0 (Hz),{np.round(ci_68_lower_f,4)},to,{np.round(ci_68_upper_f,4)}",
+                f"# Median T0 (s) [LMT0,AZ],{np.round(mean_t,4)}",
+                f"# Log-normal standard deviation T0 () [SigmaLNT0,AZ],{np.round(sigm_t,4)}",
+                f"# 68 % Confidence Interval T0 (s),{np.round(ci_68_lower_t,4)},to,{np.round(ci_68_upper_t,4)}",
             ]
 
         else:
             lines += [
-                f"# Mean f0 (Hz) [f0,AZ],{mean_f}",
-                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{sigm_f}",
-                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Mean f0 (Hz) [f0,AZ],{np.round(mean_f,4)}",
+                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{np.round(sigm_f,4)}",
+                f"# 68 % Confidence Interval f0 (Hz),{np.round(ci_68_lower_f,4)},to,{np.round(ci_68_upper_f,4)}",
                 f"# Mean T0 (s) [LMT0,AZ],NAN",
                 f"# Standard deviation T0 () [SigmaT0,AZ],NAN",
                 f"# 68 % Confidence Interval T0 (s),NAN",
@@ -477,8 +477,8 @@ class HvsrRotated():
         c_type = "Median" if distribution_mc == "log-normal" else "Mean"
         lines += [
             f"# {c_type} Curve Distribution (),{distribution_mc}",
-            f"# {c_type} Curve Peak Frequency (Hz) [f0mc,AZ],{mc_peak_frq}",
-            f"# {c_type} Curve Peak Amplitude (),{mc_peak_amp}",
+            f"# {c_type} Curve Peak Frequency (Hz) [f0mc,AZ],{np.round(mc_peak_frq,4)}",
+            f"# {c_type} Curve Peak Amplitude (),{np.round(mc_peak_amp,4)}",
             f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
         ]
 
@@ -486,7 +486,7 @@ class HvsrRotated():
         for line in lines:
             _lines.append(line+"\n")
 
-        for f_i, mean_i, bel_i, abv_i in zip(self.frq, mc, _min, _max):
+        for f_i, mean_i, bel_i, abv_i in zip(np.round(self.frq,4), np.round(mc,4), np.round(_min,4), np.round(_max,4)):
             _lines.append(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
 
         return _lines
