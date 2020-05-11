@@ -447,7 +447,7 @@ class HvsrRotated():
             f"# Number of Standard Deviations Used for Rejection () [n],{ex.meta.get('n')}",
             # f"# Number of Accepted Windows (),{self.n_windows-n_rejected}"
             # f"# Number of Rejected Windows (),{n_rejected}",
-            f"# Distribution of `f0` (),{distribution_f0}"]
+            f"# Distribution of f0 (),{distribution_f0}"]
 
         if distribution_f0 == "log-normal":
             mean_t = 1/mean_f
@@ -456,9 +456,9 @@ class HvsrRotated():
             ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
 
             lines += [
-                f"# Median `f0` (Hz) [LMf0,AZ],{mean_f}",
-                f"# Log-normal standard deviation `f0` () [SigmaLNf0,AZ],{sigm_f}",
-                f"# 68 % Confidence Interval `f0` (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Median f0 (Hz) [LMf0,AZ],{mean_f}",
+                f"# Log-normal standard deviation f0 () [SigmaLNf0,AZ],{sigm_f}",
+                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
                 f"# Median T0 (s) [LMT0,AZ],{mean_t}",
                 f"# Log-normal standard deviation T0 () [SigmaLNT0,AZ],{sigm_t}",
                 f"# 68 % Confidence Interval T0 (s),{ci_68_lower_t},to,{ci_68_upper_t}",
@@ -466,9 +466,9 @@ class HvsrRotated():
 
         else:
             lines += [
-                f"# Mean `f0` (Hz) [f0,AZ],{mean_f}",
-                f"# Standard deviation `f0` (Hz) [Sigmaf0,AZ],{sigm_f}",
-                f"# 68 % Confidence Interval `f0` (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
+                f"# Mean f0 (Hz) [f0,AZ],{mean_f}",
+                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{sigm_f}",
+                f"# 68 % Confidence Interval f0 (Hz),{ci_68_lower_f},to,{ci_68_upper_f}",
                 f"# Mean T0 (s) [LMT0,AZ],NAN",
                 f"# Standard deviation T0 () [SigmaT0,AZ],NAN",
                 f"# 68 % Confidence Interval T0 (s),NAN",
