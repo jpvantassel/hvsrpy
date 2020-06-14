@@ -50,10 +50,10 @@ class Test_Spatial(TestCase):
         # Normal
         generator = PCG64(1994)
         vals = spatial.montecarlo_f0(means, stds, weights,
-                                                 dist_generators="normal",
-                                                 dist_spatial="normal",
-                                                 nrealizations=3,
-                                                 generator=generator)
+                                     dist_generators="normal",
+                                     dist_spatial="normal",
+                                     nrealizations=3,
+                                     generator=generator)
         mean, stddev, realizations = vals
 
         # Realizations
@@ -77,10 +77,10 @@ class Test_Spatial(TestCase):
         # LogNormal
         generator = PCG64(1994)
         vals = spatial.montecarlo_f0(means, stds, weights,
-                                                 dist_generators="lognormal",
-                                                 dist_spatial="lognormal",
-                                                 nrealizations=3,
-                                                 generator=generator)
+                                     dist_generators="lognormal",
+                                     dist_spatial="lognormal",
+                                     nrealizations=3,
+                                     generator=generator)
         mean, stddev, realizations = vals
 
         # Realizations
@@ -104,7 +104,7 @@ class Test_Spatial(TestCase):
         # Other generators
         for generator in ["PCG64", "MT19937"]:
             spatial.montecarlo_f0(means, stds, weights,
-                                              generator=generator)
+                                  generator=generator)
 
         # Bad generator
         generator = "my fancy generator"
