@@ -91,7 +91,7 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
           dist    | mean    | stddev
         ---------------------------------------------------------
         Normal    | \mu     | \sigma  -> mean and stddev
-        Lognormal | \lambda | \zeta   -> \mu and \sigma of log(x)
+        Lognormal | \lambda | \zeta   -> \mu and \sigma of ln(x)
     dist_spatial : {'lognormal', 'normal'}, optional
         Assumed distribution of spatial statistics on f0, default is
         `lognormal`.
@@ -113,106 +113,116 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
     else:
         raise ValueError(f"generator type {generator} not recognized.")
 
-    if dist_generators == "normal":
-        def realization(_mu, _sigma):
-            return rng.normal(_mu, _sigma, size=nrealizations)
-    elif dist_generators == "lognormal":
-        def realization(_lambda, _zeta):
-            return rng.normal(_lambda, _zeta, size=nrealizations)
-    else:
+    if dist_generators not in ["normal", "lognormal"]:
         msg = f"dist_generators = {dist_generators} not recognized."
         raise NotImplementedError(msg)
+
+    if dist_spatial not in ["normal", "lognormal"]:
+        msg = f"dist_spatial = {dist_spatial} not recognized."
+        raise NotImplementedError(msg)
+
+    def realization(mean, stddev, nrealizations=nrealizations):
+        return rng.normal(mean, stddev, size=nrealizations)
 
     realizations = np.empty((len(mean), nrealizations))
     for r, (_mean, _stddev) in enumerate(zip(mean, stddev)):
         realizations[r, :] = realization(_mean, _stddev)
 
-    # TODO (jpv): Add factory design pattern.
-    # TODO (jpv): This is not quite right if generators are lognormal and spatial is normal.
+    if dist_generators == "lognormal" and dist_spatial == "normal":
+        realizations = np.exp(realizations)
+    elif dist_generators == "normal" and dist_spatial == "lognormal":
+        realizations = np.log(realizations)
+    # elif dist_generators == "normal" and dist_spatial == "normal":
+    #     pass
+    # elif dist_generators == "lognormal" and dist_spatial == "lognormal":
+    #     pass
+    # else:
+    #     pass
+
     f0_mean, f0_stddev = _statistics(realizations, weights)
 
-    if dist_spatial == "normal":
-        pass
-    elif dist_spatial == "lognormal":
+    if dist_spatial == "lognormal":
         f0_mean = np.exp(f0_mean)
-    else:
-        msg = f"dist_spatial = {dist_spatial} not recognized."
-        raise NotImplementedError(msg)
-
-    if dist_generators == "normal":
-        pass
-    elif dist_generators == "lognormal":
         realizations = np.exp(realizations)
-    else:
-        pass
 
     return (f0_mean, f0_stddev, realizations)
 
 
-class HvsrVault(): # pragma: no cover
+class HvsrVault():  # pragma: no cover
     """A container for Hvsr objects.
 
     Attributes
     ----------
-    TODO
+    coordinates : ndarray
+        Relative x and y coordinates of the sensors, where each row
+        of the `ndarray` in an x, y pair.
+    means : ndarray
+        Mean f0 value for each location, meaning is determined by
+        `distribution` keyword argument.
+    stddevs : ndarray, optional
+        Standard deviation for each location, meaning is determined
+        by `distribution` keyword argument, default is `None`
+        indicating no uncertainty is defined.
 
     """
 
     # @staticmethod
     # def lat_lon_to_x_y(lat, lon):
     #     raise NotImplementedError
-    #     # TODO (jpv): Will be quite useful.
 
-    def __init__(self, points, means, stddevs=None, distribution='lognormal'): # pragma: no cover
-        """For now we are just going to store the statistis.
+    def __init__(self, coordinates, means, stddevs=None):  # pragma: no cover
+        """Create a container for `Hvsr` statistics.
 
         Parameters
         ----------
-        points : ndarray
-            With the relative x and y coordinates of the Voronoi
-            generators, where each row is of the `ndarray` represents
-            an x, y pair.
-        boudary : ndarray
-            Points which define the unique bounding points for the
-            Voronoi tesselation.
+        coordinates : ndarray
+            Relative x and y coordinates of the sensors, where each row
+            of the `ndarray` in an x, y pair.
         means : ndarray
-            Mean f0 values for each point. Meaning is determined by
-            `distribution`.
+            Mean f0 value for each location, meaning is determined by
+            `distribution` keyword argument.
         stddevs : ndarray, optional
-            Standard deviation for each point. Meaningn is determined by
-            `distribution`.
+            Standard deviation for each location, meaning is determined
+            by `distribution` keyword argument, default is `None`
+            indicating no uncertainty is defined.
         distribution : {'normal', 'lognormal'}, optional
             Distribution to which the mean and stddev for each point
             corresponds, default is 'lognormal'.
 
         """
-        points = np.array(points, dtype=np.double)
-        npts, dim = points.shape
+        coordinates = np.array(coordinates, dtype=np.double)
+        npts, dim = coordinates.shape
         if dim != 2:
-            msg = f"points must have shape (N,2), not {points.shape}."
+            msg = f"coordinates must have shape (N,2), not {coordinates.shape}."
             raise ValueError(msg)
         if npts < 3:
-            raise ValueError(f"Requires at least three points")
+            raise ValueError(f"Requires at least three coordinates")
 
-        self.points = points
+        self.coordinates = coordinates
         self.means = np.array(means, dtype=np.double)
-        self.stddevs = np.array(stddevs, dtype=np.double)
 
-    def spatial_weights(self, boundary, dc_method="voronoi"): # pragma: no cover
+        if stddevs is None:
+            self.stddevs = np.zeros_like(self.means)
+        else:
+            self.stddevs = np.array(stddevs, dtype=np.double)
+
+    def spatial_weights(self, boundary, dc_method="voronoi"):  # pragma: no cover
         """Calculate the weights for each voronoi region.
 
         Parameters
         ----------
         boundary: ndarray
-            x, y points defining the boundary boundary.shape must be
-            (N, 2)
+            x, y coordinates defining the spatial boundary. Must be of
+            shape `(N, 2)`.
         dc_method: {"voronoi"}, optional
             Declustering method, default is 'voronoi'.
 
         Return
         ------
-        ndarray
-            Statistical weights for each point.
+        tuple
+            Of the form `(weights, indices)` where `weights` are the
+            statistical weights and `indicates` the bounding box of
+            each cell. 
 
         """
         if dc_method == "voronoi":
@@ -222,16 +232,16 @@ class HvsrVault(): # pragma: no cover
         return (weights, indices)
 
     @staticmethod
-    def _boundary_to_mask(boundary): # pragma: no cover
+    def _boundary_to_mask(boundary):  # pragma: no cover
+        """Create mask from iterable of coordinate pairs."""
         boundary = np.array(boundary)
         if boundary.shape[1] != 2:
             msg = f"boudary must have shape (N,2), not {boundary.shape}."
             raise ValueError(msg)
         bounding_pts = MultiPoint([Point(i) for i in boundary])
-        mask = bounding_pts.convex_hull
-        return mask
+        return bounding_pts.convex_hull
 
-    def _voronoi_weights(self, boundary): # pragma: no cover
+    def _voronoi_weights(self, boundary):  # pragma: no cover
         """Calculate the voronoi geometry weights."""
         mask = self._boundary_to_mask(boundary)
         total_area = mask.area
@@ -241,48 +251,66 @@ class HvsrVault(): # pragma: no cover
         areas = np.empty(len(regions))
         for i, region in enumerate(regions):
             closed_points = np.vstack((region, region[0]))
-            poly = Polygon(closed_points)
-            areas[i] = poly.area
+            areas[i] = Polygon(closed_points).area
 
         return (areas/total_area, indices)
 
-    def _culled_points(self, mask): # pragma: no cover
+    def _cull_points(self, mask):  # pragma: no cover
         """Remove points not within bounding region"""
-        culled_points, passing_indices = [], []
-        for index, (x, y) in enumerate(self.points):
+        passing_points, passing_indices = [], []
+        for index, (x, y) in enumerate(self.coordinates):
             p = Point(x, y)
             if mask.contains(p):
-                culled_points.append([x, y])
+                passing_points.append([x, y])
                 passing_indices.append(index)
             else:
                 logger.info(f"Discarding point ({x}, {y})")
-        return np.array(culled_points), passing_indices
+        return (np.array(passing_points), passing_indices)
 
-    def bounded_voronoi(self, boundary): # pragma: no cover
-        mask = self._boundary_to_mask(boundary)
-        return self._bounded_voronoi(mask)
-
-    def _bounded_voronoi(self, mask): # pragma: no cover
-        """Vertices of bounded voronoi region.
+    def bounded_voronoi(self, boundary):  # pragma: no cover
+        """Vertices of bounded Voronoi region.
 
         Parameters
         ----------
-        points: ndarray
-            With the relative x and y coordinates of the Voronoi generators,
-            where each row is of the `ndarray` represents an x, y pair.
+        boundary : ndarray
+            x, y coordinates defining the spatial boundary. Must be of
+            shape `(N, 2)`.
 
         Returns
         -------
         tuple
-            (List of ndarrays, list) new veritces and passing indices
+            Of the form `(new_vertices, indices)` where `new_vertices`
+            defines the vertices of each region and `indices` indicates
+            how these vertices relate to master statistics.
+
+        """
+
+        mask = self._boundary_to_mask(boundary)
+        return self._bounded_voronoi(mask)
+
+    def _bounded_voronoi(self, mask, radius=1E6):  # pragma: no cover
+        """Vertices of bounded voronoi region.
+
+        Parameters
+        ----------
+        mask: ndarray
+            Bounding mask to define boundary.
+
+        Returns
+        -------
+        tuple
+            Of the form `(new_vertices, indices)` where `new_vertices`
+            defines the vertices of each region and `indices` indicates
+            how these vertices relate to master statistics.
 
         """
         # Points inside bounding mask
-        points, indices = self._culled_points(mask)
+        points, indices = self._cull_points(mask)
 
         # Define semi-infinite Voronoi tesselations
         vor = Voronoi(points)
-        regions, vertices = self._voronoi_finite_polygons_2d(vor, radius=1E6)
+        regions, vertices = self._voronoi_finite_polygons_2d(vor,
+                                                             radius=radius)
 
         # Define bounded Voronoi tesselations
         new_vertices = []
@@ -290,18 +318,16 @@ class HvsrVault(): # pragma: no cover
             unique_points = vertices[region]
             closed_points = np.vstack((unique_points, unique_points[0]))
             polygon_before = Polygon(closed_points)
-
             polygon_after = polygon_before.intersection(mask)
-
             xs, ys = polygon_after.boundary.xy
             new_unique_points = np.array(list(zip(xs[:-1], ys[:-1])))
             new_vertices.append(new_unique_points)
 
-        return new_vertices, indices
+        return (new_vertices, indices)
 
     @staticmethod
-    def _voronoi_finite_polygons_2d(vor, radius=None): # pragma: no cover
-        """Convert infinite 2D Voronoi regions a finite regions.
+    def _voronoi_finite_polygons_2d(vor, radius=None):  # pragma: no cover
+        """Convert infinite 2D Voronoi regions to finite regions.
 
         Parameters
         ----------
@@ -321,8 +347,8 @@ class HvsrVault(): # pragma: no cover
 
         Notes
         -----
-        This function modified a function originally released by Pauli
-        Virtanen. (https: // gist.github.com/pv/8036995).
+        This function is modified version of a the one originally
+        released by Pauli Virtanen (https://gist.github.com/pv/8036995).
 
         """
         if vor.points.shape[1] != 2:

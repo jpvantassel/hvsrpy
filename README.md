@@ -56,6 +56,10 @@ single-station HVSR measurements.” _Geophysical Journal International_, 221(3)
 statistical approach to account for azimuthal variability in single-station
 HVSR measurements." _Geophysical Journal International_, In Review.
 
+> Cheng, T., Hallal, M., Vantassel, J. P., and Cox, B. R. (2020). "Estimating
+Unbiased Statistics for Fundamental Site Frequency Using Spatially Distributed
+HVSR Measurements and Voronoi Tessellation." Submitted.
+
 ## Why use _hvsrpy_
 
 ---
@@ -65,6 +69,7 @@ open-source software, including:
 
 -   A method to calculate statistics on `f0` that incorporates azimuthal
 variability.
+-   A method for developing rigorous and unbiased spatial statistics.
 -   A fully-automated frequency-domain window-rejection algorithm.
 -   A log-normal distribution for the fundamental site frequency (`f0`) so the
 uncertainty in `f0` can be represented consistently in frequency or period.
@@ -81,6 +86,10 @@ azimuthal calculations), and not only the mean/median curve.
 ### Example output from `hvsrpy` when considering azimuthal variability
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_az.png?raw=true" width="775">
+
+### Example output from `hvsrpy` when considering spatial variability
+
+<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_sp.png?raw=true" width="775">
 
 ## A comparison of _hvsrpy_ with _Geopsy_
 
