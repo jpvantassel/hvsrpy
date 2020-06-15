@@ -130,6 +130,8 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
 
     if dist_generators == "lognormal" and dist_spatial == "normal":
         realizations = np.exp(realizations)
+    elif dist_generators == "normal" and dist_spatial == "lognormal":
+        realizations = np.log(realizations)
     # elif dist_generators == "normal" and dist_spatial == "normal":
     #     pass
     # elif dist_generators == "lognormal" and dist_spatial == "lognormal":
@@ -139,25 +141,28 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
 
     f0_mean, f0_stddev = _statistics(realizations, weights)
 
-    if dist_generators == "lognormal" and dist_spatial == "lognormal":
+    if dist_spatial == "lognormal":
         f0_mean = np.exp(f0_mean)
         realizations = np.exp(realizations)
-    # elif dist_generators == "lognormal" and dist_spatial == "normal":
-    #     pass
-    # elif dist_generators == "normal" and dist_spatial == "normal":
-    #     pass
-    # else:
-    #     pass
 
     return (f0_mean, f0_stddev, realizations)
 
 
-class HvsrVault(): # pragma: no cover
+class HvsrVault():  # pragma: no cover
     """A container for Hvsr objects.
 
     Attributes
     ----------
-    TODO
+    coordinates : ndarray
+        Relative x and y coordinates of the sensors, where each row
+        of the `ndarray` in an x, y pair.
+    means : ndarray
+        Mean f0 value for each location, meaning is determined by
+        `distribution` keyword argument.
+    stddevs : ndarray, optional
+        Standard deviation for each location, meaning is determined
+        by `distribution` keyword argument, default is `None`
+        indicating no uncertainty is defined.
 
     """
 
@@ -165,14 +170,14 @@ class HvsrVault(): # pragma: no cover
     # def lat_lon_to_x_y(lat, lon):
     #     raise NotImplementedError
 
-    def __init__(self, coordinates, means, stddevs=None, distribution='lognormal'): # pragma: no cover
+    def __init__(self, coordinates, means, stddevs=None):  # pragma: no cover
         """Create a container for `Hvsr` statistics.
 
         Parameters
         ----------
         coordinates : ndarray
             Relative x and y coordinates of the sensors, where each row
-            of the `ndarray` an x, y pair.
+            of the `ndarray` in an x, y pair.
         means : ndarray
             Mean f0 value for each location, meaning is determined by
             `distribution` keyword argument.
@@ -201,7 +206,7 @@ class HvsrVault(): # pragma: no cover
         else:
             self.stddevs = np.array(stddevs, dtype=np.double)
 
-    def spatial_weights(self, boundary, dc_method="voronoi"): # pragma: no cover
+    def spatial_weights(self, boundary, dc_method="voronoi"):  # pragma: no cover
         """Calculate the weights for each voronoi region.
 
         Parameters
