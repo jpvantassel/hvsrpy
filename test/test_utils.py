@@ -33,7 +33,7 @@ class Test_Utils(TestCase):
         mean_curve = df["mean"].to_numpy()
         std_curve = df["p1"].to_numpy()
 
-        utils.sesame_clarity(mean_curve, std_curve)
+        self.assertRaises(NotImplementedError, utils.sesame_clarity, mean_curve, std_curve)
 
 if __name__ == "__main__":
     unittest.main()

@@ -51,5 +51,4 @@ def sesame_clarity(mean_curve, std_curve):
     if mc_peak_amp > 2:
         criteria[3] = 1
     
-    
-    
+    raise NotImplementedError
