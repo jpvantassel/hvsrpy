@@ -88,10 +88,15 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
     dist_generators : {'lognormal', 'normal'}, optional
         Assumed distribution of each generating point, default is
         `lognormal`.
-          dist    | mean    | stddev
-        ---------------------------------------------------------
-        Normal    | \mu     | \sigma  -> mean and stddev
-        Lognormal | \lambda | \zeta   -> \mu and \sigma of ln(x)
+
+        +-----------+------------------+-----------------+
+        | if dist is| mean must be     | stddev must be  |
+        +===========+==================+=================+
+        | normal    |:math:`\\mu`       |:math:`\\sigma`   |
+        +-----------+------------------+-----------------+
+        | lognormal |:math:`\\lambda`   |:math:`\\zeta`    |
+        +-----------+------------------+-----------------+
+
     dist_spatial : {'lognormal', 'normal'}, optional
         Assumed distribution of spatial statistics on f0, default is
         `lognormal`.
@@ -166,6 +171,7 @@ class HvsrVault():  # pragma: no cover
 
     """
 
+    # TODO (jpv): Implement a converter from latitude and longitude, to x and y.
     # @staticmethod
     # def lat_lon_to_x_y(lat, lon):
     #     raise NotImplementedError
@@ -207,7 +213,7 @@ class HvsrVault():  # pragma: no cover
             self.stddevs = np.array(stddevs, dtype=np.double)
 
     def spatial_weights(self, boundary, dc_method="voronoi"):  # pragma: no cover
-        """Calculate the weights for each voronoi region.
+        """Calculate the weights for each Voronoi region.
 
         Parameters
         ----------
@@ -236,7 +242,7 @@ class HvsrVault():  # pragma: no cover
         """Create mask from iterable of coordinate pairs."""
         boundary = np.array(boundary)
         if boundary.shape[1] != 2:
-            msg = f"boudary must have shape (N,2), not {boundary.shape}."
+            msg = f"boundary must have shape (N,2), not {boundary.shape}."
             raise ValueError(msg)
         bounding_pts = MultiPoint([Point(i) for i in boundary])
         return bounding_pts.convex_hull
@@ -281,7 +287,7 @@ class HvsrVault():  # pragma: no cover
         tuple
             Of the form `(new_vertices, indices)` where `new_vertices`
             defines the vertices of each region and `indices` indicates
-            how these vertices relate to master statistics.
+            how these vertices relate to the master statistics.
 
         """
 
@@ -347,7 +353,7 @@ class HvsrVault():  # pragma: no cover
 
         Notes
         -----
-        This function is modified version of a the one originally
+        This function is a modified version of the one originally
         released by Pauli Virtanen (https://gist.github.com/pv/8036995).
 
         """

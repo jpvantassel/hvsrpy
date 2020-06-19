@@ -6,7 +6,7 @@ with open("README.md", encoding="utf8") as f:
 
 setup(
     name='hvsrpy',
-    version='0.3.0',
+    version='0.4.0',
     description='A Python package for horizontal-to-vertical spectral ratio processing',
     long_description=long_description,
     long_description_content_type='text/markdown',
