@@ -67,16 +67,16 @@ HVSR Measurements and Voronoi Tessellation." Submitted.
 `hvsrpy` contains features not currently available in any other commercial or
 open-source software, including:
 
--   A method to calculate statistics on `f0` that incorporates azimuthal
-variability.
--   A method for developing rigorous and unbiased spatial statistics.
--   A fully-automated frequency-domain window-rejection algorithm.
 -   A log-normal distribution for the fundamental site frequency (`f0`) so the
 uncertainty in `f0` can be represented consistently in frequency or period.
 -   Ability to use the geometric-mean, squared-average, or any azimuth of your
 choice.
 -   Access to the H/V data from each time window (and azimuth in the case of
 azimuthal calculations), and not only the mean/median curve.
+-   A method to calculate statistics on `f0` that incorporates azimuthal
+variability.
+-   A method for developing rigorous and unbiased spatial statistics.
+-   A fully-automated frequency-domain window-rejection algorithm.
 -   A performant framework for batch-style processing.
 
 ### Example output from `hvsrpy` when considering the geometric-mean of the horizontal components

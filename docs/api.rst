@@ -9,3 +9,4 @@ API Reference
    sensor3c
    hvsr
    hvsr_rotated
+   hvsr_spatial

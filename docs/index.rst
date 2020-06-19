@@ -2,10 +2,10 @@ hvsrpy Documentation
 ====================
 
 `hvsrpy` is a Python package for horizontal-to-vertical spectral ratio
-processing. It includes three main class definitions `Sensor3c`, `Hvsr`, and
-`HvsrRotated`. These classes include various methods for creating and
-manipulating 3-component sensor and horizontal-to-vertical spectral ratio
-objects.
+processing. It includes four main class definitions `Sensor3c`, `Hvsr`,
+`HvsrRotated`, and `HvsrVault`. These classes include various methods for
+creating and manipulating 3-component sensor and horizontal-to-vertical
+spectral ratio objects.
 
 This package and the classes therein are actively being developed, so if you
 do not see a feature you would like it may very well be under development and
