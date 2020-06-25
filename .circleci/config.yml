@@ -23,7 +23,7 @@ jobs:
           name: Install numpy
           command: |
             . venv/bin/activate
-            pip install numpy
+            pip install numpy<1.19.0
       - run:
           name: Install SigProPy
           command: |
