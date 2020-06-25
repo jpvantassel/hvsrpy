@@ -28,7 +28,7 @@ jobs:
           name: Install SigProPy
           command: |
             . venv/bin/activate
-            pip install git+ssh://git@github.com/jpvantassel/signal-processing.git
+            pip install git+ssh://git@github.com/jpvantassel/sigpropy.git
       - run:
           name: Install hvsrpy and dependencies
           command: |
