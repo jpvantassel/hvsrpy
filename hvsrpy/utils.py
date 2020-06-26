@@ -17,6 +17,8 @@
 
 """Various Hvsr utilities."""
 
+import time
+
 from hvsrpy import Hvsr
 import numpy as np
 
@@ -49,7 +51,8 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
     def peak_index(curve):
         pot_peak_indices, _ = Hvsr.find_peaks(curve)
         pot_peak_amp = curve[pot_peak_indices]
-        pot_peak_index = np.argwhere(pot_peak_amp == np.max(pot_peak_amp))[0][0]
+        pot_peak_index = np.argwhere(
+            pot_peak_amp == np.max(pot_peak_amp))[0][0]
         peak_index = pot_peak_indices[pot_peak_index]
         return peak_index
 
@@ -69,7 +72,7 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
     # Criteria ii)
     a_high = mean_curve[np.logical_and(frequency > mc_peak_frq,
                                        frequency < 4*mc_peak_frq)]
-    
+
     if np.sum(a_high < mc_peak_amp/2):
         criteria[1] = 1
 
@@ -122,3 +125,67 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
         criteria[5] = 1
 
     return criteria
+
+
+def parse_hvsrpy_output(fname):
+    """Parse an hvsrpy output file for revalent information.
+
+    Parameters
+    ----------
+    fname : str
+        Name of file to be parsed may include a relative or full path.
+
+    Returns
+    -------
+    dict
+        With revalent information as key value pairs.    
+
+    """
+    start = time.perf_counter()
+    data = {}
+    frqs, meds, lows, higs = [], [], [], []
+
+    lookup = {"# Window Length (s)": ("window_length", float),
+              "# Total Number of Windows ()": ("total_windows", int),
+              "# Frequency Domain Window Rejection Performed ()": ("rejection_bool", bool),
+              "# Number of Standard Deviations Used for Rejection () [n]": ("n_for_rejection", int),
+              "# Number of Accepted Windows ()": ("accepted_windows", int),
+              "# Distribution of f0 ()": ("distribution_f0", lambda x: x.rstrip()),
+              "# Mean f0 (Hz)": ("mean_f0", float),
+              "# Standard deviation f0 (Hz) [Sigmaf0]": ("std_f0", float),
+              "# Median Curve Distribution ()": ("distribution_mc", lambda x: x.rstrip()),
+              "# Median Curve Peak Frequency (Hz) [f0mc]": ("f0_mc", float),
+              "# Median Curve Peak Amplitude ()": ("amplitude_f0_mc", float)
+              }
+
+    with open(fname, "r") as f:
+        for line in f:
+            if line.startswith("#"):
+                try:
+                    key, value = line.split(",")
+                except ValueError:
+                    continue
+
+                try:
+                    subkey, operation = lookup[key]
+                    data[subkey] = operation(value)
+                except KeyError:
+                    continue
+            else:
+                frq, med, low, hig = line.split(",")
+
+                frqs.append(frq)
+                meds.append(med)
+                lows.append(low)
+                higs.append(hig)
+
+    data["frequency"] = np.array(frqs, dtype=np.double)
+    data["curve"] = np.array(meds, dtype=np.double)
+    data["lower"] = np.array(lows, dtype=np.double)
+    data["upper"] = np.array(higs, dtype=np.double)
+
+    end = time.perf_counter()
+    # print(f"Elapsed Time (s): {np.round(end-start, 3)}")
+
+    return data
+

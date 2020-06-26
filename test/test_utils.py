@@ -151,5 +151,42 @@ class Test_Utils(TestCase):
         expected = np.array([1.0]*6)
         self.assertArrayEqual(expected, returned)
 
+    def test_parse_hvsrpy_output(self):
+
+        def compare_data_dict(expected_dict, returned_dict):
+            for key, value in expected_dict.items():
+                if isinstance(value, (str, int, bool)):
+                    self.assertEqual(expected_dict[key], returned_dict[key])
+                elif isinstance(value, float):
+                    self.assertAlmostEqual(expected_dict[key],
+                                           returned_dict[key], places=3)
+                elif isinstance(value, np.ndarray):
+                    self.assertArrayAlmostEqual(expected_dict[key],
+                                                returned_dict[key], places=3)
+                else:
+                    raise ValueError
+
+        # Ex 0
+        fname = self.full_path + "data/utils/ex0.hv"
+        expected = {"window_length": 60.0,
+                    "total_windows": 30,
+                    "rejection_bool": True,
+                    "n_for_rejection": 2.0,
+                    "accepted_windows": 29,
+                    "distribution_f0": "normal",
+                    "mean_f0": 0.6976,
+                    "std_f0": 0.1353,
+                    "distribution_mc": "log-normal",
+                    "f0_mc": 0.7116,
+                    "amplitude_f0_mc": 3.8472,
+                    }
+        names = ["frequency", "curve", "lower", "upper"]
+        df = pd.read_csv(fname, comment="#", names=names)
+        for name in names:
+            expected[name] = df[name].to_numpy()
+        returned = utils.parse_hvsrpy_output(fname)
+        compare_data_dict(expected, returned)
+
+
 if __name__ == "__main__":
     unittest.main()
