@@ -48,7 +48,8 @@ class Test_Utils(TestCase):
 
         for expected, mean_curve in potential_curves:
             returned = utils.sesame_clarity(frequency, mean_curve,
-                                            std_curve, f0_std)[0]
+                                            std_curve, f0_std,
+                                            verbose=0)[0]
             self.assertEqual(expected, returned)
 
         # Condition 2: there exists an f in [f0, 4f0] where A(f) < A(f0)/2
@@ -62,7 +63,8 @@ class Test_Utils(TestCase):
 
         for expected, mean_curve in potential_curves:
             returned = utils.sesame_clarity(frequency, mean_curve,
-                                            std_curve, f0_std)[1]
+                                            std_curve, f0_std,
+                                            verbose=0)[1]
             self.assertEqual(expected, returned)
 
         # Condition 3: A0>2
@@ -75,7 +77,8 @@ class Test_Utils(TestCase):
                             ]
         for expected, mean_curve in potential_curves:
             returned = utils.sesame_clarity(frequency, mean_curve,
-                                            std_curve, f0_std)[2]
+                                            std_curve, f0_std,
+                                            verbose=0)[2]
             self.assertEqual(expected, returned)
 
         # Condition 4: fpeak[Ahv(f) +/- sigma_a(f)] = f0 +/- 5%
@@ -104,7 +107,8 @@ class Test_Utils(TestCase):
             curve = np.exp(np.log(mean_curve) + std_curve)
             self.assertArrayEqual(upper, curve)
             returned = utils.sesame_clarity(frequency, mean_curve,
-                                            std_curve, f0_std)[3]
+                                            std_curve, f0_std,
+                                            verbose=0)[3]
             self.assertEqual(expected, returned)
 
         # Condition 5: f0_std < epsilon(f0)
@@ -118,7 +122,8 @@ class Test_Utils(TestCase):
             for adjust, expected in zip([0.9, 1.1], [1, 0]):
                 f0_std = factor*peak_frequency*adjust
                 returned = utils.sesame_clarity(frequency, mean_curve,
-                                                std_curve, f0_std)[4]
+                                                std_curve, f0_std,
+                                                verbose=0)[4]
                 self.assertEqual(expected, returned)
 
         # Condition 6: sigma_a(f0) < theta(f0)
@@ -136,20 +141,28 @@ class Test_Utils(TestCase):
                 self.assertArrayAlmostEqual(upper, curve, places=6)
                 f0_std = factor*peak_frequency*adjust
                 returned = utils.sesame_clarity(frequency, mean_curve,
-                                                std_curve, f0_std)[5]
+                                                std_curve, f0_std,
+                                                verbose=0)[5]
                 self.assertEqual(expected, returned)
 
     def test_sesame_by_case(self):
-        # Case 1: All pass
-        frequency = np.array([0.7, 0.8, 0.9, 1, 1.1])
-        mean_curve = np.array([1, 1, 2.1, 1, 1])
-        std_curve = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
-        f0_std = 0.1
+        def load(fname):
+            data = utils.parse_hvsrpy_output(fname)
+            std_curve = np.log(data["upper"]) - np.log(data["curve"])
+            return utils.sesame_clarity(data["frequency"], data["curve"],
+                                        std_curve, data["std_f0"], verbose=2)
 
-        returned = utils.sesame_clarity(frequency, mean_curve, std_curve,
-                                        f0_std)
-        expected = np.array([1.0]*6)
-        self.assertArrayEqual(expected, returned)
+        expecteds = [[1, 1, 1, 1, 0, 1],
+                     [1, 1, 1, 1, 1, 1],
+                     [1, 1, 1, 1, 0, 1],
+                     [1, 1, 1, 1, 1, 1],
+                     [1, 1, 1, 1, 1, 1]]
+
+        for count, expected in enumerate(expecteds):
+            fname = self.full_path + f"data/utils/ex{count}.hv"
+            expected = np.array(expected)
+            returned = load(fname)
+            self.assertArrayEqual(expected, returned)
 
     def test_parse_hvsrpy_output(self):
 
@@ -249,6 +262,7 @@ class Test_Utils(TestCase):
             expected[name] = df[name].to_numpy()
         returned = utils.parse_hvsrpy_output(fname)
         compare_data_dict(expected, returned)
+
 
 if __name__ == "__main__":
     unittest.main()
