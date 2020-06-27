@@ -1,5 +1,5 @@
-# This file is part of hvsrpy, a Python package for horizontal-to-vertical
-# spectral ratio processing.
+# This file is part of hvsrpy, a Python module for
+# horizontal-to-vertical spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ from hvsrpy import Hvsr
 import numpy as np
 
 
-def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
+def sesame_clarity(frequency, mean_curve, std_curve, f0_std, verbose=1):
     """Check SESAME (2004) clarity criteria.
 
     Parameters
@@ -39,12 +39,11 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
     f0_std : float
         Standard deviation of f0 peak
         (assumes normal distribution).
+    verbose : {0, 1, 2}, optional
+        Level of verbose logging for SESAME criteria, amount of logging
 
     Returns
-    -------
-    ndarray
-        Of length 6 (one per condition), indicating a pass with a `1`
-        and a fail with a `0`.
+    -f0_std={f0_std} {string(criteria[4]) less than a pass with a `1`
 
     """
 
@@ -55,6 +54,10 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
             pot_peak_amp == np.max(pot_peak_amp))[0][0]
         peak_index = pot_peak_indices[pot_peak_index]
         return peak_index
+
+    def pstring(value): return "Pass" if value > 0 else "Fail"
+    def clean(number): return str(np.round(number, decimals=3))
+    def string(value): return "is" if value > 0 else "is not"
 
     criteria = np.zeros(6)
 
@@ -69,6 +72,14 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
     if np.sum(a_low < mc_peak_amp/2):
         criteria[0] = 1
 
+    if verbose > 0:
+        msg = f"Criteria i): {pstring(criteria[0])}"
+        print(msg)
+
+    if verbose > 1:
+        msg = f"  min(A[f0/4,f0])={clean(np.min(a_low))} < A0[f0]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
+        print(msg)
+
     # Criteria ii)
     a_high = mean_curve[np.logical_and(frequency > mc_peak_frq,
                                        frequency < 4*mc_peak_frq)]
@@ -76,9 +87,25 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
     if np.sum(a_high < mc_peak_amp/2):
         criteria[1] = 1
 
+    if verbose > 0:
+        msg = f"Criteria ii): {pstring(criteria[1])}"
+        print(msg)
+
+    if verbose > 1:
+        msg = f"  min(A[f0,f0*4])={clean(np.min(a_high))} < A0[f0]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
+        print(msg)
+
     # Criteria iii)
     if mc_peak_amp > 2:
         criteria[2] = 1
+
+    if verbose > 0:
+        msg = f"Criteria iii): {pstring(criteria[2])}"
+        print(msg)
+
+    if verbose > 1:
+        msg = f"  A0[f0]={clean(mc_peak_amp)} !> 2.0"
+        print(msg)
 
     # Criteria iv)
     upper_curve = np.exp(np.log(mean_curve) + std_curve)
@@ -95,6 +122,14 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
 
     if cond_1 and cond_2:
         criteria[3] = 1
+
+    if verbose > 0:
+        msg = f"Criteria iv): {pstring(criteria[3])}"
+        print(msg)
+
+    if verbose > 1:
+        msg = f"  f0_std={clean(f0_std)} {string(criteria[4])} less than "
+        print(msg)
 
     # Table for conditions v) and vi)
     if mc_peak_frq < 0.2:
@@ -117,12 +152,29 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std):
     if f0_std < epsilon*mc_peak_frq:
         criteria[4] = 1
 
+    if verbose > 0:
+        msg = f"Criteria v): {pstring(criteria[4])}"
+        print(msg)
+
+    if verbose > 1:
+        msg = f"  f0_std={f0_std} {string(criteria[4])} less than "
+        msg += f"epsilon*mc_peak_frq={clean(epsilon)}*{clean(mc_peak_frq)}={clean(epsilon*mc_peak_frq)}."
+        print(msg)
+
     # Criteria vi)
     sigma_a = upper_curve/mean_curve
     sigma_a_peak = sigma_a[mc_peak_index]
 
     if sigma_a_peak < theta:
         criteria[5] = 1
+
+    if verbose > 0:
+        msg = f"Criteria vi): {pstring(criteria[5])}"
+        print(msg)
+
+    if verbose > 1:
+        msg = f"  sigma_a_peak={clean(sigma_a_peak)} {string(criteria[5])} less than theta={clean(theta)}."
+        print(msg)
 
     return criteria
 
@@ -188,4 +240,3 @@ def parse_hvsrpy_output(fname):
     # print(f"Elapsed Time (s): {np.round(end-start, 3)}")
 
     return data
-
