@@ -196,8 +196,8 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std, search_limits=None,
         print(msg)
 
     if verbose > 1:
-        overall = "passes" if np.sum(criteria>4) else "fails"
-        print(f"The chosen peak {overall} the peak clarity criteria")
+        overall = "PASSES" if np.sum(criteria) > 4 else "FAILS"
+        print(f"The chosen peak {overall} the peak clarity criteria, with {int(np.sum(criteria))} of 6.")
 
     return criteria
 
