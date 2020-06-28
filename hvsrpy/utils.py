@@ -23,7 +23,8 @@ from hvsrpy import Hvsr
 import numpy as np
 
 
-def sesame_clarity(frequency, mean_curve, std_curve, f0_std, verbose=1):
+def sesame_clarity(frequency, mean_curve, std_curve, f0_std, search_limits=None,
+                   verbose=1):
     """Check SESAME (2004) clarity criteria.
 
     Parameters
@@ -39,6 +40,8 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std, verbose=1):
     f0_std : float
         Standard deviation of f0 peak
         (assumes normal distribution).
+    search_limits : tuple
+        Limits about which to search for f0.
     verbose : {0, 1, 2}, optional
         Level of verbose logging for SESAME criteria, amount of logging
 
@@ -50,16 +53,31 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std, verbose=1):
     def peak_index(curve):
         pot_peak_indices, _ = Hvsr.find_peaks(curve)
         pot_peak_amp = curve[pot_peak_indices]
-        pot_peak_index = np.argwhere(
-            pot_peak_amp == np.max(pot_peak_amp))[0][0]
-        peak_index = pot_peak_indices[pot_peak_index]
-        return peak_index
+        pot_peak_index = np.argwhere(pot_peak_amp == np.max(pot_peak_amp))[0][0]
+        return pot_peak_indices[pot_peak_index]
 
     def pstring(value): return "Pass" if value > 0 else "Fail"
     def clean(number): return str(np.round(number, decimals=3))
     def string(value): return "is" if value > 0 else "is not"
 
     criteria = np.zeros(6)
+
+    if search_limits is not None:
+        low_limit, upp_limit = min(search_limits), max(search_limits)
+        rel_frq_low = np.abs(frequency - low_limit)
+        lower_index = np.where(rel_frq_low == np.min(rel_frq_low))[0][0]
+        rel_frq_upp = np.abs(frequency - upp_limit)
+        upper_index = np.where(rel_frq_upp == np.min(rel_frq_upp))[0][0]+1
+
+        if verbose > 0:
+            print(f"Considering only frequencies between {clean(low_limit)} and {clean(upp_limit)} Hz.")
+        if verbose > 1:
+            print(f"  Lower frequency limit is {clean(frequency[lower_index])} Hz.")
+            print(f"  Upper frequency limit is {clean(frequency[upper_index-1])} Hz.")
+
+        frequency = frequency[lower_index:upper_index]
+        mean_curve = mean_curve[lower_index:upper_index]
+        std_curve = std_curve[lower_index:upper_index]
 
     # Peak Information
     mc_peak_index = peak_index(mean_curve)
@@ -128,7 +146,8 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std, verbose=1):
         print(msg)
 
     if verbose > 1:
-        msg = f"  f0_std={clean(f0_std)} {string(criteria[4])} less than "
+        msg = f"  f0_upper={clean(f_plus)} {string(cond_1)} within 5% of f0_mc={clean(mc_peak_frq)}.\n"
+        msg += f"  f0_lower={clean(f_minus)} {string(cond_2)} within 5% of f0_mc={clean(mc_peak_frq)}."
         print(msg)
 
     # Table for conditions v) and vi)
@@ -175,6 +194,10 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std, verbose=1):
     if verbose > 1:
         msg = f"  sigma_a_peak={clean(sigma_a_peak)} {string(criteria[5])} less than theta={clean(theta)}."
         print(msg)
+
+    if verbose > 1:
+        overall = "passes" if np.sum(criteria>4) else "fails"
+        print(f"The chosen peak {overall} the peak clarity criteria")
 
     return criteria
 

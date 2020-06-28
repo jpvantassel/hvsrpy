@@ -145,12 +145,29 @@ class Test_Utils(TestCase):
                                                 verbose=0)[5]
                 self.assertEqual(expected, returned)
 
+    def test_sesame_with_limits(self):
+        frequency = np.array([0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3])
+        mean_curve = np.array([1, 3, 1, 1, 3, 1, 1])
+        std_curve = np.array([0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2])
+        f0_std = 0.1
+
+        settings = [(6, (0.7, 0.9)),
+                    (6, (0.9, 1.3))]
+
+        for expected, limits in settings:
+            returned = np.sum(utils.sesame_clarity(frequency, mean_curve,
+                                            std_curve, f0_std,
+                                            search_limits=limits,
+                                            verbose=2))
+            self.assertEqual(expected, returned)
+
+
     def test_sesame_by_case(self):
         def load(fname):
             data = utils.parse_hvsrpy_output(fname)
             std_curve = np.log(data["upper"]) - np.log(data["curve"])
             return utils.sesame_clarity(data["frequency"], data["curve"],
-                                        std_curve, data["std_f0"], verbose=2)
+                                        std_curve, data["std_f0"], verbose=0)
 
         expecteds = [[1, 1, 1, 1, 0, 1],
                      [1, 1, 1, 1, 1, 1],
