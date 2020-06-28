@@ -6,6 +6,4 @@
 
 ## Under Consideration for a Future Release
 
-- Automatic checking of the SESAME clarity criteria (AT).
-
 ## Unassigned
