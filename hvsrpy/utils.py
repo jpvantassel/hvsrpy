@@ -95,7 +95,7 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std, search_limits=None,
         print(msg)
 
     if verbose > 1:
-        msg = f"  min(A[f0/4,f0])={clean(np.min(a_low))} < A0[f0]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
+        msg = f"  min(A[f0/4,f0])={clean(np.min(a_low))} {string(criteria[0])} < A0[f0]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
         print(msg)
 
     # Criteria ii)
@@ -110,7 +110,7 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std, search_limits=None,
         print(msg)
 
     if verbose > 1:
-        msg = f"  min(A[f0,f0*4])={clean(np.min(a_high))} < A0[f0]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
+        msg = f"  min(A[f0,f0*4])={clean(np.min(a_high))} {string(criteria[1])} < A0[f0]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
         print(msg)
 
     # Criteria iii)
@@ -122,7 +122,7 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std, search_limits=None,
         print(msg)
 
     if verbose > 1:
-        msg = f"  A0[f0]={clean(mc_peak_amp)} !> 2.0"
+        msg = f"  A0[f0]={clean(mc_peak_amp)} {string(criteria[2])} > 2.0"
         print(msg)
 
     # Criteria iv)
