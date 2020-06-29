@@ -448,7 +448,7 @@ class Sensor3c():
                                                resampling=resampling,
                                                bandwidth=bandwidth,
                                                azimuth=az)
-            return HvsrRotated.from_iter(hvsrs, azimuth)
+            return HvsrRotated.from_iter(hvsrs, azimuth, meta=self.meta)
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)

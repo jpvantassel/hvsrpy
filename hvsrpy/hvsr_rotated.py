@@ -41,7 +41,7 @@ class HvsrRotated():
 
     """
 
-    def __init__(self, hvsr, azimuth):
+    def __init__(self, hvsr, azimuth, meta=None):
         """Instantiate a `HvsrRotated` object.
 
         Parameters
@@ -61,6 +61,7 @@ class HvsrRotated():
         hvsr, azimuth = self._check_input(hvsr, azimuth)
         self.hvsrs = [hvsr]
         self.azimuths = [azimuth]
+        self.meta = meta
 
     @staticmethod
     def _check_input(hvsr, az):
@@ -102,9 +103,9 @@ class HvsrRotated():
         self.azimuths.append(azimuth)
 
     @classmethod
-    def from_iter(cls, hvsrs, azimuths):
+    def from_iter(cls, hvsrs, azimuths, meta=None):
         """Create HvsrRotated from iterable of Hvsr objects."""
-        obj = cls(hvsrs[0], azimuths[0])
+        obj = cls(hvsrs[0], azimuths[0], meta=meta)
         if len(azimuths) > 1:
             for hvsr, az in zip(hvsrs[1:], azimuths[1:]):
                 obj.append(hvsr, az)
@@ -434,20 +435,18 @@ class HvsrRotated():
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 
-        # n_rejected = self.n_windows - len(self.valid_window_indices)
-        ex = self.hvsrs[0]
-        rejection = ex.meta.get('Performed Rejection')
+        rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
         lines = [
             f"# hvsrpy output version 0.3.0",
-            f"# File Name (),{ex.meta.get('File Name')}",
-            f"# Window Length (s),{ex.meta.get('Window Length')}",
-            f"# Total Number of Windows (),{ex.n_windows}",
+            f"# File Name (),{self.meta.get('File Name')}",
+            f"# Window Length (s),{self.meta.get('Window Length')}",
+            f"# Total Number of Windows (),{self.hvsrs[0].n_windows}",
             f"# Total Number of Azimuths (),{self.azimuth_count}",
-            f"# Frequency Domain Window Rejection Performed (),{'False' if rejection is None else rejection}",
-            f"# Number of Standard Deviations Used for Rejection () [n],{ex.meta.get('n')}",
-            # f"# Number of Accepted Windows (),{self.n_windows-n_rejected}"
-            # f"# Number of Rejected Windows (),{n_rejected}",
+            f"# Frequency Domain Window Rejection Performed (),{rejection}",
+            f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
             f"# Distribution of f0 (),{distribution_f0}"]
+
+        def fclean(x): return np.round(x, 4)
 
         if distribution_f0 == "log-normal":
             mean_t = 1/mean_f
@@ -456,19 +455,19 @@ class HvsrRotated():
             ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
 
             lines += [
-                f"# Median f0 (Hz) [LMf0,AZ],{np.round(mean_f,4)}",
-                f"# Log-normal standard deviation f0 () [SigmaLNf0,AZ],{np.round(sigm_f,4)}",
-                f"# 68 % Confidence Interval f0 (Hz),{np.round(ci_68_lower_f,4)},to,{np.round(ci_68_upper_f,4)}",
-                f"# Median T0 (s) [LMT0,AZ],{np.round(mean_t,4)}",
-                f"# Log-normal standard deviation T0 () [SigmaLNT0,AZ],{np.round(sigm_t,4)}",
-                f"# 68 % Confidence Interval T0 (s),{np.round(ci_68_lower_t,4)},to,{np.round(ci_68_upper_t,4)}",
+                f"# Median f0 (Hz) [LMf0,AZ],{fclean(mean_f)}",
+                f"# Log-normal standard deviation f0 () [SigmaLNf0,AZ],{fclean(sigm_f)}",
+                f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
+                f"# Median T0 (s) [LMT0,AZ],{fclean(mean_t)}",
+                f"# Log-normal standard deviation T0 () [SigmaLNT0,AZ],{fclean(sigm_t)}",
+                f"# 68 % Confidence Interval T0 (s),{fclean(ci_68_lower_t)},to,{fclean(ci_68_upper_t)}",
             ]
 
         else:
             lines += [
-                f"# Mean f0 (Hz) [f0,AZ],{np.round(mean_f,4)}",
-                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{np.round(sigm_f,4)}",
-                f"# 68 % Confidence Interval f0 (Hz),{np.round(ci_68_lower_f,4)},to,{np.round(ci_68_upper_f,4)}",
+                f"# Mean f0 (Hz) [f0,AZ],{fclean(mean_f)}",
+                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{fclean(sigm_f)}",
+                f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
                 f"# Mean T0 (s) [LMT0,AZ],NAN",
                 f"# Standard deviation T0 () [SigmaT0,AZ],NAN",
                 f"# 68 % Confidence Interval T0 (s),NAN",
@@ -477,8 +476,8 @@ class HvsrRotated():
         c_type = "Median" if distribution_mc == "log-normal" else "Mean"
         lines += [
             f"# {c_type} Curve Distribution (),{distribution_mc}",
-            f"# {c_type} Curve Peak Frequency (Hz) [f0mc,AZ],{np.round(mc_peak_frq,4)}",
-            f"# {c_type} Curve Peak Amplitude (),{np.round(mc_peak_amp,4)}",
+            f"# {c_type} Curve Peak Frequency (Hz) [f0mc,AZ],{fclean(mc_peak_frq)}",
+            f"# {c_type} Curve Peak Amplitude (),{fclean(mc_peak_amp)}",
             f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
         ]
 
@@ -486,7 +485,7 @@ class HvsrRotated():
         for line in lines:
             _lines.append(line+"\n")
 
-        for f_i, mean_i, bel_i, abv_i in zip(np.round(self.frq,4), np.round(mc,4), np.round(_min,4), np.round(_max,4)):
+        for f_i, mean_i, bel_i, abv_i in zip(fclean(self.frq), fclean(mc), fclean(_min), fclean(_max)):
             _lines.append(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
 
         return _lines
