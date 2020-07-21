@@ -221,7 +221,7 @@
                 "nf": 2048,
                 "res_type": "log"
             },
-            "method": "azimuth",
+            "method": "single-azimuth",
             "azimuth": 30
         }
     },
@@ -238,7 +238,7 @@
                 "nf": 2048,
                 "res_type": "log"
             },
-            "method": "azimuth",
+            "method": "single-azimuth",
             "azimuth": 90
         }
     },
