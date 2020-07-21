@@ -20,6 +20,7 @@
 import math
 import logging
 import json
+import warnings
 
 import numpy as np
 import obspy
@@ -131,9 +132,8 @@ class Sensor3c():
         return factor
 
     @classmethod
-    def from_mseed(cls, fname=None, fname_verbose=None):
-        """Initialize a 3-component sensor (Sensor3c) object from a
-        .miniseed/.mseed file.
+    def from_mseed(cls, fname=None, fnames_1c=None):
+        """Create 3-component sensor (Sensor3c) object from .mseed file.
 
         Parameters
         ----------
@@ -143,7 +143,7 @@ class Sensor3c():
             appropriate channel names. Refer to the `SEED` Manual
             `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
             for specifics, default is `None`.
-        fname_verbose : dict, optional
+        fnames_1c : dict, optional
             Some data acquisition systems supply three separate miniSEED
             files rather than a single combined file. To use those types
             of files, simply specify the three files in a `dict` of
@@ -161,25 +161,26 @@ class Sensor3c():
             If both `fname` and `fname_verbose` are `None`.
 
         """
-        if fname_verbose is None and fname is None:
-            msg = "`fname_verbose` and `fname` cannot both be `None`."
+        if fnames_1c is None and fname is None:
+            msg = "`fnames_1c` and `fname` cannot both be `None`."
             raise ValueError(msg)
-        elif fname_verbose is not None:
+        elif fnames_1c is not None:
             trace_list = []
             for key in ["e", "n", "z"]:
-                stream = obspy.read(fname_verbose[key], format="MSEED")
+                stream = obspy.read(fnames_1c[key], format="MSEED")
                 if len(stream) > 1:
-                    msg = f"File {fname_verbose[key]} contained {len(stream)}"
+                    msg = f"File {fnames_1c[key]} contained {len(stream)}"
                     msg += "traces, rather than 1 as was expected."
                     raise IndexError(msg)
                 trace = stream[0]
                 if trace.meta.channel[-1] != key.capitalize():
                     msg = f"Component indicated in the header of "
-                    msg += f"{fname_verbose[key]} is {trace.meta.channel[-1]} "
+                    msg += f"{fnames_1c[key]} is {trace.meta.channel[-1]} "
                     msg += f"which does not match the key {key} specified. "
                     msg += f"Ignore this warning only if you know "
                     msg += f"your digitizer's header is incorrect."
                     warnings.warn(msg)
+                    trace.meta.channel = trace.meta.channel[:-1]+key.capitalize()
                 trace_list.append(trace)
             traces = obspy.Stream(trace_list)
         else:
@@ -417,7 +418,7 @@ class Sensor3c():
         ns = horizontals["ns"]
         ew = horizontals["ew"]
 
-        if method == 'azimuth':
+        if method in ["azimuth", "single-azimuth"]:
             horizontal = ns.amp*math.cos(az_rad) + ew.amp*math.sin(az_rad)
         else:
             msg = f"method={method} has not been implemented."
@@ -474,7 +475,7 @@ class Sensor3c():
         if method in ["squared-average", "geometric-mean", "azimuth", "single-azimuth"]:
             if method == "azimuth":
                 msg = f"method='azimuth' is deprecated replace with the more descriptive 'single-azimuth'."
-                warnings.warn(DeprecationWarning, msg)
+                warnings.warn(msg, DeprecationWarning)
                 method = "single-azimuth"
 
             return self._make_hvsr(method=method,
@@ -484,7 +485,7 @@ class Sensor3c():
         elif method in ["rotate", "multiple-azimuths"]:
             if method == "rotate":
                 msg = f"method='rotate' is deprecated replace with the more descriptive 'multiple-azimuths'."
-                warnings.warn(DeprecationWarning, msg)
+                warnings.warn(msg, DeprecationWarning)
                 method = "multiple-azimuths"
 
             hvsrs = np.empty(len(azimuth), dtype=object)

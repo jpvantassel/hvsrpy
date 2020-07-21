@@ -34,17 +34,18 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
 
     Parameters
     ----------
-        file_name : str
-            Name of 3-component time record, may be relative or full
-            path.
+        file_name : str or dict
+            If `str`, name of 3-component time record, may be relative
+            or full path, else `dict` of three files (one-component per
+            file).
         windowlength : float, optional
             Length of time windows, default is 60 seconds.
         width : {0.0 - 1.0}, optional
             Length of cosine taper, default is 0.1 (5% on each side) of
             time window.
         bandwidth : int, optional
-            Bandwidth coefficeint for Konno & Ohmachi smoothing, default
-            is 40.
+            Bandwidth coefficient for Konno & Ohmachi (1998) smoothing,
+            default is 40.
         minf, maxf : float, optional
             Minimum and maximum frequency in Hz to consider when
             resampling, defaults are 0.2 and 20, respectively.
@@ -79,7 +80,6 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
             Number of permitted iterations to convergence, default is
             50.
 
-
     Returns
     -------
     tuple
@@ -103,7 +103,13 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
         ax4 = False
 
     start = time.time()
-    sensor = hvsrpy.Sensor3c.from_mseed(file_name)
+    if isinstance(file_name, str):
+        sensor = hvsrpy.Sensor3c.from_mseed(fname = file_name)
+    elif isinstance(file_name, dict):
+        sensor = hvsrpy.Sensor3c.from_mseed(fnames_1c=file_name)
+    else:
+        raise TypeError
+
     bp_filter = {"flag": filter_bool, "flow": flow,
                  "fhigh": fhigh, "order": forder}
     resampling = {"minf": minf, "maxf": maxf, "nf": nf, "res_type": res_type}
