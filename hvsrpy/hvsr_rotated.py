@@ -22,7 +22,7 @@ import logging
 import numpy as np
 from pandas import DataFrame
 
-from hvsrpy import Hvsr
+from hvsrpy import Hvsr, VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class HvsrRotated():
         if (az < 0) or (az > 180):
             raise ValueError(f"`azimuth` must be between 0 and 180, not {az}.")
 
-        return hvsr, az
+        return (hvsr, az)
 
     def append(self, hvsr, azimuth):
         """Append `Hvsr` object at a new azimuth.
@@ -349,15 +349,13 @@ class HvsrRotated():
     def nstd_curve(self, n, distribution):
         """Nth standard deviation on mean curve from all azimuths"""
         return self._nth_std_factory(n=n, distribution=distribution,
-                                     mean=self.mean_curve(
-                                         distribution=distribution),
+                                     mean=self.mean_curve(distribution=distribution),
                                      std=self.std_curve(distribution=distribution))
 
     def nstd_f0_frq(self, n, distribution):
         """Nth standard deviation on `f0` from all azimuths"""
         return self._nth_std_factory(n=n, distribution=distribution,
-                                     mean=self.mean_f0_frq(
-                                         distribution=distribution),
+                                     mean=self.mean_f0_frq(distribution=distribution),
                                      std=self.std_f0_frq(distribution=distribution))
 
     def mc_peak_amp(self, distribution='log-normal'):
@@ -436,14 +434,20 @@ class HvsrRotated():
         _max = self.nstd_curve(+1, distribution_mc)
 
         rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
+
+        n_windows = self.hvsrs[0].n_windows
+        n_accepted = sum([len(hvsr.valid_window_indices) for hvsr in self.hvsrs])
+        n_rejected = self.azimuth_count*n_windows - n_accepted
         lines = [
-            f"# hvsrpy output version 0.3.0",
+            f"# hvsrpy output version {VERSION}",
             f"# File Name (),{self.meta.get('File Name')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
-            f"# Total Number of Windows (),{self.hvsrs[0].n_windows}",
+            f"# Total Number of Windows per Azimuth (),{n_windows}",
             f"# Total Number of Azimuths (),{self.azimuth_count}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",
             f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
+            f"# Number of Accepted Windows (),{n_accepted}",
+            f"# Number of Rejected Windows (),{n_rejected}",
             f"# Distribution of f0 (),{distribution_f0}"]
 
         def fclean(x): return np.round(x, 4)

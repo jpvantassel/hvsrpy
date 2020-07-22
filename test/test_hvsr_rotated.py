@@ -319,7 +319,7 @@ class Test_HvsrRotated(TestCase):
         width = 0.1
         bandwidth = 40
         resampling = {"minf": 0.2, "maxf": 20, "nf": 128, "res_type": "log"}
-        method = "rotate"
+        method = "multiple-azimuths"
         azimuthal_interval = 15
         azimuth = np.arange(0,180+azimuthal_interval, azimuthal_interval)
         sensor = hvsrpy.Sensor3c.from_mseed(fname)

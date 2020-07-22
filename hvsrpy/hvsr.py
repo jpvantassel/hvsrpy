@@ -23,6 +23,8 @@ import numpy as np
 import scipy.signal as sg
 from pandas import DataFrame
 
+from hvsrpy import VERSION
+
 logger = logging.getLogger(name=__name__)
 
 
@@ -610,7 +612,7 @@ class Hvsr():
         def fclean(x): return np.round(x, 4)
 
         lines = [
-            f"# hvsrpy output version 0.3.0",
+            f"# hvsrpy output version {VERSION}",
             f"# Number of windows = {len(self.valid_window_indices)}",
             f"# f0 from average\t{fclean(mc_peak_frq)}",
             f"# Number of windows for f0 = {len(self.valid_window_indices)}",
@@ -648,7 +650,7 @@ class Hvsr():
         n_rejected = self.n_windows - len(self.valid_window_indices)
         rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
         lines = [
-            f"# hvsrpy output version 0.3.0",
+            f"# hvsrpy output version {VERSION}",
             f"# File Name (),{self.meta.get('File Name')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
             f"# Total Number of Windows (),{self.n_windows}",
