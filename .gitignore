@@ -4,6 +4,7 @@
 *.tmp_profiler_run
 .vscode
 html
+examples/example_*
 
 # Folders
 .ipynb_checkpoints
