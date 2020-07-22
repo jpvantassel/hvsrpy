@@ -120,7 +120,7 @@ class Sensor3c():
         self.ns, self.ew, self.vt = self._check_input({"ns": ns,
                                                        "ew": ew,
                                                        "vt": vt})
-        self.meta = meta
+        self.meta = {} if meta is None else meta
 
     @property
     def normalization_factor(self):
@@ -522,6 +522,9 @@ class Sensor3c():
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
 
+        self.meta["method"] = method
+        self.meta["azimuth"] = azimuth
+
         if resampling["res_type"] == "linear":
             frq = np.linspace(resampling["minf"],
                               resampling["maxf"],
@@ -544,10 +547,7 @@ class Sensor3c():
         else:
             window_length = max(self.ns.time[0])
 
-        if isinstance(self.meta, dict):
-            self.meta["Window Length"] = window_length
-        else:
-            self.meta = {"Window Length": window_length}
+        self.meta["Window Length"] = window_length
 
         return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
 

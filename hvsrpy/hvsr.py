@@ -652,6 +652,8 @@ class Hvsr():
         lines = [
             f"# hvsrpy output version {VERSION}",
             f"# File Name (),{self.meta.get('File Name')}",
+            f"# Method (),{self.meta.get('method')}",
+            f"# Azimuth (),{self.meta.get('azimuth')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
             f"# Total Number of Windows (),{self.n_windows}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",

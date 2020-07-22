@@ -1,5 +1,7 @@
 # hvsrpy output version 0.4.1
 # File Name (),UT.STN11.A2_C150.miniseed
+# Method (),geometric-mean
+# Azimuth (),None
 # Window Length (s),60.0
 # Total Number of Windows (),60
 # Frequency Domain Window Rejection Performed (),True
