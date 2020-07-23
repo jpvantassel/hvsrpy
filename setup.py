@@ -6,7 +6,7 @@ with open("README.md", encoding="utf8") as f:
 
 setup(
     name='hvsrpy',
-    version='0.4.1rc1',
+    version='0.4.0',
     description='A Python package for horizontal-to-vertical spectral ratio processing',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -33,7 +33,7 @@ setup(
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
     python_requires = '>=3.6, <3.9',
-    install_requires=['numpy<1.19.0', 'scipy', 'obspy', 'sigpropy', 'pandas', 'shapely'],
+    install_requires=['numpy<1.19.0', 'scipy', 'obspy', 'sigpropy', 'pandas', 'shapely', 'termcolor'],
     extras_require={
         'dev': ['matplotlib', 'coverage'],
     },

@@ -4,3 +4,4 @@ obspy
 pandas
 shapely
 coverage
+termcolor
