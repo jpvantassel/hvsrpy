@@ -22,7 +22,6 @@ import logging
 import numpy as np
 from numpy.random import default_rng, PCG64, MT19937, BitGenerator
 from scipy.spatial import Voronoi
-import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint, Point, Polygon
 
 logger = logging.getLogger(name=__name__)
@@ -228,7 +227,7 @@ class HvsrVault():  # pragma: no cover
         tuple
             Of the form `(weights, indices)` where `weights` are the
             statistical weights and `indicates` the bounding box of
-            each cell. 
+            each cell.
 
         """
         if dc_method == "voronoi":
@@ -262,7 +261,7 @@ class HvsrVault():  # pragma: no cover
         return (areas/total_area, indices)
 
     def _cull_points(self, mask):  # pragma: no cover
-        """Remove points not within bounding region"""
+        """Remove points not within bounding region."""
         passing_points, passing_indices = [], []
         for index, (x, y) in enumerate(self.coordinates):
             p = Point(x, y)

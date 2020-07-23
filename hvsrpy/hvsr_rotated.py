@@ -347,7 +347,7 @@ class HvsrRotated():
                                      mean=mean, std=std)
 
     def nstd_curve(self, n, distribution):
-        """Nth standard deviation on mean curve from all azimuths"""
+        """Nth standard deviation on mean curve from all azimuths."""
         return self._nth_std_factory(n=n, distribution=distribution,
                                      mean=self.mean_curve(distribution=distribution),
                                      std=self.std_curve(distribution=distribution))
@@ -416,7 +416,6 @@ class HvsrRotated():
 
     def print_stats(self, distribution_f0, places=2):  # pragma: no cover
         """Print basic statistics of `Hvsr` instance."""
-        display(self._stats(distribution_f0=distribution_f0).round(places))
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""

@@ -246,7 +246,7 @@ class Test_HvsrRotated(TestCase):
         returned = self.hvrot.mean_curve("log-normal")
         expected = np.array([1.122, 1.566, 1.709, 1.830, 1.144])
         self.assertArrayAlmostEqual(expected, returned, places=2)
-        
+
         # Peak Amp
         returned = self.hvrot.mc_peak_amp("log-normal")
         expected = 1.830

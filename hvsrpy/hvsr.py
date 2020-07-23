@@ -159,7 +159,7 @@ class Hvsr():
         Returns
         -------
         Tuple
-            Of the form `(peaks, settings)`. Where `peaks` is an 
+            Of the form `(peaks, settings)`. Where `peaks` is an
             `ndarray` or `list` of `ndarray` (one per window) of peak
             indices, and `settings` is `dict`, refer to
             `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_

@@ -71,7 +71,7 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
             frequency, default is "log-normal".
         , distribution_mc : {"normal", "log-normal"}, optional
             Distribution assumed to describe the median curve, default
-            is "log-normal". 
+            is "log-normal".
         rejection_bool : bool, optional
             Determines whether the rejection is performed, default is
             True.

@@ -251,7 +251,7 @@ class Sensor3c():
         for comp in ["ns", "ew", "vt"]:
             comps.append(TimeSeries.from_dict(dictionary[comp]))
 
-        return cls(*comps, dictionary["meta"])
+        return cls(*comps, meta=dictionary["meta"])
 
     def to_json(self):
         """Json string representation of `Sensor3c` object.
@@ -440,7 +440,7 @@ class Sensor3c():
         windowlength : float
             Length of time windows in seconds.
         bp_filter : dict
-            Bandpass filter settings, of the form 
+            Bandpass filter settings, of the form
             `{'flag':bool, 'flow':float, 'fhigh':float, 'order':int}`.
         taper_width : float
             Width of cosine taper, value between `0.` and `1.`.
