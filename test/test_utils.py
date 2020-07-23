@@ -17,6 +17,9 @@
 
 """Tests for utils module."""
 
+import sys
+import os
+
 import pandas as pd
 import numpy as np
 
@@ -146,40 +149,69 @@ class Test_Utils(TestCase):
                 self.assertEqual(expected, returned)
 
     def test_sesame_with_limits(self):
-        frequency = np.array([0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3])
-        mean_curve = np.array([1, 3, 1, 1, 3, 1, 1])
-        std_curve = np.array([0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2])
-        f0_std = 0.1
+        frequency = np.array([0.3, 0.4, 0.5, 0.6, 0.9, 1, 1.1, 1.2, 1.3])
+        mean_curve = np.array([1, 3, 1, 1, 1, 1, 1, 3, 1])
+        std_curve = np.ones(9)*0.2
+        f0_std = 0.07
 
-        settings = [(6, (0.7, 0.9)),
-                    (6, (0.9, 1.3))]
+        # reliability
+        expecteds = [3, 3]
+        settings = [(0.3, 0.5), (0.9, 1.3)]
 
-        for expected, limits in settings:
-            returned = np.sum(utils.sesame_clarity(frequency, mean_curve,
-                                            std_curve, f0_std,
-                                            search_limits=limits,
-                                            verbose=2))
+        for expected, limits in zip(expecteds, settings):
+            with open(os.devnull, "w") as sys.stdout:
+                returned = np.sum(utils.sesame_reliability(60, 10, frequency,
+                mean_curve, std_curve, search_limits=limits,
+                                                        verbose=2))
+                sys.stdout = sys.__stdout__
+            self.assertEqual(expected, returned)
+
+        # clarity
+        expecteds = [6,6]
+        settings = [(0.3, 0.5), (0.9, 1.3)]
+
+        for expected, limits in zip(expecteds, settings):
+            with open(os.devnull, "w") as sys.stdout:
+                returned = np.sum(utils.sesame_clarity(frequency, mean_curve,
+                                                std_curve, f0_std,
+                                                search_limits=limits,
+                                                verbose=2))
+                sys.stdout = sys.__stdout__
             self.assertEqual(expected, returned)
 
 
     def test_sesame_by_case(self):
-        def load(fname):
+
+        def load(fname, verbose=0):
             data = utils.parse_hvsrpy_output(fname)
             std_curve = np.log(data["upper"]) - np.log(data["curve"])
-            return utils.sesame_clarity(data["frequency"], data["curve"],
-                                        std_curve, data["std_f0"], verbose=0)
+            clarity = utils.sesame_clarity(data["frequency"],
+                                           data["curve"],
+                                           std_curve,
+                                           data["std_f0"],
+                                           verbose=verbose)
+            reliability = utils.sesame_reliability(data["windowlength"],
+                                                   data["accepted_windows"],
+                                                   data["frequency"],
+                                                   data["curve"],
+                                                   std_curve,
+                                                   verbose=verbose)
+            return (reliability, clarity)
 
-        expecteds = [[1, 1, 1, 1, 0, 1],
-                     [1, 1, 1, 1, 1, 1],
-                     [1, 1, 1, 1, 0, 1],
-                     [1, 1, 1, 1, 1, 1],
-                     [1, 1, 1, 1, 1, 1]]
+        expecteds = [([1, 1, 1], [1, 1, 1, 1, 0, 1]),
+                     ([1, 1, 1], [1, 1, 1, 1, 1, 1]),
+                     ([1, 1, 1], [1, 1, 1, 1, 0, 1]),
+                     ([1, 1, 1], [1, 1, 1, 1, 1, 1]),
+                     ([1, 1, 1], [1, 1, 1, 1, 1, 1])]
 
-        for count, expected in enumerate(expecteds):
+        for count, expected_tuple in enumerate(expecteds):
             fname = self.full_path + f"data/utils/ex{count}.hv"
-            expected = np.array(expected)
-            returned = load(fname)
-            self.assertArrayEqual(expected, returned)
+            with open(os.devnull, "w") as sys.stdout:
+                returned_tuple = load(fname)
+                sys.stdout = sys.__stdout__
+            for expected, returned in zip(expected_tuple, returned_tuple):
+                expected = np.array(expected)
+                self.assertArrayEqual(expected, returned)
 
     def test_parse_hvsrpy_output(self):
 
