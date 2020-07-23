@@ -198,7 +198,7 @@ class Test_Utils(TestCase):
 
         # Ex 0
         fname = self.full_path + "data/utils/ex0.hv"
-        expected = {"window_length": 60.0,
+        expected = {"windowlength": 60.0,
                     "total_windows": 30,
                     "rejection_bool": True,
                     "n_for_rejection": 2.0,
@@ -219,7 +219,7 @@ class Test_Utils(TestCase):
 
         # Ex 1
         fname = self.full_path + "data/utils/ex1.hv"
-        expected = {"window_length": 60.0,
+        expected = {"windowlength": 60.0,
                     "total_windows": 60,
                     "rejection_bool": True,
                     "n_for_rejection": 2.0,
@@ -240,7 +240,7 @@ class Test_Utils(TestCase):
 
         # Ex 2
         fname = self.full_path + "data/utils/ex2.hv"
-        expected = {"window_length": 60.0,
+        expected = {"windowlength": 60.0,
                     "total_windows": 30,
                     "rejection_bool": True,
                     "n_for_rejection": 2.0,
@@ -261,7 +261,7 @@ class Test_Utils(TestCase):
 
         # Ex 3
         fname = self.full_path + "data/utils/ex3.hv"
-        expected = {"window_length": 60.0,
+        expected = {"windowlength": 60.0,
                     "total_windows": 60,
                     "rejection_bool": True,
                     "n_for_rejection": 2.0,
