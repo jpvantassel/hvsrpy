@@ -139,11 +139,11 @@ def sesame_reliability(windowlength, passing_window_count,
         msg = f"    sigma_a(f)={clean(sigma_a_max)} {is_isnot(criteria[2])} < {2 if mc_peak_frq>0.5 else 3}"
         print(msg)
 
-    if verbose > 1:
+    if verbose > 0:
         overall = colored("PASSES", "green") if np.sum(
             criteria) == 3 else colored("FAILS", "red")
         print(
-            f"The chosen peak {overall} the peak reliability criteria, with {int(np.sum(criteria))} of 3.")
+            f"  The chosen peak {overall} the peak reliability criteria, with {int(np.sum(criteria))} of 3.")
 
     return criteria
 
@@ -327,11 +327,11 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
         msg = f"    sigma_a_peak={clean(sigma_a_peak)} {is_isnot(criteria[5])} less than theta={clean(theta)}."
         print(msg)
 
-    if verbose > 1:
+    if verbose > 0:
         overall = colored("PASSES", "green") if np.sum(
             criteria) > 4 else colored("FAILS", "red")
         print(
-            f"The chosen peak {overall} the peak clarity criteria, with {int(np.sum(criteria))} of 6.")
+            f"  The chosen peak {overall} the peak clarity criteria, with {int(np.sum(criteria))} of 6.")
 
     return criteria
 
