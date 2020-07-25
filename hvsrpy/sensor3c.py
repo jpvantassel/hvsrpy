@@ -180,7 +180,8 @@ class Sensor3c():
                     msg += f"Ignore this warning only if you know "
                     msg += f"your digitizer's header is incorrect."
                     warnings.warn(msg)
-                    trace.meta.channel = trace.meta.channel[:-1]+key.capitalize()
+                    trace.meta.channel = trace.meta.channel[:-1] + \
+                        key.capitalize()
                 trace_list.append(trace)
             traces = obspy.Stream(trace_list)
         else:
@@ -554,3 +555,11 @@ class Sensor3c():
     def __iter__(self):
         """Iterable representation of a Sensor3c object."""
         return iter((self.ns, self.ew, self.vt))
+
+    def __str__(self):
+        """Human-readable representation of `Sensor3c` object."""
+        return f"Sensor3c"
+
+    def __repr__(self):
+        """Unambiguous representation of `Sensor3c` object."""
+        return f"Sensor3c(ns={self.ns}, ew={self.ew}, vt={self.vt}, meta={self.meta})"

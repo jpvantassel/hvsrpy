@@ -292,6 +292,19 @@ class Test_Sensor3c(TestCase):
                                         geopsy_hv["avg"].to_numpy(),
                                         delta=0.375)
 
+    def test_str_and_repr(self):
+        fname = self.full_path + "data/custom/0101010.mseed"
+        sensor = hvsrpy.Sensor3c.from_mseed(fname=fname)
+
+        # str
+        self.assertEqual("Sensor3c", sensor.__str__())
+
+        # repr
+        expected = f"Sensor3c(ns={sensor.ns}, ew={sensor.ew}, vt={sensor.vt}, meta={sensor.meta})"
+        returned = sensor.__repr__()
+        print(returned)
+        self.assertEqual(expected, returned)
+
 
 if __name__ == "__main__":
     unittest.main()
