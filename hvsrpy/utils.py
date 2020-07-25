@@ -1,4 +1,4 @@
-# This file is part of hvsrpy, a Python module for
+# This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -56,12 +56,12 @@ def sesame_reliability(windowlength, passing_window_count,
     passing_window_count : int
         Number of passing windows included in `mean_curve`.
     frequency : ndarray
-        Frequency vector for H/V curve.
+        Frequency vector for HVSR curve.
     mean_curve : ndarray
-        Mean H/V curve
+        Mean HVSR curve
         (assumes lognormal distribution).
     std_curve : ndarray
-        Standard deviation of H/V curve
+        Standard deviation of HVSR curve
         (assumes lognormal distribution).
     f0_std : float
         Standard deviation of f0 peak from time windows
@@ -88,8 +88,8 @@ def sesame_reliability(windowlength, passing_window_count,
     mc_peak_frq = frequency[mc_peak_index]
 
     if verbose > 0:
-        print(
-            colored("Assessing SESAME (2004) reliability criteria ... ", attrs=["bold"]))
+        print(colored("Assessing SESAME (2004) reliability criteria ... ",
+                      attrs=["bold"]))
 
     criteria = np.zeros(3)
 
@@ -142,8 +142,8 @@ def sesame_reliability(windowlength, passing_window_count,
     if verbose > 0:
         overall = colored("PASSES", "green") if np.sum(
             criteria) == 3 else colored("FAILS", "red")
-        print(
-            f"  The chosen peak {overall} the peak reliability criteria, with {int(np.sum(criteria))} of 3.")
+        msg = f"  The chosen peak {overall} the peak reliability criteria, with {int(np.sum(criteria))} of 3."
+        print(msg)
 
     return criteria
 
@@ -156,13 +156,14 @@ def trim_curve(search_limits, frequency, mean_curve, std_curve, verbose=0):
     upper_index = np.where(rel_frq_upp == np.min(rel_frq_upp))[0][0]+1
 
     if verbose > 0:
-        print(
-            f"  Considering only frequencies between {clean(low_limit)} and {clean(upp_limit)} Hz.")
+        msg = f"  Considering only frequencies between {clean(low_limit)} and {clean(upp_limit)} Hz."
+        print(msg)
+
     if verbose > 1:
-        print(
-            f"    Lower frequency limit is {clean(frequency[lower_index])} Hz.")
-        print(
-            f"    Upper frequency limit is {clean(frequency[upper_index-1])} Hz.")
+        msg = f"    Lower frequency limit is {clean(frequency[lower_index])} Hz."
+        print(msg)
+        msg = f"    Upper frequency limit is {clean(frequency[upper_index-1])} Hz."
+        print(msg)
 
     frequency = frequency[lower_index:upper_index]
     mean_curve = mean_curve[lower_index:upper_index]
@@ -178,12 +179,12 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
     Parameters
     ----------
     frequency : ndarray
-        Frequency vector for H/V curve.
+        Frequency vector for HVSR curve.
     mean_curve : ndarray
-        Mean H/V curve
+        Mean HVSR curve
         (assumes lognormal distribution).
     std_curve : ndarray
-        Standard deviation of H/V curve
+        Standard deviation of HVSR curve
         (assumes lognormal distribution).
     f0_std : float
         Standard deviation of f0 peak from time windows
@@ -201,8 +202,8 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
 
     """
     if verbose > 0:
-        print(
-            colored("Assessing SESAME (2004) clarity criteria ... ", attrs=["bold"]))
+        print(colored("Assessing SESAME (2004) clarity criteria ... ",
+                      attrs=["bold"]))
 
     criteria = np.zeros(6)
 

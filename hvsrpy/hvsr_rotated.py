@@ -22,7 +22,7 @@ import logging
 import numpy as np
 from pandas import DataFrame
 
-from hvsrpy import Hvsr, VERSION
+from hvsrpy import Hvsr, __version__
 
 logger = logging.getLogger(__name__)
 
@@ -438,7 +438,7 @@ class HvsrRotated():
         n_accepted = sum([len(hvsr.valid_window_indices) for hvsr in self.hvsrs])
         n_rejected = self.azimuth_count*n_windows - n_accepted
         lines = [
-            f"# hvsrpy output version {VERSION}",
+            f"# hvsrpy output version {__version__}",
             f"# File Name (),{self.meta.get('File Name')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
             f"# Total Number of Windows per Azimuth (),{n_windows}",

@@ -1,4 +1,4 @@
-# This file is part of hvsrpysrpy, a Python module for
+# This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -83,18 +83,18 @@ class Test_Sensor3c(TestCase):
 
     def test_to_and_from_dict(self):
         # Simple Case
-        ns = sigpropy.TimeSeries([1, 2, 3], dt=1)
-        ew = sigpropy.TimeSeries([1, 4, 5], dt=1)
-        vt = sigpropy.TimeSeries([1, -1, 1], dt=1)
-        expected = hvsrpy.Sensor3c(ns, ew, vt)
+        ns = sigpropy.TimeSeries([1., 2, 3], dt=1)
+        ew = sigpropy.TimeSeries([1., 4, 5], dt=1)
+        vt = sigpropy.TimeSeries([1., 1, 1], dt=1)
+        expected = hvsrpy.Sensor3c(ns, ew, vt, meta={"windowlength":1})
 
         dict_repr = expected.to_dict()
         returned = hvsrpy.Sensor3c.from_dict(dict_repr)
 
-        for comp in ["ns", "ew", "vt"]:
-            exp = getattr(expected, comp).amp
-            ret = getattr(returned, comp).amp
-            self.assertArrayEqual(exp, ret)
+        for comp in ["ns", "ew", "vt", "meta"]:
+            exp = getattr(expected, comp)
+            ret = getattr(returned, comp)
+            self.assertEqual(exp, ret)
 
     def test_to_and_from_json(self):
         # Simple Case
@@ -302,7 +302,6 @@ class Test_Sensor3c(TestCase):
         # repr
         expected = f"Sensor3c(ns={sensor.ns}, ew={sensor.ew}, vt={sensor.vt}, meta={sensor.meta})"
         returned = sensor.__repr__()
-        print(returned)
         self.assertEqual(expected, returned)
 
 

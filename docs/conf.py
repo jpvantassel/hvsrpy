@@ -13,7 +13,7 @@
 import os
 import sys
 
-from hvsrpy import VERSION
+from hvsrpy import __version__
 
 sys.path.insert(0, os.path.abspath('../hvsrpy'))
 
@@ -24,7 +24,7 @@ copyright = '2019-2020, Joseph P. Vantassel'
 author = 'Joseph P. Vantassel'
 
 # The full version, including alpha/beta/rc tags
-release = VERSION
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 

@@ -17,7 +17,7 @@
 
 """Import modules into the hvsrpy namespace."""
 
-VERSION = "0.4.1"
+__version__ = "0.4.1"
 from .hvsr import Hvsr
 from .hvsr_rotated import HvsrRotated
 from .sensor3c import Sensor3c

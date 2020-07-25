@@ -52,10 +52,10 @@ class Sensor3c():
         """Perform checks on inputs.
 
         Specifically:
-            1. Ensure all components are `TimeSeries` objects.
-            2. Ensure all components have equal `dt`.
-            3. Ensure all components have same `nsamples`. If not trim
-            components to the common length.
+        1. Ensure all components are `TimeSeries` objects.
+        2. Ensure all components have equal `dt`.
+        3. Ensure all components have same `nsamples`. If not trim
+        components to the common length.
 
         Parameters
         ----------
@@ -219,11 +219,10 @@ class Sensor3c():
 
         """
         dictionary = {}
-        for name in ["ns", "ew", "vt", "meta"]:
-            value = getattr(self, name)
-            if name != "meta":
-                value = value.to_dict()
+        for name in ["ns", "ew", "vt"]:
+            value = getattr(self, name).to_dict()
             dictionary[name] = value
+        dictionary["meta"] = self.meta
         return dictionary
 
     @classmethod
@@ -233,7 +232,7 @@ class Sensor3c():
         Parameters
         ---------
         dictionary : dict
-            Must contain keys "ns", "ew", and "vt", and may also contain
+            Must contain keys "ns", "ew", "vt", and may also contain
             the optional key "meta". "ns", "ew", and "vt" must be
             dictionary representations of `TimeSeries` objects, see
             `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
@@ -245,14 +244,10 @@ class Sensor3c():
             Instantiated `Sensor3c` object.
 
         """
-        if dictionary.get("meta") is None:
-            dictionary["meta"] = None
-
-        comps = []
+        components = []
         for comp in ["ns", "ew", "vt"]:
-            comps.append(TimeSeries.from_dict(dictionary[comp]))
-
-        return cls(*comps, meta=dictionary["meta"])
+            components.append(TimeSeries.from_dict(dictionary[comp]))
+        return cls(*components, meta=dictionary.get("meta"))
 
     def to_json(self):
         """Json string representation of `Sensor3c` object.
@@ -382,8 +377,7 @@ class Sensor3c():
         -------
         TimeSeries or FourierTransform
             Depending upon the specified `method` requires the
-            combination to happen in the time or frequency domain,
-            respectively.
+            combination to happen in the time or frequency domain.
 
         """
         if method in ["squared-average", "geometric-mean"]:
@@ -475,7 +469,7 @@ class Sensor3c():
 
         if method in ["squared-average", "geometric-mean", "azimuth", "single-azimuth"]:
             if method == "azimuth":
-                msg = f"method='azimuth' is deprecated replace with the more descriptive 'single-azimuth'."
+                msg = f"method='azimuth' is deprecated, replace with the more descriptive 'single-azimuth'."
                 warnings.warn(msg, DeprecationWarning)
                 method = "single-azimuth"
 
@@ -485,7 +479,7 @@ class Sensor3c():
                                    azimuth=azimuth)
         elif method in ["rotate", "multiple-azimuths"]:
             if method == "rotate":
-                msg = f"method='rotate' is deprecated replace with the more descriptive 'multiple-azimuths'."
+                msg = f"method='rotate' is deprecated, replace with the more descriptive 'multiple-azimuths'."
                 warnings.warn(msg, DeprecationWarning)
                 method = "multiple-azimuths"
 
