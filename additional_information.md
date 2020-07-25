@@ -22,12 +22,14 @@ are shown in the
 [README](https://github.com/jpvantassel/hvsrpy/blob/master/README.md).
 For most sites the default/recommended settings (as detailed in the
 Jupyter notebook) should be sufficient. Refer to the literature including
-Cox et al. (2020) and the SESAME Guidelines specifically for more information.
+Cox et al. (2020) and the SESAME Guidelines (2004) specifically for more
+information.
 
 ## What types of data formats can _hvsrpy_ accept?
 
 Currently _hvsrpy_ is able to easily (i.e., no coding required) process
-3-component _.miniseed_ files that conform to the _SEED_ standard. However,
+miniSEED files which conform to the _SEED_ standard. These can either be single
+3-componenet files (i.e., all three components are in a single file) or  However,
 there are plans to extend this functionality to other common data formats in the
 near future.
 

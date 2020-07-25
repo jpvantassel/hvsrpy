@@ -20,6 +20,7 @@
 import math
 import logging
 import json
+import warnings
 
 import numpy as np
 import obspy
@@ -51,10 +52,10 @@ class Sensor3c():
         """Perform checks on inputs.
 
         Specifically:
-            1. Ensure all components are `TimeSeries` objects.
-            2. Ensure all components have equal `dt`.
-            3. Ensure all components have same `nsamples`. If not trim
-            components to the common length.
+        1. Ensure all components are `TimeSeries` objects.
+        2. Ensure all components have equal `dt`.
+        3. Ensure all components have same `nsamples`. If not trim
+        components to the common length.
 
         Parameters
         ----------
@@ -82,7 +83,7 @@ class Sensor3c():
                 msg = f"`{key}`` must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
             if value.dt != dt:
-                msg = f"All components must have equal `dt`."
+                msg = "All components must have equal `dt`."
                 raise ValueError(msg)
             if value.nsamples != nsamples:
                 logging.info("Components are not of the same length.")
@@ -119,7 +120,7 @@ class Sensor3c():
         self.ns, self.ew, self.vt = self._check_input({"ns": ns,
                                                        "ew": ew,
                                                        "vt": vt})
-        self.meta = meta
+        self.meta = {} if meta is None else meta
 
     @property
     def normalization_factor(self):
@@ -131,26 +132,60 @@ class Sensor3c():
         return factor
 
     @classmethod
-    def from_mseed(cls, fname):
-        """Initialize a 3-component sensor (Sensor3c) object from a
-        .miniseed file.
+    def from_mseed(cls, fname=None, fnames_1c=None):
+        """Create 3-component sensor (Sensor3c) object from .mseed file.
 
         Parameters
         ----------
-        fname : str
+        fname : str, optional
             Name of miniseed file, full path may be used if desired.
             The file should contain three traces with the
             appropriate channel names. Refer to the `SEED` Manual
             `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
-            for specifics.
+            for specifics, default is `None`.
+        fnames_1c : dict, optional
+            Some data acquisition systems supply three separate miniSEED
+            files rather than a single combined file. To use those types
+            of files, simply specify the three files in a `dict` of
+            the form `{'e':'east.mseed', 'n':'north.mseed',
+            'z':'vertical.mseed'}`, default is `None`.
 
         Returns
         -------
         Sensor3c
             Initialized 3-component sensor object.
 
+        Raises
+        ------
+        ValueError
+            If both `fname` and `fname_verbose` are `None`.
+
         """
-        traces = obspy.read(fname)
+        if fnames_1c is None and fname is None:
+            msg = "`fnames_1c` and `fname` cannot both be `None`."
+            raise ValueError(msg)
+        if fnames_1c is not None:
+            trace_list = []
+            for key in ["e", "n", "z"]:
+                stream = obspy.read(fnames_1c[key], format="MSEED")
+                if len(stream) > 1:
+                    msg = f"File {fnames_1c[key]} contained {len(stream)}"
+                    msg += "traces, rather than 1 as was expected."
+                    raise IndexError(msg)
+                trace = stream[0]
+                if trace.meta.channel[-1] != key.capitalize():
+                    msg = "Component indicated in the header of "
+                    msg += f"{fnames_1c[key]} is {trace.meta.channel[-1]} "
+                    msg += f"which does not match the key {key} specified. "
+                    msg += "Ignore this warning only if you know "
+                    msg += "your digitizer's header is incorrect."
+                    warnings.warn(msg)
+                    trace.meta.channel = trace.meta.channel[:-1] + \
+                        key.capitalize()
+                trace_list.append(trace)
+            traces = obspy.Stream(trace_list)
+        else:
+            traces = obspy.read(fname, format="MSEED")
 
         if len(traces) != 3:
             msg = f"miniseed file {fname} has {len(traces)} traces, but should have 3."
@@ -168,7 +203,7 @@ class Sensor3c():
                 vt = TimeSeries.from_trace(trace)
                 found_vt = True
             else:
-                msg = f"Missing, duplicate, or incorrectly named components. See documentation."
+                msg = "Missing, duplicate, or incorrectly named components. See documentation."
                 raise ValueError(msg)
 
         meta = {"File Name": fname}
@@ -184,11 +219,10 @@ class Sensor3c():
 
         """
         dictionary = {}
-        for name in ["ns", "ew", "vt", "meta"]:
-            value = getattr(self, name)
-            if name != "meta":
-                value = value.to_dict()
+        for name in ["ns", "ew", "vt"]:
+            value = getattr(self, name).to_dict()
             dictionary[name] = value
+        dictionary["meta"] = self.meta
         return dictionary
 
     @classmethod
@@ -198,7 +232,7 @@ class Sensor3c():
         Parameters
         ---------
         dictionary : dict
-            Must contain keys "ns", "ew", and "vt", and may also contain
+            Must contain keys "ns", "ew", "vt", and may also contain
             the optional key "meta". "ns", "ew", and "vt" must be
             dictionary representations of `TimeSeries` objects, see
             `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
@@ -210,14 +244,10 @@ class Sensor3c():
             Instantiated `Sensor3c` object.
 
         """
-        if dictionary.get("meta") is None:
-            dictionary["meta"] = None
-
-        comps = []
+        components = []
         for comp in ["ns", "ew", "vt"]:
-            comps.append(TimeSeries.from_dict(dictionary[comp]))
-
-        return cls(*comps, dictionary["meta"])
+            components.append(TimeSeries.from_dict(dictionary[comp]))
+        return cls(*components, meta=dictionary.get("meta"))
 
     def to_json(self):
         """Json string representation of `Sensor3c` object.
@@ -257,7 +287,8 @@ class Sensor3c():
     def split(self, windowlength):
         """Split component `TimeSeries` into `WindowedTimeSeries`.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+        Refer to
+        `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
         documentation for details.
 
         """
@@ -269,7 +300,8 @@ class Sensor3c():
     def detrend(self):
         """Detrend components.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+        Refer to
+        `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
         documentation for details.
 
         """
@@ -279,7 +311,8 @@ class Sensor3c():
     def bandpassfilter(self, flow, fhigh, order):  # pragma: no cover
         """Bandpassfilter components.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+        Refer to
+        `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
         documentation for details.
 
         """
@@ -289,7 +322,8 @@ class Sensor3c():
     def cosine_taper(self, width):
         """Cosine taper components.
 
-        Refer to `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
+        Refer to
+        `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
         documentation for details.
 
         """
@@ -323,31 +357,32 @@ class Sensor3c():
 
         Parameters
         ----------
-        method : {'squared-average', 'geometric-mean', 'azimuth'}
+        method : {'squared-average', 'geometric-mean', 'single-azimuth', 'multiple-azimuths'}
             Defines how the two horizontal components are combined
             to represent a single horizontal component.
         horizontals : dict
             If combination is done in the frequency-domain (i.e.,
             `method in ['squared-average', 'geometric-mean']`)
             horizontals is a `dict` of `FourierTransform` objects,
-            see meth: tranform for details. If combination is done in
-            the time-domain (i.e., `method in ['azimuth']`)
+            see :meth:`transform <Sensor3c.transform>` for details. If
+            combination is done in the time-domain
+            (i.e., `method in ['single-azimuth', 'multiple-azimuths']`)
             horizontals is a `dict` of `TimeSeries` objects.
         azimuth : float, optional
-            Valid only if `method` is `azimuth` in which case an azimuth
-            (clockwise positive) from North (i.e., 0 degrees) is
+            Valid only if `method` is `single-azimuth` in which case an
+            azimuth (clockwise positive) from North (i.e., 0 degrees) is
             required.
 
         Returns
         -------
-        FourierTransform or TimeSeries
-            Depending upon whether method is performed in the
-            frequency-domain or time-domain, respectively.
+        TimeSeries or FourierTransform
+            Depending upon the specified `method` requires the
+            combination to happen in the time or frequency domain.
 
         """
         if method in ["squared-average", "geometric-mean"]:
             return self._combine_horizontal_fd(method, horizontals)
-        elif method == 'azimuth':
+        elif method in ["azimuth", "single-azimuth"]:
             return self._combine_horizontal_td(method, horizontals, azimuth=azimuth)
         else:
             msg = f"`method`={method} has not been implemented."
@@ -358,9 +393,9 @@ class Sensor3c():
         ns = horizontals["ns"]
         ew = horizontals["ew"]
 
-        if method == 'squared-average':
+        if method == "squared-average":
             horizontal = np.sqrt((ns.mag*ns.mag + ew.mag*ew.mag)/2)
-        elif method == 'geometric-mean':
+        elif method == "geometric-mean":
             horizontal = np.sqrt(ns.mag * ew.mag)
         else:
             msg = f"`method`={method} has not been implemented."
@@ -378,7 +413,7 @@ class Sensor3c():
         ns = horizontals["ns"]
         ew = horizontals["ew"]
 
-        if method == 'azimuth':
+        if method in ["azimuth", "single-azimuth"]:
             horizontal = ns.amp*math.cos(az_rad) + ew.amp*math.sin(az_rad)
         else:
             msg = f"method={method} has not been implemented."
@@ -395,31 +430,27 @@ class Sensor3c():
            resampling, method, azimuth=None):
         """Prepare time series and Fourier transforms then compute H/V.
 
-        More information for the all parameters can be found in
-        the documentation of
-        `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_.
-
         Parameters
         ----------
         windowlength : float
             Length of time windows in seconds.
         bp_filter : dict
             Bandpass filter settings, of the form
-            {'flag':`bool`, 'flow':`float`, 'fhigh':`float`,
-            'order':`int`}.
+            `{'flag':bool, 'flow':float, 'fhigh':float, 'order':int}`.
         taper_width : float
-            Width of cosine taper.
+            Width of cosine taper, value between `0.` and `1.`.
         bandwidth : float
-            Bandwidth of the Konno and Ohmachi smoothing window.
+            Bandwidth (b) of the Konno and Ohmachi (1998) smoothing
+            window.
         resampling : dict
             Resampling settings, of the form
-            {'minf':`float`, 'maxf':`float`, 'nf':`int`,
-            'res_type':`str`}.
-        method : {'squared-averge', 'geometric-mean', 'azimuth'}
+            `{'minf':float, 'maxf':float, 'nf':int, 'res_type':str}`.
+        method : {'squared-averge', 'geometric-mean', 'single-azimuth', 'multiple-azimuths'}
             Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
             for details.
         azimuth : float, optional
-            Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
+            Refer to
+            :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
             for details.
 
         Returns
@@ -436,19 +467,27 @@ class Sensor3c():
         self.detrend()
         self.cosine_taper(width=taper_width)
 
-        if method in ["squared-average", "geometric-mean", "azimuth"]:
-            return self._make_hvsr(method=method,
-                                   resampling=resampling,
-                                   bandwidth=bandwidth,
-                                   azimuth=azimuth)
-        elif method in ["rotate"]:
+        if method in ["squared-average", "geometric-mean", "azimuth", "single-azimuth"]:
+            if method == "azimuth":
+                msg = "method='azimuth' is deprecated, replace with the more descriptive 'single-azimuth'."
+                warnings.warn(msg, DeprecationWarning)
+                method = "single-azimuth"
+            return self._make_hvsr(method=method, resampling=resampling,
+                                   bandwidth=bandwidth, azimuth=azimuth)
+
+        elif method in ["rotate", "multiple-azimuths"]:
+            if method == "rotate":
+                msg = "method='rotate' is deprecated, replace with the more descriptive 'multiple-azimuths'."
+                warnings.warn(msg, DeprecationWarning)
+                method = "multiple-azimuths"
             hvsrs = np.empty(len(azimuth), dtype=object)
             for index, az in enumerate(azimuth):
-                hvsrs[index] = self._make_hvsr(method="azimuth",
+                hvsrs[index] = self._make_hvsr(method="single-azimuth",
                                                resampling=resampling,
                                                bandwidth=bandwidth,
                                                azimuth=az)
-            return HvsrRotated.from_iter(hvsrs, azimuth)
+            return HvsrRotated.from_iter(hvsrs, azimuth, meta=self.meta)
+
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
@@ -459,7 +498,7 @@ class Sensor3c():
             hor = self.combine_horizontals(method=method, horizontals=ffts)
             ver = ffts["vt"]
             del ffts
-        elif method == "azimuth":
+        elif method == "single-azimuth":
             hor = self.combine_horizontals(method=method,
                                            horizontals={"ew": self.ew,
                                                         "ns": self.ns},
@@ -475,6 +514,9 @@ class Sensor3c():
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
+
+        self.meta["method"] = method
+        self.meta["azimuth"] = azimuth
 
         if resampling["res_type"] == "linear":
             frq = np.linspace(resampling["minf"],
@@ -498,13 +540,18 @@ class Sensor3c():
         else:
             window_length = max(self.ns.time[0])
 
-        if isinstance(self.meta, dict):
-            self.meta["Window Length"] = window_length
-        else:
-            self.meta = {"Window Length": window_length}
+        self.meta["Window Length"] = window_length
 
         return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
 
     def __iter__(self):
         """Iterable representation of a Sensor3c object."""
         return iter((self.ns, self.ew, self.vt))
+
+    def __str__(self):
+        """Human-readable representation of `Sensor3c` object."""
+        return "Sensor3c"
+
+    def __repr__(self):
+        """Unambiguous representation of `Sensor3c` object."""
+        return f"Sensor3c(ns={self.ns}, ew={self.ew}, vt={self.vt}, meta={self.meta})"

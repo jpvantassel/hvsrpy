@@ -1,0 +1,38 @@
+# output-format: grouped
+
+# strictness: veryhigh
+# doc-warnings: true
+# test-warnings: false
+# max-line-length: 120
+
+ignore-paths:
+  - docs/
+
+# frosted:
+#   run: false
+
+# pyroma:
+#   run: true
+
+# mypy:
+#   run: true
+#   options:
+#     ignore-missing-imports: true
+#     follow-imports: skip
+
+# pylint:
+#   disable:
+#     - bad-builtin
+#     - too-few-public-methods
+#     - missing-docstring
+#     - star-args
+
+pep8:
+  full: true
+  disable:
+    - E501
+
+pep257:
+  disable:
+    - D213
+    - D413

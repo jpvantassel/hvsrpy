@@ -19,8 +19,8 @@
 -   [A Comparison of _hvsrpy_ with _Geopsy_](#A-comparison-of-hvsrpy-with-Geopsy)
 -   [Getting Started](#Getting-Started)
 -   [Additional Comparisons between _hvsrpy_ and _Geopsy_](#Additional-Comparisons-between-hvsrpy-and-Geopsy)
-  -   [Multiple Windows](#Multiple-Windows)
-  -   [Single Window](#Single-Window)
+    -   [Multiple Windows](#Multiple-Windows)
+    -   [Single Window](#Single-Window)
 
 ## About _hvsrpy_
 
@@ -37,8 +37,8 @@ azimuth variability implemented in `hvsrpy` are detailed in Cheng et al. (2020).
 If you use `hvsrpy` in your research or consulting, we ask you please cite the
 following:
 
->Joseph Vantassel. (2020). jpvantassel/hvsrpy: latest (Concept). Zenodo.
-[http://doi.org/10.5281/zenodo.3666956](http://doi.org/10.5281/zenodo.3666956)
+> Joseph Vantassel. (2020). jpvantassel/hvsrpy: latest (Concept). Zenodo.
+> [http://doi.org/10.5281/zenodo.3666956](http://doi.org/10.5281/zenodo.3666956)
 
 _Note: For software, version specific citations should be preferred to
 general concept citations, such as that listed above. To generate a version
@@ -48,17 +48,17 @@ version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
 These works provide background for the calculations performed by `hvsrpy`.
 
 > Cox, B. R., Cheng, T., Vantassel, J. P., and Manuel, L. (2020). “A statistical
-representation and frequency-domain window-rejection algorithm for
-single-station HVSR measurements.” _Geophysical Journal International_, 221(3),
-2170-2183.
+> representation and frequency-domain window-rejection algorithm for
+> single-station HVSR measurements.” _Geophysical Journal International_, 221(3),
+> 2170-2183.
 
 > Cheng, T., Cox, B. R., Vantassel, J. P., and Manuel, L. (2020). "A
-statistical approach to account for azimuthal variability in single-station
-HVSR measurements." _Geophysical Journal International_, In Review.
+> statistical approach to account for azimuthal variability in single-station
+> HVSR measurements." _Geophysical Journal International_, In Review.
 
 > Cheng, T., Hallal, M., Vantassel, J. P., and Cox, B. R. (2020). "Estimating
-Unbiased Statistics for Fundamental Site Frequency Using Spatially Distributed
-HVSR Measurements and Voronoi Tessellation." Submitted.
+> Unbiased Statistics for Fundamental Site Frequency Using Spatially Distributed
+> HVSR Measurements and Voronoi Tessellation." Submitted.
 
 ## Why use _hvsrpy_
 
@@ -165,10 +165,10 @@ and also as part of a large published data set
 -   __Cosine Taper Width:__ 10% (i.e., 5% in Geopsy)
 -   __Konno and Ohmachi Smoothing Coefficient:__ 40
 -   __Resampling:__
-  -   __Minimum Frequency:__ 0.3 Hz
-  -   __Maximum Frequency:__ 40 Hz
-  -   __Number of Points:__ 2048
-  -   __Sampling Type:__ 'log'
+    -   __Minimum Frequency:__ 0.3 Hz
+    -   __Maximum Frequency:__ 40 Hz
+    -   __Number of Points:__ 2048
+    -   __Sampling Type:__ 'log'
 -   __Method for Combining Horizontal Components:__ 'squared-average'
 -   __Distribution for f0 from Time Windows:__ 'normal'
 -   __Distribution for Mean Curve:__ 'log-normal'
@@ -205,10 +205,10 @@ these settings noted for each example.
 - __Cosine Taper Width:__ 10% (i.e., 5% in Geopsy)
 - __Konno and Ohmachi Smoothing Coefficient:__ 40
 - __Resampling:__
-  - __Minimum Frequency:__ 0.3 Hz
-  - __Maximum Frequency:__ 40 Hz
-  - __Number of Points:__ 2048
-  - __Sampling Type:__ 'log'
+    - __Minimum Frequency:__ 0.3 Hz
+    - __Maximum Frequency:__ 40 Hz
+    - __Number of Points:__ 2048
+    - __Sampling Type:__ 'log'
 - __Method for Combining Horizontal Components:__ 'squared-average'
 - __Distribution for f0 from Time Windows:__ 'normal'
 - __Distribution for Mean Curve:__ 'log-normal'

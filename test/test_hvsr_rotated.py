@@ -246,7 +246,7 @@ class Test_HvsrRotated(TestCase):
         returned = self.hvrot.mean_curve("log-normal")
         expected = np.array([1.122, 1.566, 1.709, 1.830, 1.144])
         self.assertArrayAlmostEqual(expected, returned, places=2)
-        
+
         # Peak Amp
         returned = self.hvrot.mc_peak_amp("log-normal")
         expected = 1.830
@@ -319,7 +319,7 @@ class Test_HvsrRotated(TestCase):
         width = 0.1
         bandwidth = 40
         resampling = {"minf": 0.2, "maxf": 20, "nf": 128, "res_type": "log"}
-        method = "rotate"
+        method = "multiple-azimuths"
         azimuthal_interval = 15
         azimuth = np.arange(0,180+azimuthal_interval, azimuthal_interval)
         sensor = hvsrpy.Sensor3c.from_mseed(fname)

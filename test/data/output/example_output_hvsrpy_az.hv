@@ -1,10 +1,12 @@
-# hvsrpy output version 0.3.0
+# hvsrpy output version 0.4.1
 # File Name (),UT.STN11.A2_C150.miniseed
 # Window Length (s),60.0
-# Total Number of Windows (),60
+# Total Number of Windows per Azimuth (),60
 # Total Number of Azimuths (),13
 # Frequency Domain Window Rejection Performed (),True
 # Number of Standard Deviations Used for Rejection () [n],2
+# Number of Accepted Windows (),663
+# Number of Rejected Windows (),117
 # Distribution of f0 (),log-normal
 # Median f0 (Hz) [LMf0,AZ],0.6687
 # Log-normal standard deviation f0 () [SigmaLNf0,AZ],0.184

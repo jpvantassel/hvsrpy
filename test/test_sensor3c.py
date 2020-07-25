@@ -1,4 +1,4 @@
-# This file is part of hvsrpysrpy, a Python module for
+# This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
 # Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
@@ -19,6 +19,7 @@
 
 import logging
 import json
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -82,18 +83,18 @@ class Test_Sensor3c(TestCase):
 
     def test_to_and_from_dict(self):
         # Simple Case
-        ns = sigpropy.TimeSeries([1, 2, 3], dt=1)
-        ew = sigpropy.TimeSeries([1, 4, 5], dt=1)
-        vt = sigpropy.TimeSeries([1, -1, 1], dt=1)
-        expected = hvsrpy.Sensor3c(ns, ew, vt)
+        ns = sigpropy.TimeSeries([1., 2, 3], dt=1)
+        ew = sigpropy.TimeSeries([1., 4, 5], dt=1)
+        vt = sigpropy.TimeSeries([1., 1, 1], dt=1)
+        expected = hvsrpy.Sensor3c(ns, ew, vt, meta={"windowlength": 1})
 
         dict_repr = expected.to_dict()
         returned = hvsrpy.Sensor3c.from_dict(dict_repr)
 
-        for comp in ["ns", "ew", "vt"]:
-            exp = getattr(expected, comp).amp
-            ret = getattr(returned, comp).amp
-            self.assertArrayEqual(exp, ret)
+        for comp in ["ns", "ew", "vt", "meta"]:
+            exp = getattr(expected, comp)
+            ret = getattr(returned, comp)
+            self.assertEqual(exp, ret)
 
     def test_to_and_from_json(self):
         # Simple Case
@@ -110,23 +111,58 @@ class Test_Sensor3c(TestCase):
             ret = getattr(returned, comp).amp
             self.assertArrayEqual(exp, ret)
 
-    def test_from_miniseed(self):
-        # 0101010 custom file
-        fname = self.full_path+"data/custom/0101010.miniseed"
-        sensor = hvsrpy.Sensor3c.from_mseed(fname)
+    def test_from_mseed(self):
+        # fname is not None
+        # -----------------
 
+        # 0101010 custom file
+        fname = self.full_path+"data/custom/0101010.mseed"
+        sensor = hvsrpy.Sensor3c.from_mseed(fname)
         expected = np.array([0, 1, 0, 1, 0, 1, 0])
         for component in sensor:
             returned = component.amp
             self.assertArrayEqual(expected, returned)
 
         # Extra trace
-        fname = self.full_path+"data/custom/extra_trace.miniseed"
+        fname = self.full_path+"data/custom/extra_trace.mseed"
         self.assertRaises(ValueError, hvsrpy.Sensor3c.from_mseed, fname)
 
         # Mislabeled trace
-        fname = self.full_path+"data/custom/mislabeled_trace.miniseed"
+        fname = self.full_path+"data/custom/mislabeled_trace.mseed"
         self.assertRaises(ValueError, hvsrpy.Sensor3c.from_mseed, fname)
+
+        # fnames_1c is not None
+        # -------------------------
+
+        # 0101010 custom files
+        prefix = self.full_path + "data/custom"
+        fnames_1c = {c: f"{prefix}/channel_{c}.mseed" for c in list("enz")}
+        sensor = hvsrpy.Sensor3c.from_mseed(fnames_1c=fnames_1c)
+        base = np.array([0, 1, 0, 1, 0, 1, 0])
+        for factor, component in enumerate(sensor, start=1):
+            expected = base*factor
+            returned = component.amp
+            self.assertArrayEqual(expected, returned)
+
+        # 0101010 custom files with components switched -> warning
+        fnames_1c["n"], fnames_1c["e"] = fnames_1c["e"], fnames_1c["n"]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            sensor = hvsrpy.Sensor3c.from_mseed(fnames_1c=fnames_1c)
+        for component, factor in zip(sensor, [2, 1, 3]):
+            expected = base*factor
+            returned = component.amp
+            self.assertArrayEqual(expected, returned)
+
+        # len(stream) > 1
+        fnames_1c = {c: f"{prefix}/channel_{c}.mseed" for c in list("enz")}
+        fnames_1c["z"] = f"{prefix}/0101010.mseed"
+        self.assertRaises(IndexError, hvsrpy.Sensor3c.from_mseed,
+                          fnames_1c=fnames_1c)
+
+        # fname and fnames_1c are None
+        # --------------------------------
+        self.assertRaises(ValueError, hvsrpy.Sensor3c.from_mseed)
 
     def test_split(self):
         # Simple Case
@@ -228,7 +264,7 @@ class Test_Sensor3c(TestCase):
         self.assertRaises(NotImplementedError, sensor.transform)
 
     def test_hv(self):
-        with open(self.full_path+"int_singlewindow_cases.json", "r") as f:
+        with open(self.full_path+"data/integration/int_singlewindow_cases.json", "r") as f:
             cases = json.load(f)
 
         bp_filter = {"flag": False, "flow": 0.001, "fhigh": 49.9, "order": 5}
@@ -239,13 +275,15 @@ class Test_Sensor3c(TestCase):
             fname = self.full_path+value["fname_miniseed"]
             sensor = hvsrpy.Sensor3c.from_mseed(fname)
             settings = value["settings"]
-            my_hv = sensor.hv(settings["length"],
-                              bp_filter,
-                              settings["width"],
-                              settings["b"],
-                              settings["resampling"],
-                              settings["method"],
-                              azimuth=settings.get("azimuth"))
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                my_hv = sensor.hv(settings["length"],
+                                  bp_filter,
+                                  settings["width"],
+                                  settings["b"],
+                                  settings["resampling"],
+                                  settings["method"],
+                                  azimuth=settings.get("azimuth"))
             geopsy_hv = pd.read_csv(self.full_path+value["fname_geopsy"],
                                     delimiter="\t",
                                     comment="#",
@@ -253,6 +291,18 @@ class Test_Sensor3c(TestCase):
             self.assertArrayAlmostEqual(my_hv.amp[0],
                                         geopsy_hv["avg"].to_numpy(),
                                         delta=0.375)
+
+    def test_str_and_repr(self):
+        fname = self.full_path + "data/custom/0101010.mseed"
+        sensor = hvsrpy.Sensor3c.from_mseed(fname=fname)
+
+        # str
+        self.assertEqual("Sensor3c", sensor.__str__())
+
+        # repr
+        expected = f"Sensor3c(ns={sensor.ns}, ew={sensor.ew}, vt={sensor.vt}, meta={sensor.meta})"
+        returned = sensor.__repr__()
+        self.assertEqual(expected, returned)
 
 
 if __name__ == "__main__":

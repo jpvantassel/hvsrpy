@@ -28,7 +28,7 @@ from testtools import get_full_path
 full_path = get_full_path(__file__)
 
 
-with open(full_path+"int_singlewindow_cases.json", "r") as f:
+with open(full_path+"data/integration/int_singlewindow_cases.json", "r") as f:
     cases = json.load(f)
 
 bp_filter = {"flag": False, "flow": 0.001, "fhigh": 49.9, "order": 5}

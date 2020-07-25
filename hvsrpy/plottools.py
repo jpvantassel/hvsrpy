@@ -17,34 +17,37 @@
 
 """File for organizing some useful plotting functions."""
 
-import matplotlib.pyplot as plt
 import time
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
 import hvsrpy
 
 
 def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
                minf=0.2, maxf=20, nf=128, res_type="log",
                filter_bool=False, flow=0.1, fhigh=30, forder=5,
-               method="geometric-mean",
+               method="geometric-mean", azimuth=None,
                distribution_f0="log-normal",
                distribution_mc="log-normal",
-               rejection_bool=True, n=2, n_iteration=50
-               ):  # pragma: no cover
+               rejection_bool=True, n=2, n_iteration=50):  # pragma: no cover
     """Create standard five panel (3-time histories and 2-Hvsr)
 
     Parameters
     ----------
-        file_name : str
-            Name of 3-component time record, may be relative or full
-            path.
+        file_name : str or dict
+            If `str`, name of 3-component time record, may be relative
+            or full path, else `dict` of three files (one-component per
+            file).
         windowlength : float, optional
             Length of time windows, default is 60 seconds.
         width : {0.0 - 1.0}, optional
             Length of cosine taper, default is 0.1 (5% on each side) of
             time window.
         bandwidth : int, optional
-            Bandwidth coefficeint for Konno & Ohmachi smoothing, default
-            is 40.
+            Bandwidth coefficient for Konno & Ohmachi (1998) smoothing,
+            default is 40.
         minf, maxf : float, optional
             Minimum and maximum frequency in Hz to consider when
             resampling, defaults are 0.2 and 20, respectively.
@@ -57,28 +60,27 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
             `False`.
         flow, fhigh : float, optional
             Upper and lower frequency limits of bandpass filter in Hz,
-            default iare 0.1 and 30 respectively.
+            defaults are 0.1 and 30 respectively.
         forder : int, optional
             Filter order, default is 5 (i.e., 5th order filter).
         method : {'squared-average', 'geometric-mean'}, optional
             Method for combining the horizontal components, default is
             `geometric-mean`.
         distribution_f0 : {"normal", "log-normal"}, optional
-            Distribution assumed to describe the fundemental site
+            Distribution assumed to describe the fundamental site
             frequency, default is "log-normal".
         , distribution_mc : {"normal", "log-normal"}, optional
             Distribution assumed to describe the median curve, default
-            is "log-normal". 
+            is "log-normal".
         rejection_bool : bool, optional
             Determines whether the rejection is performed, default is
             True.
         n : float, optional
-            Number of standard deviations to consider whenn performing
+            Number of standard deviations to consider when performing
             the rejection, default is 2.
         n_iteration : int, optional
             Number of permitted iterations to convergence, default is
             50.
-
 
     Returns
     -------
@@ -88,6 +90,14 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
 
 
     """
+    if isinstance(file_name, str):
+        sensor = hvsrpy.Sensor3c.from_mseed(fname=file_name)
+    elif isinstance(file_name, dict):
+        sensor = hvsrpy.Sensor3c.from_mseed(fnames_1c=file_name)
+    else:
+        raise TypeError
+
+    # Direct form simple_hvsrpy_interface.ipynb
     fig = plt.figure(figsize=(6, 6), dpi=150)
     gs = fig.add_gridspec(nrows=6, ncols=6)
 
@@ -99,16 +109,16 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
         ax3 = fig.add_subplot(gs[0:3, 3:6])
         ax4 = fig.add_subplot(gs[3:6, 3:6])
     else:
-        ax3 = fig.add_subplot(gs[1:4, 3:6])
+        ax3 = fig.add_subplot(gs[0:3, 3:6])
         ax4 = False
 
     start = time.time()
-    sensor = hvsrpy.Sensor3c.from_mseed(file_name)
+    # sensor = hvsrpy.Sensor3c.from_mseed(file_name)
     bp_filter = {"flag": filter_bool, "flow": flow,
                  "fhigh": fhigh, "order": forder}
     resampling = {"minf": minf, "maxf": maxf, "nf": nf, "res_type": res_type}
-    hv = sensor.hv(windowlength, bp_filter, width,
-                   bandwidth, resampling, method)
+    hv = sensor.hv(windowlength, bp_filter, width, bandwidth,
+                   resampling, method, azimuth=azimuth)
     end = time.time()
     print(f"Elapsed Time: {str(end-start)[0:4]} seconds")
 
@@ -117,7 +127,7 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
     for ax, title in zip([ax3, ax4], ["Before Rejection", "After Rejection"]):
         # Rejected Windows
         if title == "After Rejection":
-            if hv.rejected_window_indices.size > 0:
+            if len(hv.rejected_window_indices) > 0:
                 label = "Rejected"
                 for amp in hv.amp[hv.rejected_window_indices]:
                     ax.plot(hv.frq, amp, color='#00ffff',
@@ -142,7 +152,7 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
                 label="" if title == "Before Rejection" and rejection_bool else r"$f_{0,mc}$")
 
         # Mean Curve
-        label = r"$LM_{curve}$" if distribution_mc == "log-normal" else "Mean Curve"
+        label = r"$LM_{curve}$" if distribution_mc == "log-normal" else "Mean"
         ax.plot(hv.frq, hv.mean_curve(distribution_mc), color='k', linewidth=median_width,
                 label="" if title == "Before Rejection" and rejection_bool else label)
 
@@ -168,39 +178,26 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
         ax.set_xscale('log')
         ax.set_xlabel("Frequency (Hz)")
         ax.set_ylabel("HVSR Ampltidue")
-        n_spaces = 19
         if rejection_bool:
             if title == "Before Rejection":
-                print()
-                print(f"*{'*'*n_spaces} Statistics Before Rejection {'*'*n_spaces}")
+                print("\nStatistics before rejection:")
                 hv.print_stats(distribution_f0)
-                print()
                 c_iter = hv.reject_windows(n, max_iterations=n_iteration,
                                            distribution_f0=distribution_f0, distribution_mc=distribution_mc)
-                print(f"Window length :  {str(windowlength)}s")
-                print(f"No. of windows : {sensor.ns.n_windows}")
-                print(
-                    f"Number of iterations to convergence: {c_iter} of {n_iteration} allowed.")
             elif title == "After Rejection":
                 fig.legend(ncol=4, loc='lower center',
                            bbox_to_anchor=(0.51, 0), columnspacing=2)
-                print(
-                    f"No. of rejected windows : {len(hv.rejected_window_indices)}")
 
-                print()
-                print(f"*{'*'*n_spaces} Statistics After Rejection {'*'*n_spaces}*")
+                print("\nAnalysis summary:")
+                display(pd.DataFrame(columns=[""], index=["Window length", "No. of windows", "Number of iterations to convergence", "No. of rejected windows"],
+                                     data=[f"{windowlength}s", str(sensor.ns.n_windows), f"{c_iter} of {n_iteration} allowed", str(len(hv.rejected_window_indices))]))
+                print("\nStatistics after rejection:")
                 hv.print_stats(distribution_f0)
-                print()
         else:
-            n_spaces += 9
-            print()
-            print(f"Window length :  {str(windowlength)}s")
-            print(f"No. of windows : {sensor.ns.n_windows}")
-            print()
-            print(f"*{'*'*n_spaces} Statistics{'*'*n_spaces}")
+            display(pd.DataFrame(columns=[""], index=["Window length", "No. of windows"],
+                                 data=[f"{windowlength}s", str(sensor.ns.n_windows)]))
             hv.print_stats(distribution_f0)
-            print()
-            fig.legend(loc="upper center", bbox_to_anchor=(0.75, 0.3))
+            fig.legend(loc="upper center", bbox_to_anchor=(0.77, 0.4))
             break
         ax.set_title(title)
 
@@ -218,6 +215,17 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
         for window_index in hv.rejected_window_indices:
             ax.plot(ctime[window_index], amp[window_index],
                     linewidth=0.2, color="cyan")
+
+    if rejection_bool:
+        axs = [ax0, ax3, ax1, ax4, ax2]
+    else:
+        axs = [ax0, ax3, ax1, ax2]
+
+    for ax, letter in zip(axs, list("abcde")):
+        ax.text(0.97, 0.97, f"({letter})", ha="right",
+                va="top", transform=ax.transAxes, fontsize=12)
+        for spine in ["top", "right"]:
+            ax.spines[spine].set_visible(False)
 
     fig.tight_layout(h_pad=1, w_pad=2, rect=(0, 0.08, 1, 1))
 
@@ -240,9 +248,6 @@ def quick_voronoi_plot(points, vertice_set, boundary, ax=None,
 
     for vertices in vertice_set:
         ax.fill(vertices[:, 0], vertices[:, 1], alpha=0.4)
-
-    # for number, (_x, _y) in enumerate(points):
-    #     ax.text(_x, _y+1, number, ha="center", va="bottom")
 
     ax.plot(points[:, 0], points[:, 1], 'ko')
     ax.plot(boundary[:, 0], boundary[:, 1], color="k")

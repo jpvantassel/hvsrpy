@@ -121,7 +121,7 @@ class Test_Spatial(TestCase):
         dist_spatial = "my fancy distribution"
         self.assertRaises(NotImplementedError,
                           spatial.montecarlo_f0, means, stds,
-                          weights, dist_spatial=dist_generators)
+                          weights, dist_spatial=dist_spatial)
 
 
 if __name__ == "__main__":
