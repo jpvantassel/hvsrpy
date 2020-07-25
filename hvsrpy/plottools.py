@@ -127,7 +127,7 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
     for ax, title in zip([ax3, ax4], ["Before Rejection", "After Rejection"]):
         # Rejected Windows
         if title == "After Rejection":
-            if len(hv.rejected_window_indices):
+            if len(hv.rejected_window_indices) > 0:
                 label = "Rejected"
                 for amp in hv.amp[hv.rejected_window_indices]:
                     ax.plot(hv.frq, amp, color='#00ffff',

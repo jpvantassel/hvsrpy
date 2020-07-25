@@ -17,8 +17,6 @@
 
 """Various Hvsr utilities."""
 
-import time
-
 from termcolor import colored
 
 from hvsrpy import Hvsr
@@ -29,7 +27,8 @@ def pass_fail(value):
     return colored("Pass", "green") if value > 0 else colored("Fail", "red")
 
 
-def clean(number): return str(np.round(number, decimals=3))
+def clean(number, decimals=3):
+    return str(np.round(number, decimals=decimals))
 
 
 def is_isnot(value):
