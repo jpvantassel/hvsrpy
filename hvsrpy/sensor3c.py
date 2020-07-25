@@ -83,7 +83,7 @@ class Sensor3c():
                 msg = f"`{key}`` must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
             if value.dt != dt:
-                msg = f"All components must have equal `dt`."
+                msg = "All components must have equal `dt`."
                 raise ValueError(msg)
             if value.nsamples != nsamples:
                 logging.info("Components are not of the same length.")
@@ -164,7 +164,7 @@ class Sensor3c():
         if fnames_1c is None and fname is None:
             msg = "`fnames_1c` and `fname` cannot both be `None`."
             raise ValueError(msg)
-        elif fnames_1c is not None:
+        if fnames_1c is not None:
             trace_list = []
             for key in ["e", "n", "z"]:
                 stream = obspy.read(fnames_1c[key], format="MSEED")
@@ -174,11 +174,11 @@ class Sensor3c():
                     raise IndexError(msg)
                 trace = stream[0]
                 if trace.meta.channel[-1] != key.capitalize():
-                    msg = f"Component indicated in the header of "
+                    msg = "Component indicated in the header of "
                     msg += f"{fnames_1c[key]} is {trace.meta.channel[-1]} "
                     msg += f"which does not match the key {key} specified. "
-                    msg += f"Ignore this warning only if you know "
-                    msg += f"your digitizer's header is incorrect."
+                    msg += "Ignore this warning only if you know "
+                    msg += "your digitizer's header is incorrect."
                     warnings.warn(msg)
                     trace.meta.channel = trace.meta.channel[:-1] + \
                         key.capitalize()
@@ -203,7 +203,7 @@ class Sensor3c():
                 vt = TimeSeries.from_trace(trace)
                 found_vt = True
             else:
-                msg = f"Missing, duplicate, or incorrectly named components. See documentation."
+                msg = "Missing, duplicate, or incorrectly named components. See documentation."
                 raise ValueError(msg)
 
         meta = {"File Name": fname}
@@ -469,20 +469,17 @@ class Sensor3c():
 
         if method in ["squared-average", "geometric-mean", "azimuth", "single-azimuth"]:
             if method == "azimuth":
-                msg = f"method='azimuth' is deprecated, replace with the more descriptive 'single-azimuth'."
+                msg = "method='azimuth' is deprecated, replace with the more descriptive 'single-azimuth'."
                 warnings.warn(msg, DeprecationWarning)
                 method = "single-azimuth"
+            return self._make_hvsr(method=method, resampling=resampling,
+                                   bandwidth=bandwidth, azimuth=azimuth)
 
-            return self._make_hvsr(method=method,
-                                   resampling=resampling,
-                                   bandwidth=bandwidth,
-                                   azimuth=azimuth)
         elif method in ["rotate", "multiple-azimuths"]:
             if method == "rotate":
-                msg = f"method='rotate' is deprecated, replace with the more descriptive 'multiple-azimuths'."
+                msg = "method='rotate' is deprecated, replace with the more descriptive 'multiple-azimuths'."
                 warnings.warn(msg, DeprecationWarning)
                 method = "multiple-azimuths"
-
             hvsrs = np.empty(len(azimuth), dtype=object)
             for index, az in enumerate(azimuth):
                 hvsrs[index] = self._make_hvsr(method="single-azimuth",
@@ -490,6 +487,7 @@ class Sensor3c():
                                                bandwidth=bandwidth,
                                                azimuth=az)
             return HvsrRotated.from_iter(hvsrs, azimuth, meta=self.meta)
+
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
@@ -552,7 +550,7 @@ class Sensor3c():
 
     def __str__(self):
         """Human-readable representation of `Sensor3c` object."""
-        return f"Sensor3c"
+        return "Sensor3c"
 
     def __repr__(self):
         """Unambiguous representation of `Sensor3c` object."""

@@ -86,7 +86,7 @@ class Test_Sensor3c(TestCase):
         ns = sigpropy.TimeSeries([1., 2, 3], dt=1)
         ew = sigpropy.TimeSeries([1., 4, 5], dt=1)
         vt = sigpropy.TimeSeries([1., 1, 1], dt=1)
-        expected = hvsrpy.Sensor3c(ns, ew, vt, meta={"windowlength":1})
+        expected = hvsrpy.Sensor3c(ns, ew, vt, meta={"windowlength": 1})
 
         dict_repr = expected.to_dict()
         returned = hvsrpy.Sensor3c.from_dict(dict_repr)

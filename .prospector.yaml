@@ -27,10 +27,10 @@ ignore-paths:
 #     - missing-docstring
 #     - star-args
 
-# pep8:
-#   full: true
-#   disable:
-#     - E126
+pep8:
+  full: true
+  disable:
+    - E501
 
 pep257:
   disable:

@@ -161,24 +161,23 @@ class Test_Utils(TestCase):
         for expected, limits in zip(expecteds, settings):
             with open(os.devnull, "w") as sys.stdout:
                 returned = np.sum(utils.sesame_reliability(60, 10, frequency,
-                mean_curve, std_curve, search_limits=limits,
-                                                        verbose=2))
+                                                           mean_curve, std_curve, search_limits=limits,
+                                                           verbose=2))
                 sys.stdout = sys.__stdout__
             self.assertEqual(expected, returned)
 
         # clarity
-        expecteds = [6,6]
+        expecteds = [6, 6]
         settings = [(0.3, 0.5), (0.9, 1.3)]
 
         for expected, limits in zip(expecteds, settings):
             with open(os.devnull, "w") as sys.stdout:
                 returned = np.sum(utils.sesame_clarity(frequency, mean_curve,
-                                                std_curve, f0_std,
-                                                search_limits=limits,
-                                                verbose=2))
+                                                       std_curve, f0_std,
+                                                       search_limits=limits,
+                                                       verbose=2))
                 sys.stdout = sys.__stdout__
             self.assertEqual(expected, returned)
-
 
     def test_sesame_by_case(self):
 

@@ -609,7 +609,8 @@ class Hvsr():
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 
-        def fclean(x): return np.round(x, 4)
+        def fclean(number, decimals=4):
+            return np.round(number, decimals=decimals)
 
         lines = [
             f"# hvsrpy output version {__version__}",
@@ -662,7 +663,8 @@ class Hvsr():
             f"# Number of Rejected Windows (),{n_rejected}",
             f"# Distribution of f0 (),{distribution_f0}"]
 
-        def fclean(x): return np.round(x,4)
+        def fclean(number, decimals=4):
+            return np.round(number, decimals=decimals)
 
         if distribution_f0 == "log-normal":
             mean_t = 1/mean_f
