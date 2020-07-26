@@ -54,11 +54,20 @@ These works provide background for the calculations performed by `hvsrpy`.
 
 > Cheng, T., Cox, B. R., Vantassel, J. P., and Manuel, L. (2020). "A
 > statistical approach to account for azimuthal variability in single-station
-> HVSR measurements." _Geophysical Journal International_, In Review.
+> HVSR measurements." _Geophysical Journal International_, Accepted.
 
 > Cheng, T., Hallal, M., Vantassel, J. P., and Cox, B. R. (2020). "Estimating
 > Unbiased Statistics for Fundamental Site Frequency Using Spatially Distributed
 > HVSR Measurements and Voronoi Tessellation." Submitted.
+
+> SESAME. (2004). Guidelines for the Implementation of the H/V Spectral Ratio
+> Technique on Ambient Vibrations Measurements, Processing, and Interpretation.
+> European Commission - Research General Directorate, 62, European Commission -
+> Research General Directorate.
+
+`hvsrpy` would not exist without the help of many others. As a small display of
+gratitude, we thank them individually
+[here](https://github.com/jpvantassel/hvsrpy/blob/master/thanks.md).
 
 ## Why use _hvsrpy_
 
@@ -77,6 +86,8 @@ azimuthal calculations), and not only the mean/median curve.
 variability.
 -   A method for developing rigorous and unbiased spatial statistics.
 -   A fully-automated frequency-domain window-rejection algorithm.
+-   Automatic checking of the SESAME (2004) peak reliability and clarity
+criteria.
 -   A performant framework for batch-style processing.
 
 ### Example output from `hvsrpy` when considering the geometric-mean of the horizontal components
