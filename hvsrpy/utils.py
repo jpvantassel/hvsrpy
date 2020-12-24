@@ -46,8 +46,8 @@ def peak_index(curve):
 
 
 def sesame_reliability(windowlength, passing_window_count,
-                       frequency, mean_curve, std_curve, search_limits=None,
-                       verbose=1):
+                       frequency, mean_curve, std_curve,
+                       search_limits=(None, None), verbose=1):
     """Check SESAME (2004) reliability criteria.
 
     Parameters
@@ -68,7 +68,8 @@ def sesame_reliability(windowlength, passing_window_count,
         Standard deviation of f0 peak from time windows
         (assumes normal distribution).
     search_limits : tuple
-        Limits about which to search for f0.
+        Limits about which to search for f0, default is `(None, None)`
+        indicating the full range will be considered.
     verbose : {0, 1, 2}, optional
         Level of verbose logging for SESAME criteria, amount of logging
 
@@ -79,7 +80,16 @@ def sesame_reliability(windowlength, passing_window_count,
         failure and 1 indicating a pass.
 
     """
-    if search_limits is not None:
+    limits = []
+    limits_were_both_none = True
+    for limit, default in zip(search_limits, [min(frequency), max(frequency)]):
+        if limit is None:
+            limits.append(default)
+        else:
+            limits.append(float(limit))
+            limits_were_both_none = False
+    search_limits = tuple(limits)
+    if not limits_were_both_none:
         frequency, mean_curve, std_curve = trim_curve(search_limits, frequency,
                                                       mean_curve, std_curve,
                                                       verbose=verbose)
@@ -157,7 +167,7 @@ def trim_curve(search_limits, frequency, mean_curve, std_curve, verbose=0):
     upper_index = np.where(rel_frq_upp == np.min(rel_frq_upp))[0][0]+1
 
     if verbose > 0:
-        msg = f"  Considering only frequencies between {clean(low_limit)} and {clean(upp_limit)} Hz."
+        msg = f"Considering only frequencies between {clean(low_limit)} and {clean(upp_limit)} Hz."
         print(msg)
 
     if verbose > 1:
@@ -174,7 +184,7 @@ def trim_curve(search_limits, frequency, mean_curve, std_curve, verbose=0):
 
 
 def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
-                   search_limits=None, verbose=1):
+                   search_limits=(None, None), verbose=1):
     """Check SESAME (2004) clarity criteria.
 
     Parameters
@@ -191,7 +201,8 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
         Standard deviation of f0 peak from time windows
         (assumes normal distribution).
     search_limits : tuple
-        Limits about which to search for f0.
+        Limits about which to search for f0, default is `(None, None)`
+        indicating the full range will be considered.
     verbose : {0, 1, 2}, optional
         Level of verbose logging for SESAME criteria, amount of logging
 
@@ -208,7 +219,16 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
 
     criteria = np.zeros(6)
 
-    if search_limits is not None:
+    limits = []
+    limits_were_both_none = True
+    for limit, default in zip(search_limits, [min(frequency), max(frequency)]):
+        if limit is None:
+            limits.append(default)
+        else:
+            limits.append(float(limit))
+            limits_were_both_none = False
+    search_limits = tuple(limits)
+    if not limits_were_both_none:
         frequency, mean_curve, std_curve = trim_curve(search_limits, frequency,
                                                       mean_curve, std_curve,
                                                       verbose=verbose)

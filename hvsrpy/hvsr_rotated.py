@@ -51,6 +51,8 @@ class HvsrRotated():
         azimuth : float
             Rotation angle in degrees measured clockwise positive from
             north (i.e., 0 degrees).
+        meta : dict, optional
+            Meta information about the object, default is `None`.
 
         Returns
         -------

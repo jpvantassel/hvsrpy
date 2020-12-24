@@ -28,6 +28,7 @@ from .meta import __version__
 
 logger = logging.getLogger(name=__name__)
 
+
 class Hvsr():
     """Class for creating and manipulating horizontal-to-vertical
     spectral ratio objects.
@@ -98,7 +99,8 @@ class Hvsr():
             distribution = "lognormal"
         return distribution
 
-    def __init__(self, amplitude, frequency, find_peaks=True, meta=None):
+    def __init__(self, amplitude, frequency, find_peaks=True,
+                 f_low=None, f_high=None, meta=None):
         """Create `Hvsr` from iterable of amplitude and frequency.
 
         Parameters
@@ -111,6 +113,10 @@ class Hvsr():
         find_peaks : bool, optional
             Indicates whether peaks of Hvsr will be found when created,
             default is `True`.
+        f_low, f_high : float, optional
+            Upper and lower frequency limits to restrict peak selection,
+            default is `None` meaning search range will not be
+            restricted.
         meta : dict, optional
             Meta information about the object, default is `None`.
 
@@ -133,16 +139,31 @@ class Hvsr():
         self.valid_window_indices = np.ones(self.n_windows, dtype=bool)
         self._main_peak_frq = np.zeros(self.n_windows)
         self._main_peak_amp = np.zeros(self.n_windows)
+        
+        self.f_low = None if f_low is None else float(f_low) 
+        if self.f_low is None:
+            self.i_low = 0
+        else:
+            diff = np.abs(self.frq - self.f_low)
+            self.i_low = int(np.where(diff == np.min(diff))[0])
+        
+        self.f_high = None if f_high is None else float(f_high) 
+        if self.f_high is None:
+            self.i_high = len(self.frq)
+        else:
+            diff = np.abs(self.frq - self.f_high)
+            self.i_high = int(np.where(diff == np.min(diff))[0]) + 1
+        
         self._initialized_peaks = find_peaks
         if find_peaks:
             self.update_peaks()
+        
         self.meta = meta
 
     @property
     def rejected_window_indices(self):
         """Rejected window indices."""
         return np.invert(self.valid_window_indices)
-        # return np.array([cid for cid in range(self.n_windows) if cid not in self.valid_window_indices])
 
     @property
     def peak_frq(self):
@@ -159,7 +180,7 @@ class Hvsr():
         return self._main_peak_amp[self.valid_window_indices]
 
     @staticmethod
-    def find_peaks(amp, **kwargs):
+    def find_peaks(amp, starting_index=0, **kwargs):
         """Indices of all peaks in `amp`.
 
         Wrapper method for `scipy.signal.find_peaks` function.
@@ -186,6 +207,7 @@ class Hvsr():
         peaks = []
         for c_amp in amp:
             peak, settings = sg.find_peaks(c_amp, **kwargs)
+            peak += starting_index
             peaks.append(peak.tolist())
         return (peaks, settings)
 
@@ -206,7 +228,8 @@ class Hvsr():
         if not self._initialized_peaks:
             self._initialized_peaks = True
 
-        peak_indices, _ = self.find_peaks(self.amp[self.valid_window_indices],
+        peak_indices, _ = self.find_peaks(self.amp[self.valid_window_indices, self.i_low:self.i_high],
+                                          starting_index=self.i_low,
                                           **kwargs)
         valid_indices = np.zeros(self.n_windows, dtype=bool)
         valid_count = 0
@@ -217,7 +240,8 @@ class Hvsr():
             c_window_peaks = peak_indices[valid_count]
 
             try:
-                c_index = np.where(self.amp[c_window] == np.max(self.amp[c_window, c_window_peaks]))[0]
+                c_index = np.where(self.amp[c_window] == np.max(
+                    self.amp[c_window, c_window_peaks]))[0]
                 # TODO (jpv): If a Hvsr curve has two peaks of equal
                 # amplitude, arbitrarily take the first.
                 if len(c_index) > 1:
@@ -231,9 +255,7 @@ class Hvsr():
                 else:
                     raise e
             valid_count += 1
-        # self.valid_window_indices = np.array(valid_indices, dtype=bool)
         self.valid_window_indices = valid_indices
-
 
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
@@ -410,7 +432,9 @@ class Hvsr():
         """
         mc = self.mean_curve(distribution)
         mc = mc.reshape((1, mc.size))
-        return float(self.frq[np.where(mc[0] == np.max(mc[0, self.find_peaks(mc)[0]]))])
+        mc = mc[:, self.i_low:self.i_high]
+        rel_index = np.where(mc[0] == np.max(mc[0, self.find_peaks(mc)[0]]))[0]
+        return float(self.frq[self.i_low + rel_index])
 
     def mc_peak_amp(self, distribution='lognormal'):
         """Amplitude of the peak of the mean HVSR curve.
@@ -428,6 +452,7 @@ class Hvsr():
         """
         mc = self.mean_curve(distribution)
         mc = mc.reshape((1, mc.size))
+        mc = mc[:, self.i_low:self.i_high]
         return np.max(mc[0, self.find_peaks(mc)[0]])
 
     def reject_windows(self, n=2, max_iterations=50,
@@ -676,7 +701,8 @@ class Hvsr():
         _max = self.nstd_curve(+1, distribution_mc)
 
         n_rejected = self.n_windows - sum(self.valid_window_indices)
-        rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
+        rejection = "False" if self.meta.get(
+            'Performed Rejection') is None else "True"
         lines = [
             f"# hvsrpy output version {__version__}",
             f"# File Name (),{self.meta.get('File Name')}",

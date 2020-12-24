@@ -427,7 +427,7 @@ class Sensor3c():
             raise NotImplementedError
 
     def hv(self, windowlength, bp_filter, taper_width, bandwidth,
-           resampling, method, azimuth=None):
+           resampling, method, f_low=None, f_high=None, azimuth=None):
         """Prepare time series and Fourier transforms then compute H/V.
 
         Parameters
@@ -448,6 +448,10 @@ class Sensor3c():
         method : {'squared-averge', 'geometric-mean', 'single-azimuth', 'multiple-azimuths'}
             Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
             for details.
+        f_low, f_high : float, optional
+            Upper and lower frequency limits to restrict peak selection,
+            default is `None` meaning search range will not be
+            restricted.
         azimuth : float, optional
             Refer to
             :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
@@ -473,7 +477,8 @@ class Sensor3c():
                 warnings.warn(msg, DeprecationWarning)
                 method = "single-azimuth"
             return self._make_hvsr(method=method, resampling=resampling,
-                                   bandwidth=bandwidth, azimuth=azimuth)
+                                   bandwidth=bandwidth, f_low=f_low,
+                                   f_high=f_high, azimuth=azimuth)
 
         elif method in ["rotate", "multiple-azimuths"]:
             if method == "rotate":
@@ -485,6 +490,8 @@ class Sensor3c():
                 hvsrs[index] = self._make_hvsr(method="single-azimuth",
                                                resampling=resampling,
                                                bandwidth=bandwidth,
+                                               f_low=f_low,
+                                               f_high=f_high,
                                                azimuth=az)
             return HvsrRotated.from_iter(hvsrs, azimuth, meta=self.meta)
 
@@ -492,7 +499,7 @@ class Sensor3c():
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
 
-    def _make_hvsr(self, method, resampling, bandwidth, azimuth=None):
+    def _make_hvsr(self, method, resampling, bandwidth, f_low=None, f_high=None, azimuth=None):
         if method in ["squared-average", "geometric-mean"]:
             ffts = self.transform()
             hor = self.combine_horizontals(method=method, horizontals=ffts)
@@ -542,7 +549,7 @@ class Sensor3c():
 
         self.meta["Window Length"] = window_length
 
-        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, meta=self.meta)
+        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, f_low=f_low, f_high=f_high, meta=self.meta)
 
     def __iter__(self):
         """Iterable representation of a Sensor3c object."""
