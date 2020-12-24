@@ -208,15 +208,16 @@ class Hvsr():
 
         peak_indices, _ = self.find_peaks(self.amp[self.valid_window_indices],
                                           **kwargs)
-        valid_indices = np.zeros_like(self.valid_window_indices, dtype=bool)
+        valid_indices = np.zeros(self.n_windows, dtype=bool)
+        valid_count = 0
         for c_window, valid in enumerate(self.valid_window_indices):
             if not valid:
                 continue
 
-            c_window_peaks = peak_indices[c_window]
+            c_window_peaks = peak_indices[valid_count]
 
             try:
-                c_index = np.nonzero(self.amp[c_window] == np.max(self.amp[c_window, c_window_peaks]))[0]
+                c_index = np.where(self.amp[c_window] == np.max(self.amp[c_window, c_window_peaks]))[0]
                 # TODO (jpv): If a Hvsr curve has two peaks of equal
                 # amplitude, arbitrarily take the first.
                 if len(c_index) > 1:
@@ -229,7 +230,10 @@ class Hvsr():
                     logger.warning(f"No peak found in window #{c_window}.")
                 else:
                     raise e
-        self.valid_window_indices = np.array(valid_indices, dtype=bool)
+            valid_count += 1
+        # self.valid_window_indices = np.array(valid_indices, dtype=bool)
+        self.valid_window_indices = valid_indices
+
 
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
@@ -479,14 +483,15 @@ class Hvsr():
             lower_bound = self.nstd_f0_frq(-n, distribution_f0)
             upper_bound = self.nstd_f0_frq(+n, distribution_f0)
 
+            valid_indices = np.zeros(self.n_windows, dtype=bool)
             for c_window, (c_valid, c_peak) in enumerate(zip(self.valid_window_indices, self._main_peak_frq)):
                 if not c_valid:
                     continue
 
                 if c_peak > lower_bound and c_peak < upper_bound:
-                    self.valid_window_indices[c_window] = True
-                else:
-                    self.valid_window_indices[c_window] = False
+                    valid_indices[c_window] = True
+
+            self.valid_window_indices = valid_indices
 
             mean_f0_after = self.mean_f0_frq(distribution_f0)
             std_f0_after = self.std_f0_frq(distribution_f0)
@@ -510,7 +515,6 @@ class Hvsr():
             logger.debug(f"\ts_diff: {s_diff}")
 
             if (d_diff < 0.01) and (s_diff < 0.01):
-                # self.valid_window_indices = old_indices
                 msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
                 logger.info(msg)
                 return c_iteration
@@ -637,9 +641,9 @@ class Hvsr():
 
         lines = [
             f"# hvsrpy output version {__version__}",
-            f"# Number of windows = {len(self.valid_window_indices)}",
+            f"# Number of windows = {sum(self.valid_window_indices)}",
             f"# f0 from average\t{fclean(mc_peak_frq)}",
-            f"# Number of windows for f0 = {len(self.valid_window_indices)}",
+            f"# Number of windows for f0 = {sum(self.valid_window_indices)}",
             f"# f0 from windows\t{fclean(mean)}\t{fclean(lower)}\t{fclean(upper)}",
             f"# Peak amplitude\t{fclean(mc[np.where(self.frq == mc_peak_frq)][0])}",
             f"# Position\t{0} {0} {0}",
@@ -671,7 +675,7 @@ class Hvsr():
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 
-        n_rejected = self.n_windows - len(self.valid_window_indices)
+        n_rejected = self.n_windows - sum(self.valid_window_indices)
         rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
         lines = [
             f"# hvsrpy output version {__version__}",

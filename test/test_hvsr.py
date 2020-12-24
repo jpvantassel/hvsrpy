@@ -333,17 +333,17 @@ class Test_Hvsr(TestCase):
         expected = np.array([[0.72, 0.10], [1.39, 0.1]])
         self.assertArrayEqual(expected, returned)
 
-        # # data_format == "hvsrpy"
-        # returned = hv._hvsrpy_style_lines(distribution_f0, distribution_mc)
-        # with open(self.full_path+"data/output/example_output_hvsrpy.hv") as f:
-        #     expected = f.readlines()
-        # self.assertListEqual(expected, returned)
+        # data_format == "hvsrpy"
+        returned = hv._hvsrpy_style_lines(distribution_f0, distribution_mc)
+        with open(self.full_path+"data/output/example_output_hvsrpy.hv") as f:
+            expected = f.readlines()
+        self.assertListEqual(expected, returned)
 
-        # # data_format == "geopsy"
-        # returned = hv._geopsy_style_lines(distribution_f0, distribution_mc)
-        # with open(self.full_path+"data/output/example_output_geopsy.hv") as f:
-        #     expected = f.readlines()
-        # self.assertListEqual(expected, returned)
+        # data_format == "geopsy"
+        returned = hv._geopsy_style_lines(distribution_f0, distribution_mc)
+        with open(self.full_path+"data/output/example_output_geopsy.hv") as f:
+            expected = f.readlines()
+        self.assertListEqual(expected, returned)
 
 
 if __name__ == "__main__":

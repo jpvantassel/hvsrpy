@@ -19,6 +19,8 @@
 
 import unittest
 
+import numpy as np
+
 def get_full_path(path):
     if path.count("/") > 1:
         file_name = path.split(r"/")[-1]
@@ -28,19 +30,56 @@ def get_full_path(path):
         full_path = path[:-len(file_name)]
     return full_path
 
+# class TestCase(unittest.TestCase):
+
+#     def assertListAlmostEqual(self, list1, list2, **kwargs):
+#         for a, b in zip(list1, list2):
+#             self.assertAlmostEqual(a, b, **kwargs)
+
+#     def assertArrayEqual(self, array1, array2):
+#         self.assertListEqual(array1.tolist(), array2.tolist())
+
+#     def assertArrayAlmostEqual(self, array1, array2, **kwargs):
+#         if array1.size != array2.size:
+#             self.assertEqual(array1.size, array2.size)
+#         array1 = array1.flatten()
+#         array2 = array2.flatten()
+#         for v1, v2 in zip(array1, array2):
+#             self.assertAlmostEqual(v1, v2, **kwargs)
+
 class TestCase(unittest.TestCase):
 
     def assertListAlmostEqual(self, list1, list2, **kwargs):
         for a, b in zip(list1, list2):
             self.assertAlmostEqual(a, b, **kwargs)
 
+    def assertNestedListEqual(self, list1, list2, **kwargs):
+        if len(list1) != len(list2):
+            msg = f"\nExpected:\n{list1}\nReturned:\n{list2})"
+            raise AssertionError(msg)
+
+        for l1, l2 in zip(list1, list2):
+                self.assertListEqual(l1, l2, **kwargs)
+
     def assertArrayEqual(self, array1, array2):
-        self.assertListEqual(array1.tolist(), array2.tolist())
+        try:
+            self.assertTrue(np.equal(array1, array2, casting='no').all())
+        except AssertionError as e:
+            msg = f"\nExpected:\n{array1}\nReturned:\n{array2})"
+            raise AssertionError(msg) from e
 
     def assertArrayAlmostEqual(self, array1, array2, **kwargs):
-        if array1.size != array2.size:
-            self.assertEqual(array1.size, array2.size)
-        array1 = array1.flatten()
-        array2 = array2.flatten()
-        for v1, v2 in zip(array1, array2):
-            self.assertAlmostEqual(v1, v2, **kwargs)
+        if kwargs.get("places", False):
+            kwargs["atol"] = 1/(10**kwargs["places"])
+            del kwargs["places"]
+
+        if kwargs.get("delta", False):
+            kwargs["atol"] = kwargs["delta"]
+            del kwargs["delta"]
+
+        try:
+            self.assertTrue(np.allclose(array1, array2, **kwargs))
+        except AssertionError as e:
+            msg = f"\nExpected:\n{array1}\nReturned:\n{array2})"
+            raise AssertionError(msg) from e
+        

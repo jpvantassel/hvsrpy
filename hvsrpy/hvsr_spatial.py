@@ -72,6 +72,8 @@ def _statistics(values, weights):
     return (mean, stddev)
 
 
+# TODO (jpv): Update documentation.
+
 def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
                   dist_spatial="lognormal", nrealizations=1000,
                   generator="PCG64"):

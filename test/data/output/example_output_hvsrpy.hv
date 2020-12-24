@@ -8,14 +8,14 @@
 # Number of Standard Deviations Used for Rejection () [n],2
 # Number of Accepted Windows (),46
 # Number of Rejected Windows (),14
-# Distribution of f0 (),log-normal
+# Distribution of f0 (),lognormal
 # Median f0 (Hz) [LMf0],0.7183
-# Log-normal standard deviation f0 () [SigmaLNf0],0.0989
+# Lognormal standard deviation f0 () [SigmaLNf0],0.0989
 # 68 % Confidence Interval f0 (Hz),0.6507,to,0.793
 # Median T0 (s) [LMT0],1.3921
-# Log-normal standard deviation T0 () [SigmaLNT0],0.0989
+# Lognormal standard deviation T0 () [SigmaLNT0],0.0989
 # 68 % Confidence Interval T0 (s),1.261,to,1.5369
-# Median Curve Distribution (),log-normal
+# Median Curve Distribution (),lognormal
 # Median Curve Peak Frequency (Hz) [f0mc],0.7651
 # Median Curve Peak Amplitude (),3.9514
 # Frequency (Hz),Median Curve,1 STD Below Median Curve,1 STD Above Median Curve
