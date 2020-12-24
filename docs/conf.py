@@ -13,9 +13,11 @@
 import os
 import sys
 
-from hvsrpy import __version__
-
 sys.path.insert(0, os.path.abspath('../hvsrpy'))
+
+meta = {}
+with open("meta.py") as f:
+    exec(f.read(), meta)
 
 # -- Project information -----------------------------------------------------
 
@@ -24,7 +26,7 @@ copyright = '2019-2020, Joseph P. Vantassel'
 author = 'Joseph P. Vantassel'
 
 # The full version, including alpha/beta/rc tags
-release = __version__
+release = meta['__version__']
 
 # -- General configuration ---------------------------------------------------
 
