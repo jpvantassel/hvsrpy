@@ -4,6 +4,8 @@
 # Total Number of Windows per Azimuth (),60
 # Total Number of Azimuths (),13
 # Frequency Domain Window Rejection Performed (),True
+# Lower frequency limit for peaks (Hz),None
+# Upper frequency limit for peaks (Hz),None
 # Number of Standard Deviations Used for Rejection () [n],2
 # Number of Accepted Windows (),663
 # Number of Rejected Windows (),117

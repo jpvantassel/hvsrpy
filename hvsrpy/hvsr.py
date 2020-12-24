@@ -711,6 +711,8 @@ class Hvsr():
             f"# Window Length (s),{self.meta.get('Window Length')}",
             f"# Total Number of Windows (),{self.n_windows}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",
+            f"# Lower frequency limit for peaks (Hz),{self.f_low}",
+            f"# Upper frequency limit for peaks (Hz),{self.f_high}",
             f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
             f"# Number of Accepted Windows (),{self.n_windows-n_rejected}",
             f"# Number of Rejected Windows (),{n_rejected}",
