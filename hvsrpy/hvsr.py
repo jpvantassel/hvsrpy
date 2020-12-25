@@ -30,20 +30,19 @@ logger = logging.getLogger(name=__name__)
 
 
 class Hvsr():
-    """Class for creating and manipulating horizontal-to-vertical
-    spectral ratio objects.
+    """Class for creating and manipulating HVSR objects.
 
     Attributes
     ----------
     amp : ndarray
         Array of HVSR amplitudes. Each row represents an individual
-        curve and each column a frequency.
+        curve/time window and each column a frequency.
     frq : ndarray
         Vector of frequencies corresponds to each column.
     n_windows : int
         Number of windows in `Hvsr` object.
     valid_window_indices : ndarray
-        Array of indices indicating valid windows.
+        Boolean array indicating valid windows.
 
     """
     @staticmethod
@@ -58,20 +57,20 @@ class Hvsr():
         Parameters
         ----------
         name : str
-            Name of `value` to be checked, used solely for
-            meaningful error messages.
+            Name of `value` to be checked, used solely for meaningful
+            error messages.
         value : iterable
             Value to be checked.
 
         Returns
         -------
         ndarray
-            `values` as ndarray of doubles.
+            `values` as `ndarray` of doubles.
 
         Raises
         ------
         TypeError
-            If `value` is not castable to an ndarray of doubles.
+            If `value` is not castable to an `ndarray` of doubles.
         ValueError
             If `value` contains nan or a value less than or equal to
             zero.
@@ -95,7 +94,7 @@ class Hvsr():
     def correct_distribution(distribution):
         if distribution == "log-normal":
             msg = "distribution='log-normal' is deprecated use 'lognormal' instead."
-            warnings.warn(msg, PendingDeprecationWarning)
+            warnings.warn(msg, DeprecationWarning)
             distribution = "lognormal"
         return distribution
 
@@ -107,7 +106,7 @@ class Hvsr():
         ----------
         amplitude : ndarray
             Array of HVSR amplitudes. Each row represents an individual
-            curve and each column a frequency.
+            curve/time window and each column a frequency.
         frequency : ndarray
             Vector of frequencies, corresponding to each column.
         find_peaks : bool, optional
@@ -124,6 +123,7 @@ class Hvsr():
         -------
         Hvsr
             Initialized with `amplitude` and `frequency`.
+
         """
         self.frq = self._check_input("frequency", frequency)
         nfrqs = len(self.frq)
@@ -197,9 +197,9 @@ class Hvsr():
         Returns
         -------
         Tuple
-            Of the form `(peaks, settings)`. Where `peaks` is an
-            `ndarray` or `list` of `ndarray` (one per window) of peak
-            indices, and `settings` is `dict`, refer to
+            Of the form `(peaks, settings)`. Where `peaks` is a `list`
+            of `lists` (one per window) of peak indices, and `settings`
+            is a `dict`, refer to
             `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
             documentation for details.
 
@@ -212,7 +212,7 @@ class Hvsr():
         return (peaks, settings)
 
     def update_peaks(self, **kwargs):
-        """Update with the lowest frequency, highest amplitude peak.
+        """Update with the lowest frequency, highest amplitude peaks.
 
         Parameters
         ----------
@@ -238,7 +238,6 @@ class Hvsr():
                 continue
 
             c_window_peaks = peak_indices[valid_count]
-
             try:
                 c_index = np.where(self.amp[c_window] == np.max(
                     self.amp[c_window, c_window_peaks]))[0]
@@ -260,7 +259,6 @@ class Hvsr():
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
         distribution = Hvsr.correct_distribution(distribution)
-
         if distribution == "normal":
             return np.mean(values, **kwargs)
         elif distribution == "lognormal":
@@ -284,7 +282,7 @@ class Hvsr():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -306,7 +304,7 @@ class Hvsr():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -339,15 +337,14 @@ class Hvsr():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
         return self._std_factory(distribution, self.peak_frq)
 
     def std_f0_amp(self, distribution='lognormal'):
-        """Sample standard deviation of amplitude of `f0` of valid
-        time windows.
+        """Sample standard deviation of the amplitude of f0.
 
         Parameters
         ----------
@@ -357,11 +354,12 @@ class Hvsr():
         Returns
         -------
         float
-            Sample standard deviation of the amplitude of f0.
+            Sample standard deviation of the amplitude of f0 considering
+            only the valid time windows.
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -382,14 +380,14 @@ class Hvsr():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
         return self._mean_factory(distribution, self.amp[self.valid_window_indices], axis=0)
 
     def std_curve(self, distribution='lognormal'):
-        """Sample standard deviation associated with the mean HVSR curve.
+        """Sample standard deviation of the mean HVSR curve.
 
         Parameters
         ----------
@@ -406,7 +404,7 @@ class Hvsr():
         ------
         ValueError
             If only single time window is defined.
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -562,7 +560,7 @@ class Hvsr():
         Parameters
         ----------
         n : float
-            Number of standard deviations away from the mean `f0` from
+            Number of standard deviations away from the mean `f0` for
             the valid time windows.
         distribution : {'lognormal', 'normal'}, optional
             Assumed distribution of `f0`, the default is 'lognormal'.
@@ -657,7 +655,7 @@ class Hvsr():
         # mean curve
         mc = self.mean_curve(distribution_mc)
         mc_peak_frq = self.mc_peak_frq(distribution_mc)
-        # mc_peak_amp = self.mc_peak_amp(distribution_mc)
+        mc_peak_amp = self.mc_peak_amp(distribution_mc)
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 
@@ -670,7 +668,7 @@ class Hvsr():
             f"# f0 from average\t{fclean(mc_peak_frq)}",
             f"# Number of windows for f0 = {sum(self.valid_window_indices)}",
             f"# f0 from windows\t{fclean(mean)}\t{fclean(lower)}\t{fclean(upper)}",
-            f"# Peak amplitude\t{fclean(mc[np.where(self.frq == mc_peak_frq)][0])}",
+            f"# Peak amplitude\t{fclean(mc_peak_amp)}",
             f"# Position\t{0} {0} {0}",
             f"# Category\tDefault",
             f"# Frequency\tAverage\tMin\tMax",

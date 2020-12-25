@@ -70,7 +70,7 @@ class HvsrRotated():
         """Check input, specifically:
             1. `hvsr` is an instance of `Hvsr`.
             2. `az` is `float`.
-            3. `az` is greater than 0.
+            3. `az` is greater than 0 and less than 180.
 
         """
         if not isinstance(hvsr, Hvsr):
@@ -138,7 +138,7 @@ class HvsrRotated():
         Parameters
         ----------
         distribution : {'normal', 'lognormal'}
-            Assumed distribution of `f0`, default is 'log-normal'.
+            Assumed distribution of `f0`, default is 'lognormal'.
 
         Returns
         -------
@@ -147,7 +147,7 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -170,7 +170,7 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -231,7 +231,7 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -255,7 +255,7 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -313,7 +313,7 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -321,7 +321,7 @@ class HvsrRotated():
                                   values=self.amp, axis=0)
 
     def std_curve(self, distribution='lognormal'):
-        """Sample standard deviation associated with the mean H/V curve.
+        """Sample standard deviation associated with mean HVSR curve.
 
         Parameters
         ----------
@@ -331,14 +331,14 @@ class HvsrRotated():
         Returns
         -------
         ndarray
-            Sample standard deviation of H/V curve according to the
+            Sample standard deviation of HVSR curve according to the
             distribution specified.
 
         Raises
         ------
         ValueError
             If only single time window is defined.
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -373,25 +373,25 @@ class HvsrRotated():
         Returns
         -------
         float
-            Amplitude associated with the peak of the mean H/V curve.
+            Amplitude associated with the peak of the mean HVSR curve.
 
         """
         mc = self.mean_curve(distribution)
         mc = mc.reshape((1, mc.size))
         return np.max(mc[0, Hvsr.find_peaks(mc)[0]])
 
-    def mc_peak_frq(self, distribution='log-normal'):
-        """Frequency of the peak of the mean H/V curve.
+    def mc_peak_frq(self, distribution='lognormal'):
+        """Frequency of the peak of the mean HVSR curve.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
+        distribution : {'normal', 'lognormal'}, optional
             Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
 
         Returns
         -------
         float
-            Frequency associated with the peak of the mean H/V curve.
+            Frequency associated with the peak of the mean HVSR curve.
 
         """
         mc = self.mean_curve(distribution)
