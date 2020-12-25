@@ -51,6 +51,8 @@ class HvsrRotated():
         azimuth : float
             Rotation angle in degrees measured clockwise positive from
             north (i.e., 0 degrees).
+        meta : dict, optional
+            Meta information about the object, default is `None`.
 
         Returns
         -------
@@ -68,7 +70,7 @@ class HvsrRotated():
         """Check input, specifically:
             1. `hvsr` is an instance of `Hvsr`.
             2. `az` is `float`.
-            3. `az` is greater than 0.
+            3. `az` is greater than 0 and less than 180.
 
         """
         if not isinstance(hvsr, Hvsr):
@@ -130,13 +132,13 @@ class HvsrRotated():
     def azimuth_count(self):
         return len(self.azimuths)
 
-    def mean_f0_frq(self, distribution="log-normal"):
+    def mean_f0_frq(self, distribution="lognormal"):
         """Mean `f0` from all valid timewindows and azimuths.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}
-            Assumed distribution of `f0`, default is 'log-normal'.
+        distribution : {'normal', 'lognormal'}
+            Assumed distribution of `f0`, default is 'lognormal'.
 
         Returns
         -------
@@ -145,20 +147,20 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
         return self._mean_factory(distribution=distribution,
                                   values=self.peak_frq)
 
-    def mean_f0_amp(self, distribution="log-normal"):
+    def mean_f0_amp(self, distribution="lognormal"):
         """Mean `f0` amplitude from all valid timewindows and azimuths.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
-            Assumed distribution of `f0`, default is 'log-normal'.
+        distribution : {'normal', 'lognormal'}, optional
+            Assumed distribution of `f0`, default is 'lognormal'.
 
         Returns
         -------
@@ -168,7 +170,7 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -177,10 +179,11 @@ class HvsrRotated():
 
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
+        distribution = Hvsr.correct_distribution(distribution)
         if distribution == "normal":
             mean = np.mean([np.mean(x, **kwargs) for x in values], **kwargs)
             return mean
-        elif distribution == "log-normal":
+        elif distribution == "lognormal":
             mean = np.mean([np.mean(np.log(x), **kwargs)
                             for x in values], **kwargs)
             return np.exp(mean)
@@ -190,6 +193,7 @@ class HvsrRotated():
 
     @staticmethod
     def _std_factory(distribution, values, **kwargs):
+        distribution = Hvsr.correct_distribution(distribution)
         n = len(values)
         mean = HvsrRotated._mean_factory(distribution, values, **kwargs)
         num = 0
@@ -198,7 +202,7 @@ class HvsrRotated():
         if distribution == "normal":
             def _diff(value, mean):
                 return value - mean
-        elif distribution == "log-normal":
+        elif distribution == "lognormal":
             def _diff(value, mean):
                 return np.log(value) - np.log(mean)
 
@@ -211,14 +215,14 @@ class HvsrRotated():
 
         return np.sqrt(num/(1-wi2))
 
-    def std_f0_frq(self, distribution='log-normal'):
+    def std_f0_frq(self, distribution='lognormal'):
         """Sample standard deviation of `f0` for all valid time windows
         across all azimuths.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
-            Assumed distribution of `f0`, default is 'log-normal'.
+        distribution : {'normal', 'lognormal'}, optional
+            Assumed distribution of `f0`, default is 'lognormal'.
 
         Returns
         -------
@@ -227,21 +231,21 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
         return self._std_factory(distribution=distribution,
                                  values=self.peak_frq)
 
-    def std_f0_amp(self, distribution='log-normal'):
+    def std_f0_amp(self, distribution='lognormal'):
         """Sample standard deviation of `f0` amplitude for all valid
         time windows across all azimuths.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
-            Assumed distribution of `f0`, default is 'log-normal'.
+        distribution : {'normal', 'lognormal'}, optional
+            Assumed distribution of `f0`, default is 'lognormal'.
 
         Returns
         -------
@@ -251,7 +255,7 @@ class HvsrRotated():
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -266,13 +270,13 @@ class HvsrRotated():
     def frq(self):
         return self.hvsrs[0].frq
 
-    def mean_curves(self, distribution='log-normal'):
+    def mean_curves(self, distribution='lognormal'):
         """Mean curve for each azimuth
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
-            Assumed distribution of mean curve, default is 'log-normal'.
+        distribution : {'normal', 'lognormal'}, optional
+            Assumed distribution of mean curve, default is 'lognormal'.
 
         Returns
         -------
@@ -286,7 +290,7 @@ class HvsrRotated():
             array[az_cnt, :] = hvsr.mean_curve(distribution=distribution)
         return array
 
-    def mean_curves_peak(self, distribution="log-normal"):
+    def mean_curves_peak(self, distribution="lognormal"):
         """Peak from each mean curve, one per azimuth."""
         frqs, amps = np.empty(self.azimuth_count), np.empty(self.azimuth_count)
         for az_cnt, hvsr in enumerate(self.hvsrs):
@@ -294,47 +298,47 @@ class HvsrRotated():
             amps[az_cnt] = hvsr.mc_peak_amp(distribution=distribution)
         return (frqs, amps)
 
-    def mean_curve(self, distribution='log-normal'):
+    def mean_curve(self, distribution='lognormal'):
         """Mean H/V curve considering all valid windows and azimuths.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
-            Assumed distribution of mean curve, default is 'log-normal'.
+        distribution : {'normal', 'lognormal'}, optional
+            Assumed distribution of mean curve, default is 'lognormal'.
 
         Returns
         -------
         ndarray
-            Mean H/V curve according to the distribution specified.
+            Mean HVSR curve according to the distribution specified.
 
         Raises
         ------
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
         return self._mean_factory(distribution=distribution,
                                   values=self.amp, axis=0)
 
-    def std_curve(self, distribution='log-normal'):
-        """Sample standard deviation associated with the mean H/V curve.
+    def std_curve(self, distribution='lognormal'):
+        """Sample standard deviation associated with mean HVSR curve.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
-            Assumed distribution of H/V curve, default is 'log-normal'.
+        distribution : {'normal', 'lognormal'}, optional
+            Assumed distribution of HVSR curve, default is 'lognormal'.
 
         Returns
         -------
         ndarray
-            Sample standard deviation of H/V curve according to the
+            Sample standard deviation of HVSR curve according to the
             distribution specified.
 
         Raises
         ------
         ValueError
             If only single time window is defined.
-        KeyError
+        NotImplementedError
             If `distribution` does not match the available options.
 
         """
@@ -358,42 +362,46 @@ class HvsrRotated():
                                      mean=self.mean_f0_frq(distribution=distribution),
                                      std=self.std_f0_frq(distribution=distribution))
 
-    def mc_peak_amp(self, distribution='log-normal'):
-        """Amplitude of the peak of the mean H/V curve.
+    def mc_peak_amp(self, distribution='lognormal'):
+        """Amplitude of the peak of the mean HVSR curve.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
+        distribution : {'normal', 'lognormal'}, optional
             Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
 
         Returns
         -------
         float
-            Amplitude associated with the peak of the mean H/V curve.
+            Amplitude associated with the peak of the mean HVSR curve.
 
         """
         mc = self.mean_curve(distribution)
-        return np.max(mc[Hvsr.find_peaks(mc)[0]])
+        mc = mc.reshape((1, mc.size))
+        return np.max(mc[0, Hvsr.find_peaks(mc)[0]])
 
-    def mc_peak_frq(self, distribution='log-normal'):
-        """Frequency of the peak of the mean H/V curve.
+    def mc_peak_frq(self, distribution='lognormal'):
+        """Frequency of the peak of the mean HVSR curve.
 
         Parameters
         ----------
-        distribution : {'normal', 'log-normal'}, optional
+        distribution : {'normal', 'lognormal'}, optional
             Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
 
         Returns
         -------
         float
-            Frequency associated with the peak of the mean H/V curve.
+            Frequency associated with the peak of the mean HVSR curve.
 
         """
         mc = self.mean_curve(distribution)
-        return float(self.frq[np.where(mc == np.max(mc[Hvsr.find_peaks(mc)[0]]))])
+        mc = mc.reshape((1, mc.size))
+        return float(self.frq[np.where(mc[0] == np.max(mc[0, Hvsr.find_peaks(mc)[0]]))])
 
     def _stats(self, distribution_f0):
-        if distribution_f0 == "log-normal":
+        distribution_f0 = Hvsr.correct_distribution(distribution_f0)
+
+        if distribution_f0 == "lognormal":
             columns = ["Lognormal Median", "Lognormal Standard Deviation"]
             data = np.array([[self.mean_f0_frq(distribution_f0),
                               self.std_f0_frq(distribution_f0)],
@@ -420,6 +428,10 @@ class HvsrRotated():
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""
+
+        distribution_f0 = Hvsr.correct_distribution(distribution_f0)
+        distribution_mc = Hvsr.correct_distribution(distribution_mc)
+
         # `f0` from windows
         mean_f = self.mean_f0_frq(distribution_f0)
         sigm_f = self.std_f0_frq(distribution_f0)
@@ -436,7 +448,7 @@ class HvsrRotated():
         rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
 
         n_windows = self.hvsrs[0].n_windows
-        n_accepted = sum([len(hvsr.valid_window_indices) for hvsr in self.hvsrs])
+        n_accepted = sum([sum(hvsr.valid_window_indices) for hvsr in self.hvsrs])
         n_rejected = self.azimuth_count*n_windows - n_accepted
         lines = [
             f"# hvsrpy output version {__version__}",
@@ -445,6 +457,8 @@ class HvsrRotated():
             f"# Total Number of Windows per Azimuth (),{n_windows}",
             f"# Total Number of Azimuths (),{self.azimuth_count}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",
+            f"# Lower frequency limit for peaks (Hz),{self.hvsrs[0].f_low}",
+            f"# Upper frequency limit for peaks (Hz),{self.hvsrs[0].f_high}",
             f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
             f"# Number of Accepted Windows (),{n_accepted}",
             f"# Number of Rejected Windows (),{n_rejected}",
@@ -453,7 +467,7 @@ class HvsrRotated():
         def fclean(number, decimals=4):
             return np.round(number, decimals=decimals)
 
-        if distribution_f0 == "log-normal":
+        if distribution_f0 == "lognormal":
             mean_t = 1/mean_f
             sigm_t = sigm_f
             ci_68_lower_t = np.exp(np.log(mean_t) - sigm_t)
@@ -461,10 +475,10 @@ class HvsrRotated():
 
             lines += [
                 f"# Median f0 (Hz) [LMf0,AZ],{fclean(mean_f)}",
-                f"# Log-normal standard deviation f0 () [SigmaLNf0,AZ],{fclean(sigm_f)}",
+                f"# Lognormal standard deviation f0 () [SigmaLNf0,AZ],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
                 f"# Median T0 (s) [LMT0,AZ],{fclean(mean_t)}",
-                f"# Log-normal standard deviation T0 () [SigmaLNT0,AZ],{fclean(sigm_t)}",
+                f"# Lognormal standard deviation T0 () [SigmaLNT0,AZ],{fclean(sigm_t)}",
                 f"# 68 % Confidence Interval T0 (s),{fclean(ci_68_lower_t)},to,{fclean(ci_68_upper_t)}",
             ]
 
@@ -478,7 +492,7 @@ class HvsrRotated():
                 f"# 68 % Confidence Interval T0 (s),NAN",
             ]
 
-        c_type = "Median" if distribution_mc == "log-normal" else "Mean"
+        c_type = "Median" if distribution_mc == "lognormal" else "Mean"
         lines += [
             f"# {c_type} Curve Distribution (),{distribution_mc}",
             f"# {c_type} Curve Peak Frequency (Hz) [f0mc,AZ],{fclean(mc_peak_frq)}",
@@ -496,19 +510,19 @@ class HvsrRotated():
         return _lines
 
     def to_file(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
-        """Save H/V data to file.
+        """Save HVSR data to file.
 
         Parameters
         ----------
         fname : str
             Name of file to save the results, may be the full or a
             relative path.
-        distribution_f0 : {'log-normal', 'normal'}, optional
+        distribution_f0 : {'lognormal', 'normal'}, optional
             Assumed distribution of `f0` from the time windows, the
-            default is 'log-normal'.
-        distribution_mc : {'log-normal', 'normal'}, optional
+            default is 'lognormal'.
+        distribution_mc : {'lognormal', 'normal'}, optional
             Assumed distribution of mean curve, the default is
-            'log-normal'.
+            'lognormal'.
 
         Returns
         -------

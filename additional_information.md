@@ -6,8 +6,7 @@
 
 An excellent starting reference for HVSR method is the SESAME Guidelines
 (SESAME 2004). The guidelines thoroughly documents field acquisition,
-processing, and interpretation of HVSR data. While the document is not
-exhaustive it does present a through introduction to the topic. The citation is
+processing, and interpretation of HVSR data. The citation is
 below:
 
 SESAME. (2004). Guidelines for the Implementation of the H/V Spectral Ratio
@@ -29,9 +28,11 @@ information.
 
 Currently _hvsrpy_ is able to easily (i.e., no coding required) process
 miniSEED files which conform to the _SEED_ standard. These can either be single
-3-componenet files (i.e., all three components are in a single file) or  However,
-there are plans to extend this functionality to other common data formats in the
-near future.
+3-component files (i.e., all three components are in a single file) or three
+1-component files. There are plans to extend this functionality to other common
+data formats in the near future. If you would like to see support for a
+particular format please read and comment on
+[this open issue](https://github.com/jpvantassel/hvsrpy/issues/8).
 
 ## Do I need to pre-process my ambient noise recording before using _hvsrpy_?
 

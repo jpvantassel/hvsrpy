@@ -4,9 +4,9 @@
 
 ## In-Progress for Next Release
 
-- Automatic consideration for multiple peaks.
-
 ## Under Consideration for a Future Release
+
+- Automatic consideration for multiple peaks.
 
 ## Unassigned
 

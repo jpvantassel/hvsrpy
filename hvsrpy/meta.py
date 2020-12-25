@@ -15,11 +15,6 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Import modules into the hvsrpy namespace."""
+"""Metadata for hvsrpy."""
 
-from .meta import __version__
-from .hvsr import Hvsr
-from .hvsr_rotated import HvsrRotated
-from .sensor3c import Sensor3c
-from .plottools import quick_plot
-from .hvsr_spatial import HvsrVault, montecarlo_f0
+__version__ = "0.5.0rc0"

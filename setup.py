@@ -1,20 +1,25 @@
 """A setuptools based setup module."""
 
 from setuptools import setup, find_packages
+
+meta = {}
+with open("hvsrpy/meta.py") as f:
+    exec(f.read(), meta)
+
 with open("README.md", encoding="utf8") as f:
     long_description = f.read()
 
 setup(
     name='hvsrpy',
-    version='0.4.2',
+    version=meta['__version__'],
     description='A Python package for horizontal-to-vertical spectral ratio processing',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/jpvantassel/hvsr',
+    url='https://github.com/jpvantassel/hvsrpy',
     author='Joseph P. Vantassel',
     author_email='jvantassel@utexas.edu',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
 
         'Intended Audience :: Developers',
         'Intended Audience :: Education',

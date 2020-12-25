@@ -61,7 +61,7 @@ class Test_Sensor3c(TestCase):
         self.assertRaises(ValueError, hvsrpy.Sensor3c, ns, ew, vt)
 
         # Bad length, will trim
-        amp = np.array([1, 1])
+        amp = np.array([1., 1])
         ns = sigpropy.TimeSeries(amp, dt=1)
         hvsrpy.Sensor3c(ns, ew, vt)
         self.assertArrayEqual(amp, ew.amp)
@@ -118,7 +118,7 @@ class Test_Sensor3c(TestCase):
         # 0101010 custom file
         fname = self.full_path+"data/custom/0101010.mseed"
         sensor = hvsrpy.Sensor3c.from_mseed(fname)
-        expected = np.array([0, 1, 0, 1, 0, 1, 0])
+        expected = np.array([0., 1, 0, 1, 0, 1, 0])
         for component in sensor:
             returned = component.amp
             self.assertArrayEqual(expected, returned)
@@ -138,7 +138,7 @@ class Test_Sensor3c(TestCase):
         prefix = self.full_path + "data/custom"
         fnames_1c = {c: f"{prefix}/channel_{c}.mseed" for c in list("enz")}
         sensor = hvsrpy.Sensor3c.from_mseed(fnames_1c=fnames_1c)
-        base = np.array([0, 1, 0, 1, 0, 1, 0])
+        base = np.array([0., 1, 0, 1, 0, 1, 0])
         for factor, component in enumerate(sensor, start=1):
             expected = base*factor
             returned = component.amp

@@ -31,30 +31,30 @@ class Test_HvsrRotated(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.frq = np.array([1, 2, 3, 4, 5])
-        cls.hv1 = np.array([[1, 1, 2, 1, 1],
+        cls.frq = np.array([1., 2, 3, 4, 5])
+        cls.hv1 = np.array([[1., 1, 2, 1, 1],
                             [1, 4, 1, 5, 1],
                             [1, 1, 3, 1, 1],
                             [1, 2, 4, 5, 1]])
         hv1 = hvsrpy.Hvsr(cls.hv1, cls.frq)
 
-        cls.hv2 = np.array([[1, 1, 2, 1, 1],
+        cls.hv2 = np.array([[1., 1, 2, 1, 1],
                             [1, 1, 1, 3, 1],
                             [4, 5, 6, 7, 5]])
         hv2 = hvsrpy.Hvsr(cls.hv2, cls.frq)
 
-        cls.hv3 = np.array([[1, 1, 2, 1, 1],
+        cls.hv3 = np.array([[1., 1, 2, 1, 1],
                             [1, 1, 2, 1, 1],
                             [1, 1, 2, 1, 1],
                             [1, 3, 1, 1, 1]])
         hv3 = hvsrpy.Hvsr(cls.hv3, cls.frq)
 
-        cls.hv4 = np.array([[1, 1, 1, 2, 1],
+        cls.hv4 = np.array([[1., 1, 1, 2, 1],
                             [1, 2, 1, 3, 1],
                             [1, 2, 1, 1, 1]])
         hv4 = hvsrpy.Hvsr(cls.hv4, cls.frq)
 
-        cls.azi = [0, 45, 90, 135]
+        cls.azi = [0., 45, 90, 135]
         cls.hvrot = hvsrpy.HvsrRotated.from_iter([hv1, hv2, hv3, hv4],
                                                  cls.azi)
         cls.hvrot_for_rej = hvsrpy.HvsrRotated.from_iter([hv1, hv2, hv3, hv4],
@@ -122,7 +122,7 @@ class Test_HvsrRotated(TestCase):
         self.assertEqual(expected, returned)
 
         # Log-normal
-        returned = hvsrpy.HvsrRotated._mean_factory("log-normal", values)
+        returned = hvsrpy.HvsrRotated._mean_factory("lognormal", values)
         expected = np.exp(np.mean([np.mean(np.log(x)) for x in values]))
         self.assertEqual(expected, returned)
 
@@ -136,7 +136,7 @@ class Test_HvsrRotated(TestCase):
         expected = np.mean([np.mean(x) for x in values])
         self.assertEqual(expected, returned)
         # Log-normal
-        returned = hvsrpy.HvsrRotated._mean_factory("log-normal", values)
+        returned = hvsrpy.HvsrRotated._mean_factory("lognormal", values)
         expected = np.exp(np.mean([np.mean(np.log(x)) for x in values]))
         self.assertEqual(expected, returned)
 
@@ -155,7 +155,7 @@ class Test_HvsrRotated(TestCase):
         self.assertEqual(expected, returned)
 
         # Log-normal
-        returned = hvsrpy.HvsrRotated._std_factory("log-normal", values)
+        returned = hvsrpy.HvsrRotated._std_factory("lognormal", values)
         expected = np.std(np.log(values[0]), ddof=1)
         self.assertAlmostEqual(expected, returned)
 
@@ -172,7 +172,7 @@ class Test_HvsrRotated(TestCase):
 
         # Log-normal
         adj_vals = [np.exp(vals) for vals in values]
-        returned = hvsrpy.HvsrRotated._std_factory("log-normal", adj_vals)
+        returned = hvsrpy.HvsrRotated._std_factory("lognormal", adj_vals)
         expected = 1.783458127
         self.assertAlmostEqual(expected, returned)
 
@@ -209,7 +209,7 @@ class Test_HvsrRotated(TestCase):
 
         # Log-Normal - Mean
         adj_values = [np.exp(vals) for vals in values]
-        returned = hvsrpy.HvsrRotated._mean_factory("log-normal", adj_values)
+        returned = hvsrpy.HvsrRotated._mean_factory("lognormal", adj_values)
         expected = 1.75
         self.assertAlmostEqual(expected, np.log(returned))
 
@@ -220,12 +220,12 @@ class Test_HvsrRotated(TestCase):
 
         # Log-Normal - Stddev
         adj_values = [np.exp(vals) for vals in values]
-        returned = hvsrpy.HvsrRotated._std_factory("log-normal", adj_values)
+        returned = hvsrpy.HvsrRotated._std_factory("lognormal", adj_values)
         expected = 1.783458127
         self.assertAlmostEqual(expected, returned)
 
     def test_mean_curve(self):
-        ## Normal
+        # Normal
         # Mean Curve
         returned = self.hvrot.mean_curve("normal")
         expected = np.array([1.250, 1.875, 2.063, 2.417, 1.333])
@@ -233,7 +233,7 @@ class Test_HvsrRotated(TestCase):
 
         #  Peak
         returned = self.hvrot.mc_peak_amp("normal")
-        expected  = 2.417
+        expected = 2.417
         self.assertAlmostEqual(expected, returned, places=2)
 
         # Peak Frq
@@ -241,19 +241,19 @@ class Test_HvsrRotated(TestCase):
         expected = 4
         self.assertEqual(expected, returned)
 
-        ## Log-normal
+        # Lognormal
         # Mean Curve
-        returned = self.hvrot.mean_curve("log-normal")
+        returned = self.hvrot.mean_curve("lognormal")
         expected = np.array([1.122, 1.566, 1.709, 1.830, 1.144])
         self.assertArrayAlmostEqual(expected, returned, places=2)
 
         # Peak Amp
-        returned = self.hvrot.mc_peak_amp("log-normal")
+        returned = self.hvrot.mc_peak_amp("lognormal")
         expected = 1.830
         self.assertAlmostEqual(expected, returned, places=2)
 
         # Peak Frq
-        returned = self.hvrot.mc_peak_frq("log-normal")
+        returned = self.hvrot.mc_peak_frq("lognormal")
         expected = 4
         self.assertEqual(expected, returned)
 
@@ -263,8 +263,8 @@ class Test_HvsrRotated(TestCase):
         expected = np.array([0.8611, 1.318, 1.505, 2.009, 1.148])
         self.assertArrayAlmostEqual(expected, returned, places=2)
 
-        # Log-normal
-        returned = self.hvrot.std_curve("log-normal")
+        # Lognormal
+        returned = self.hvrot.std_curve("lognormal")
         expected = np.array([0.3979, 0.5880, 0.602, 0.7457, 0.462])
         self.assertArrayAlmostEqual(expected, returned, places=2)
 
@@ -276,39 +276,39 @@ class Test_HvsrRotated(TestCase):
             self.assertArrayEqual(expected, returned)
 
     def test_nstd(self):
-        for n in [-2, -1, -0.5, 0.5,1,2]:
+        for n in [-2, -1, -0.5, 0.5, 1, 2]:
             # Mean Curve
-            mean = self.hvrot.mean_curve("log-normal")
-            stddev = self.hvrot.std_curve("log-normal")
+            mean = self.hvrot.mean_curve("lognormal")
+            stddev = self.hvrot.std_curve("lognormal")
             expected = np.exp(np.log(mean) + n*stddev)
-            returned = self.hvrot.nstd_curve(n, "log-normal")
+            returned = self.hvrot.nstd_curve(n, "lognormal")
             self.assertArrayEqual(expected, returned)
 
             # f0_frq
-            mean = self.hvrot.mean_f0_frq("log-normal")
-            stddev = self.hvrot.std_f0_frq("log-normal")
+            mean = self.hvrot.mean_f0_frq("lognormal")
+            stddev = self.hvrot.std_f0_frq("lognormal")
             expected = np.exp(np.log(mean) + n*stddev)
-            returned = self.hvrot.nstd_f0_frq(n, "log-normal")
+            returned = self.hvrot.nstd_f0_frq(n, "lognormal")
             self.assertEqual(expected, returned)
 
     def test_basic_stats(self):
         # Mean f0 - Frequency
-        for dist, expected in zip(["normal", "log-normal"], [3.313, 3.226]):
+        for dist, expected in zip(["normal", "lognormal"], [3.313, 3.226]):
             returned = self.hvrot.mean_f0_frq(distribution=dist)
             self.assertAlmostEqual(expected, returned, places=2)
 
         # Std f0 - Frequency
-        for dist, expected in zip(["normal", "log-normal"], [0.7392, 0.2471]):
+        for dist, expected in zip(["normal", "lognormal"], [0.7392, 0.2471]):
             returned = self.hvrot.std_f0_frq(distribution=dist)
             self.assertAlmostEqual(expected, returned, places=2)
 
         # Mean f0 - Amplitude
-        for dist, expected in zip(["normal", "log-normal"], [3.083, 2.802]):
+        for dist, expected in zip(["normal", "lognormal"], [3.083, 2.802]):
             returned = self.hvrot.mean_f0_amp(distribution=dist)
             self.assertAlmostEqual(expected, returned, places=2)
 
         # Std f0 - Amplitude
-        for dist, expected in zip(["normal", "log-normal"], [1.584, 0.4282]):
+        for dist, expected in zip(["normal", "lognormal"], [1.584, 0.4282]):
             returned = self.hvrot.std_f0_amp(distribution=dist)
             self.assertAlmostEqual(expected, returned, places=2)
 
@@ -321,13 +321,13 @@ class Test_HvsrRotated(TestCase):
         resampling = {"minf": 0.2, "maxf": 20, "nf": 128, "res_type": "log"}
         method = "multiple-azimuths"
         azimuthal_interval = 15
-        azimuth = np.arange(0,180+azimuthal_interval, azimuthal_interval)
+        azimuth = np.arange(0, 180+azimuthal_interval, azimuthal_interval)
         sensor = hvsrpy.Sensor3c.from_mseed(fname)
         sensor.meta["File Name"] = "UT.STN11.A2_C150.miniseed"
         hv = sensor.hv(windowlength, bp_filter, width,
                        bandwidth, resampling, method, azimuth=azimuth)
-        distribution_f0 = "log-normal"
-        distribution_mc = "log-normal"
+        distribution_f0 = "lognormal"
+        distribution_mc = "lognormal"
 
         n = 2
         n_iteration = 50

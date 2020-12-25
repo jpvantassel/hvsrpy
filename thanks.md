@@ -11,7 +11,7 @@ development of this project.
 - __Albert Kottke__ for his comments on improving _hvsrpy_,
 including detailed suggestions on speeding up the Konno and Ohmachi smoothing.
 - __Krishna Kumar__ for many helpful discussions on object-oriented programming
-and coding best practices.
+and best practices.
 - __Alan Thorp__ for being one of the first beta testers of _hvsrpy_ and
 continuing to provide many helpful comments and improvement suggestions.
 - __Liam Wotherspoon__ for being one of the first beta testers of _hvsrpy_.

@@ -37,15 +37,17 @@ def is_isnot(value):
 
 def peak_index(curve):
     """Find index to the peak of the provided curve."""
+    curve = curve.reshape((1, curve.size))
     pot_peak_indices, _ = Hvsr.find_peaks(curve)
-    pot_peak_amp = curve[pot_peak_indices]
+    pot_peak_indices = pot_peak_indices[0]
+    pot_peak_amp = curve[0, pot_peak_indices]
     pot_peak_index = np.argwhere(pot_peak_amp == np.max(pot_peak_amp))[0][0]
     return pot_peak_indices[pot_peak_index]
 
 
 def sesame_reliability(windowlength, passing_window_count,
-                       frequency, mean_curve, std_curve, search_limits=None,
-                       verbose=1):
+                       frequency, mean_curve, std_curve,
+                       search_limits=(None, None), verbose=1):
     """Check SESAME (2004) reliability criteria.
 
     Parameters
@@ -66,7 +68,8 @@ def sesame_reliability(windowlength, passing_window_count,
         Standard deviation of f0 peak from time windows
         (assumes normal distribution).
     search_limits : tuple
-        Limits about which to search for f0.
+        Limits about which to search for f0, default is `(None, None)`
+        indicating the full range will be considered.
     verbose : {0, 1, 2}, optional
         Level of verbose logging for SESAME criteria, amount of logging
 
@@ -77,7 +80,16 @@ def sesame_reliability(windowlength, passing_window_count,
         failure and 1 indicating a pass.
 
     """
-    if search_limits is not None:
+    limits = []
+    limits_were_both_none = True
+    for limit, default in zip(search_limits, [min(frequency), max(frequency)]):
+        if limit is None:
+            limits.append(default)
+        else:
+            limits.append(float(limit))
+            limits_were_both_none = False
+    search_limits = tuple(limits)
+    if not limits_were_both_none:
         frequency, mean_curve, std_curve = trim_curve(search_limits, frequency,
                                                       mean_curve, std_curve,
                                                       verbose=verbose)
@@ -155,7 +167,7 @@ def trim_curve(search_limits, frequency, mean_curve, std_curve, verbose=0):
     upper_index = np.where(rel_frq_upp == np.min(rel_frq_upp))[0][0]+1
 
     if verbose > 0:
-        msg = f"  Considering only frequencies between {clean(low_limit)} and {clean(upp_limit)} Hz."
+        msg = f"Considering only frequencies between {clean(low_limit)} and {clean(upp_limit)} Hz."
         print(msg)
 
     if verbose > 1:
@@ -172,7 +184,7 @@ def trim_curve(search_limits, frequency, mean_curve, std_curve, verbose=0):
 
 
 def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
-                   search_limits=None, verbose=1):
+                   search_limits=(None, None), verbose=1):
     """Check SESAME (2004) clarity criteria.
 
     Parameters
@@ -189,7 +201,8 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
         Standard deviation of f0 peak from time windows
         (assumes normal distribution).
     search_limits : tuple
-        Limits about which to search for f0.
+        Limits about which to search for f0, default is `(None, None)`
+        indicating the full range will be considered.
     verbose : {0, 1, 2}, optional
         Level of verbose logging for SESAME criteria, amount of logging
 
@@ -206,7 +219,16 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
 
     criteria = np.zeros(6)
 
-    if search_limits is not None:
+    limits = []
+    limits_were_both_none = True
+    for limit, default in zip(search_limits, [min(frequency), max(frequency)]):
+        if limit is None:
+            limits.append(default)
+        else:
+            limits.append(float(limit))
+            limits_were_both_none = False
+    search_limits = tuple(limits)
+    if not limits_were_both_none:
         frequency, mean_curve, std_curve = trim_curve(search_limits, frequency,
                                                       mean_curve, std_curve,
                                                       verbose=verbose)
@@ -393,3 +415,57 @@ def parse_hvsrpy_output(fname):
     data["upper"] = np.array(higs, dtype=np.double)
 
     return data
+
+# """This file contains the class Hvsr for organizing data 
+# related to the horizontal-to-vertical spectral ratio method."""
+
+# import os
+# import glob
+# import re
+# import logging
+# logger = logging.getLogger(__name__)
+
+
+# class Hvsr():
+#     def __init__(self, frequency, amplitude, identifier):
+#         self.frq = [frequency]
+#         self.amp = [amplitude]
+#         self.idn = identifier
+
+#     def append(self, frequency, amplitude):
+#         for cfreq, nfreq in zip(self.frq[0], frequency):
+#             if cfreq!=nfreq:
+#                 raise ValueError(f"appended f {cfreq} != existing f{nfreq}")
+#         self.frq.append(frequency)
+#         self.amp.append(amplitude)
+
+#     @classmethod
+#     def from_geopsy_folder(cls, dirname, identifier):
+#         logging.info(f"Reading .hv files from {dirname}")
+#         fnames = glob.glob(dirname+"/*.hv")
+#         logging.debug(f"File names to load are {fnames}")
+#         logging.info(f"Starting file {fnames[0]}")
+#         obj = cls.from_geopsy_file(fnames[0], identifier)
+#         for fname in fnames[1:]:
+#             logging.info(f"Starting file {fname}")
+#             tmp_obj = cls.from_geopsy_file(fname, "temp")
+#             obj.append(tmp_obj.frq[0], tmp_obj.amp[0])
+#         return obj
+
+#     @classmethod
+#     def from_geopsy_file(cls, fname, identifier):
+#         with open(fname, "r") as f:
+#             lines = f.read().splitlines()
+
+#         for num, line in enumerate(lines):
+#             if line.startswith("# Frequency"):
+#                 start_line = num + 1 
+#                 break
+
+#         frq, amp = [], []
+#         for line in lines[start_line:]:
+#             fr, am = re.findall(r"^(\d+.?\d*)\t(\d+.?\d*)\t\d+.?\d*\t\d+.?\d*$", line)[0]
+#             frq.append(float(fr))
+#             amp.append(float(am))
+
+#         return cls(frq, amp, identifier)

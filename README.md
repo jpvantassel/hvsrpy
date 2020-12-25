@@ -42,23 +42,25 @@ following:
 
 _Note: For software, version specific citations should be preferred to
 general concept citations, such as that listed above. To generate a version
-specific citation for `hvsrpy`, please use the citation tool for that specific
-version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
+specific citation for `hvsrpy`, please use the citation tool on the `hvsrpy`
+[archive](http://doi.org/10.5281/zenodo.3666956)._
 
 These works provide background for the calculations performed by `hvsrpy`.
 
-> Cox, B. R., Cheng, T., Vantassel, J. P., and Manuel, L. (2020). “A statistical
-> representation and frequency-domain window-rejection algorithm for
-> single-station HVSR measurements.” _Geophysical Journal International_, 221(3),
-> 2170-2183.
+> Cox, B. R., Cheng, T., Vantassel, J. P., & Manuel, L. (2020). "A statistical
+> representation and frequency-domain window-rejection algorithm for single-station
+> HVSR measurements. Geophysical Journal International, 221(3), 2170–2183.
+> https://doi.org/10.1093/gji/ggaa119
 
 > Cheng, T., Cox, B. R., Vantassel, J. P., and Manuel, L. (2020). "A
 > statistical approach to account for azimuthal variability in single-station
-> HVSR measurements." _Geophysical Journal International_, Accepted.
+> HVSR measurements." Geophysical Journal International, 223(2), 1040–1053.
+> https://doi.org/10.1093/gji/ggaa342
 
-> Cheng, T., Hallal, M., Vantassel, J. P., and Cox, B. R. (2020). "Estimating
-> Unbiased Statistics for Fundamental Site Frequency Using Spatially Distributed
-> HVSR Measurements and Voronoi Tessellation." Submitted.
+> Cheng, T., Hallal, M. M., Vantassel, J. P., and  Cox, B. R. (2021).
+> "Estimating Unbiased Statistics for Fundamental Site Frequency Using
+> Spatially Distributed HVSR Measurements and Voronoi Tessellation."
+> Submitted to Journal of Geotechnical and Geoenvironmental Engineering.
 
 > SESAME. (2004). Guidelines for the Implementation of the H/V Spectral Ratio
 > Technique on Ambient Vibrations Measurements, Processing, and Interpretation.
@@ -76,12 +78,12 @@ gratitude, we thank them individually
 `hvsrpy` contains features not currently available in any other commercial or
 open-source software, including:
 
--   A log-normal distribution for the fundamental site frequency (`f0`) so the
+-   A lognormal distribution for the fundamental site frequency (`f0`) so the
 uncertainty in `f0` can be represented consistently in frequency or period.
 -   Ability to use the geometric-mean, squared-average, or any azimuth of your
 choice.
--   Access to the H/V data from each time window (and azimuth in the case of
-azimuthal calculations), and not only the mean/median curve.
+-   Easy access to the HVSR data from each time window (and azimuth in the case
+of azimuthal calculations), not only the mean/median curve.
 -   A method to calculate statistics on `f0` that incorporates azimuthal
 variability.
 -   A method for developing rigorous and unbiased spatial statistics.
@@ -94,20 +96,35 @@ criteria.
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure.png?raw=true" width="775">
 
+|                                   | Lognormal Median | Lognormal Standard Deviation |
+|-----------------------------------|------------------|------------------------------|
+| Fundamental Site Frequency, f0,GM | 0.72             | 0.11                         |
+| Fundamental Site Period, T0,GM    | 1.40             | 0.11                         |
+
 ### Example output from `hvsrpy` when considering azimuthal variability
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_az.png?raw=true" width="775">
 
+|                                   | Lognormal Median | Lognormal Standard Deviation |
+|-----------------------------------|------------------|------------------------------|
+| Fundamental Site Frequency, f0,AZ | 0.68             | 0.18                         |
+| Fundamental Site Period, T0,AZ    | 1.48             | 0.18                         |
+
 ### Example output from `hvsrpy` when considering spatial variability
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_sp.png?raw=true" width="775">
+
+|                                   | Lognormal Median | Lognormal Standard Deviation |
+|-----------------------------------|------------------|------------------------------|
+| Fundamental Site Frequency, f0,XY | 0.58             | 0.15                         |
+| Fundamental Site Period, T0,XY    | 1.74             | 0.15                         |
 
 ## A comparison of _hvsrpy_ with _Geopsy_
 
 ---
 
 Some of the functionality available in `hvsrpy` overlaps with the popular
-open-source software `Geopsy`. And so to encourage standardization, wherever
+open-source software `Geopsy`. Therefore, to encourage standardization, wherever
 their functionality coincides we have sought to ensure consistency. Two such
 comparisons are shown below. One for a single time window (left) and one for
 multiple time windows (right). Additional examples and the information
