@@ -484,7 +484,6 @@ class Sensor3c():
             if method == "rotate":
                 msg = "method='rotate' is deprecated, replace with the more descriptive 'multiple-azimuths'."
                 warnings.warn(msg, DeprecationWarning)
-                method = "multiple-azimuths"
             hvsrs = np.empty(len(azimuth), dtype=object)
             for index, az in enumerate(azimuth):
                 hvsrs[index] = self._make_hvsr(method="single-azimuth",

@@ -241,10 +241,11 @@ def quick_voronoi_plot(points, vertice_set, boundary, ax=None,
         ax_was_none = True
 
         default_fig_kwargs = dict(figsize=(4, 4), dpi=150)
-        if fig_kwargs is not None:
-            fig_kwargs = {*fig_kwargs, *default_fig_kwargs}
+        if fig_kwargs is None:
+            fig_kwargs = {}
+        fig_kwargs = {**default_fig_kwargs, **fig_kwargs}
 
-        fig, ax = plt.subplots(**default_fig_kwargs)
+        fig, ax = plt.subplots(**fig_kwargs)
 
     for vertices in vertice_set:
         ax.fill(vertices[:, 0], vertices[:, 1], alpha=0.4)
