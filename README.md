@@ -47,18 +47,20 @@ version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
 
 These works provide background for the calculations performed by `hvsrpy`.
 
-> Cox, B. R., Cheng, T., Vantassel, J. P., and Manuel, L. (2020). “A statistical
-> representation and frequency-domain window-rejection algorithm for
-> single-station HVSR measurements.” _Geophysical Journal International_, 221(3),
-> 2170-2183.
+> Cox, B. R., Cheng, T., Vantassel, J. P., & Manuel, L. (2020). "A statistical
+> representation and frequency-domain window-rejection algorithm for single-station
+> HVSR measurements. Geophysical Journal International, 221(3), 2170–2183.
+> https://doi.org/10.1093/gji/ggaa119
 
 > Cheng, T., Cox, B. R., Vantassel, J. P., and Manuel, L. (2020). "A
 > statistical approach to account for azimuthal variability in single-station
-> HVSR measurements." _Geophysical Journal International_, Accepted.
+> HVSR measurements." Geophysical Journal International, 223(2), 1040–1053.
+> https://doi.org/10.1093/gji/ggaa342
 
-> Cheng, T., Hallal, M., Vantassel, J. P., and Cox, B. R. (2020). "Estimating
-> Unbiased Statistics for Fundamental Site Frequency Using Spatially Distributed
-> HVSR Measurements and Voronoi Tessellation." Submitted.
+> Cheng, T., Hallal, M. M., Vantassel, J. P., and  Cox, B. R. (2021).
+> "Estimating Unbiased Statistics for Fundamental Site Frequency Using
+> Spatially Distributed HVSR Measurements and Voronoi Tessellation."
+> Submitted to Journal of Geotechnical and Geoenvironmental Engineering.
 
 > SESAME. (2004). Guidelines for the Implementation of the H/V Spectral Ratio
 > Technique on Ambient Vibrations Measurements, Processing, and Interpretation.
@@ -80,8 +82,8 @@ open-source software, including:
 uncertainty in `f0` can be represented consistently in frequency or period.
 -   Ability to use the geometric-mean, squared-average, or any azimuth of your
 choice.
--   Access to the H/V data from each time window (and azimuth in the case of
-azimuthal calculations), and not only the mean/median curve.
+-   Easy access to the HVSR data from each time window (and azimuth in the case
+of azimuthal calculations), not only the mean/median curve.
 -   A method to calculate statistics on `f0` that incorporates azimuthal
 variability.
 -   A method for developing rigorous and unbiased spatial statistics.
