@@ -445,7 +445,7 @@ class Sensor3c():
         resampling : dict
             Resampling settings, of the form
             `{'minf':float, 'maxf':float, 'nf':int, 'res_type':str}`.
-        method : {'squared-averge', 'geometric-mean', 'single-azimuth', 'multiple-azimuths'}
+        method : {'squared-average', 'geometric-mean', 'single-azimuth', 'multiple-azimuths'}
             Refer to :meth:`combine_horizontals <Sensor3c.combine_horizontals>`
             for details.
         f_low, f_high : float, optional
