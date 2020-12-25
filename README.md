@@ -42,8 +42,8 @@ following:
 
 _Note: For software, version specific citations should be preferred to
 general concept citations, such as that listed above. To generate a version
-specific citation for `hvsrpy`, please use the citation tool for that specific
-version on the `hvsrpy` [archive](http://doi.org/10.5281/zenodo.3666956)._
+specific citation for `hvsrpy`, please use the citation tool on the `hvsrpy`
+[archive](http://doi.org/10.5281/zenodo.3666956)._
 
 These works provide background for the calculations performed by `hvsrpy`.
 
@@ -78,7 +78,7 @@ gratitude, we thank them individually
 `hvsrpy` contains features not currently available in any other commercial or
 open-source software, including:
 
--   A log-normal distribution for the fundamental site frequency (`f0`) so the
+-   A lognormal distribution for the fundamental site frequency (`f0`) so the
 uncertainty in `f0` can be represented consistently in frequency or period.
 -   Ability to use the geometric-mean, squared-average, or any azimuth of your
 choice.
@@ -96,20 +96,35 @@ criteria.
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure.png?raw=true" width="775">
 
+|                                   | Lognormal Median | Lognormal Standard Deviation |
+|-----------------------------------|------------------|------------------------------|
+| Fundamental Site Frequency, f0,GM | 0.72             | 0.11                         |
+| Fundamental Site Period, T0,GM    | 1.40             | 0.11                         |
+
 ### Example output from `hvsrpy` when considering azimuthal variability
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_az.png?raw=true" width="775">
 
+|                                   | Lognormal Median | Lognormal Standard Deviation |
+|-----------------------------------|------------------|------------------------------|
+| Fundamental Site Frequency, f0,AZ | 0.68             | 0.18                         |
+| Fundamental Site Period, T0,AZ    | 1.48             | 0.18                         |
+
 ### Example output from `hvsrpy` when considering spatial variability
 
 <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_sp.png?raw=true" width="775">
+
+|                                   | Lognormal Median | Lognormal Standard Deviation |
+|-----------------------------------|------------------|------------------------------|
+| Fundamental Site Frequency, f0,XY | 0.58             | 0.15                         |
+| Fundamental Site Period, T0,XY    | 1.74             | 0.15                         |
 
 ## A comparison of _hvsrpy_ with _Geopsy_
 
 ---
 
 Some of the functionality available in `hvsrpy` overlaps with the popular
-open-source software `Geopsy`. And so to encourage standardization, wherever
+open-source software `Geopsy`. Therefore, to encourage standardization, wherever
 their functionality coincides we have sought to ensure consistency. Two such
 comparisons are shown below. One for a single time window (left) and one for
 multiple time windows (right). Additional examples and the information
