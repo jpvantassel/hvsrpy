@@ -67,6 +67,16 @@ class Test_Hvsr(TestCase):
         amp = np.array([1, 2, np.nan])
         self.assertRaises(ValueError, hvsrpy.Hvsr, amp, frq)
 
+        # incompatible frequency and amplitude
+        frq = np.array([1, 2, 3])
+        amp = np.array([1, 2])
+        self.assertRaises(ValueError, hvsrpy.Hvsr, amp, frq)
+
+        # incompatible frequency and amplitude
+        frq = np.array([1, 2, 3])
+        amp = np.array([1, 2, 4, 5, 6, 7])
+        self.assertRaises(ValueError, hvsrpy.Hvsr, amp, frq)
+
     def test_find_peaks(self):
         # amp as 1d array - single peak
         frq = np.array([1, 2, 3, 4, 5])
