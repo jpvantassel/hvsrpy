@@ -67,6 +67,16 @@ class Test_Hvsr(TestCase):
         amp = np.array([1, 2, np.nan])
         self.assertRaises(ValueError, hvsrpy.Hvsr, amp, frq)
 
+        # incompatible frequency and amplitude
+        frq = np.array([1, 2, 3])
+        amp = np.array([1, 2])
+        self.assertRaises(ValueError, hvsrpy.Hvsr, amp, frq)
+
+        # incompatible frequency and amplitude
+        frq = np.array([1, 2, 3])
+        amp = np.array([1, 2, 4, 5, 6, 7])
+        self.assertRaises(ValueError, hvsrpy.Hvsr, amp, frq)
+
     def test_find_peaks(self):
         # amp as 1d array - single peak
         frq = np.array([1, 2, 3, 4, 5])
@@ -97,6 +107,31 @@ class Test_Hvsr(TestCase):
         myhvsr = hvsrpy.Hvsr(amp, frq)
         self.assertNestedListEqual([[1, 3, 5], [2], [2, 4]],
                                    hvsrpy.Hvsr.find_peaks(myhvsr.amp)[0])
+
+    def test_peaks_with_limits(self):
+        # amp as 1d array - two peak
+        frq = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        amp = np.array([[1, 1, 2, 1, 1, 5, 1, 1]])
+        hvsr = hvsrpy.Hvsr(amp, frq, f_low=None, f_high=4, find_peaks=True)
+        self.assertArrayEqual(np.array([3.0]), hvsr.peak_frq)
+
+        # amp as 1d array - two peak
+        frq = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        amp = np.array([[1, 1, 2, 1, 1, 5, 1, 1]])
+        hvsr = hvsrpy.Hvsr(amp, frq, f_low=4, f_high=None, find_peaks=True)
+        self.assertArrayEqual(np.array([6.0]), hvsr.peak_frq)
+
+        # amp as 1d array - two peak
+        frq = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        amp = np.array([[1, 1, 2, 1, 1, 5, 1, 1]])
+        hvsr = hvsrpy.Hvsr(amp, frq, f_low=1, f_high=8, find_peaks=True)
+        self.assertArrayEqual(np.array([6.0]), hvsr.peak_frq)
+
+        # amp as 1d array - two peak
+        frq = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        amp = np.array([[1, 1, 2, 1, 1, 5, 1, 1]])
+        hvsr = hvsrpy.Hvsr(amp, frq, f_low=None, f_high=None, find_peaks=True)
+        self.assertArrayEqual(np.array([6.0]), hvsr.peak_frq)
 
     def test_properties(self):
         # peak_frq

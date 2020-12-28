@@ -16,7 +16,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../hvsrpy'))
 
 meta = {}
-with open("meta.py") as f:
+with open("../hvsrpy/meta.py") as f:
     exec(f.read(), meta)
 
 # -- Project information -----------------------------------------------------

@@ -126,14 +126,15 @@ class Hvsr():
 
         """
         self.frq = self._check_input("frequency", frequency)
-        nfrqs = len(self.frq)
 
         self.amp = self._check_input("amplitude", amplitude)
-        try:
-            self.amp = self.amp.reshape((self.amp.size//nfrqs, nfrqs))
-        except ValueError as e:
+
+        if len(self.amp.shape) == 1:
+            self.amp = self.amp.reshape((1, self.amp.size))
+
+        if self.frq.size != self.amp.shape[1]:
             msg = f"Size of amplitude={self.amp.size} and frequency={self.frq.size} must be compatable."
-            raise ValueError(msg) from e
+            raise ValueError(msg)
 
         self.n_windows = self.amp.shape[0]
         self.valid_window_indices = np.ones(self.n_windows, dtype=bool)
