@@ -126,7 +126,6 @@ class Hvsr():
 
         """
         self.frq = self._check_input("frequency", frequency)
-        nfrqs = len(self.frq)
 
         self.amp = self._check_input("amplitude", amplitude)
 
