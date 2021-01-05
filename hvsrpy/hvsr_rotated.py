@@ -378,7 +378,8 @@ class HvsrRotated():
         """
         mc = self.mean_curve(distribution)
         mc = mc.reshape((1, mc.size))
-        return np.max(mc[0, Hvsr.find_peaks(mc)[0]])
+        i_low, i_high = self.hvsrs[0].i_low, self.hvsrs[0].i_high
+        return np.max(mc[0, Hvsr.find_peaks(mc[:, i_low:i_high], starting_index=i_low)[0]])
 
     def mc_peak_frq(self, distribution='lognormal'):
         """Frequency of the peak of the mean HVSR curve.
@@ -396,7 +397,8 @@ class HvsrRotated():
         """
         mc = self.mean_curve(distribution)
         mc = mc.reshape((1, mc.size))
-        return float(self.frq[np.where(mc[0] == np.max(mc[0, Hvsr.find_peaks(mc)[0]]))])
+        i_low, i_high = self.hvsrs[0].i_low, self.hvsrs[0].i_high
+        return self.frq[i_low + np.where(mc[0, i_low:i_high] == np.max(mc[0, Hvsr.find_peaks(mc[:, i_low:i_high], starting_index=i_low)[0]]))[0]]
 
     def _stats(self, distribution_f0):
         distribution_f0 = Hvsr.correct_distribution(distribution_f0)
