@@ -28,7 +28,7 @@ from sigpropy import TimeSeries, FourierTransform, WindowedTimeSeries, FourierTr
 
 from hvsrpy import Hvsr, HvsrRotated
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("swprocess.sensor3c")
 
 __all__ = ["Sensor3c"]
 
@@ -52,21 +52,22 @@ class Sensor3c():
         """Perform checks on inputs.
 
         Specifically:
+
         1. Ensure all components are `TimeSeries` objects.
         2. Ensure all components have equal `dt`.
-        3. Ensure all components have same `nsamples`. If not trim
-        components to the common length.
+        3. Ensure all components have same `nsamples`, if not trim.
 
         Parameters
         ----------
         values_dict : dict
-            Key is human readable component name {'ns', 'ew', 'vt'}.
+            Key is human-readable component name {'ns', 'ew', 'vt'}.
             Value is corresponding `TimeSeries` object.
 
         Returns
         -------
         Tuple
-            Containing checked components.
+            Containing checked components as tuple of the form
+            `(ns, ew, vt)`.
 
         """
         ns = values_dict["ns"]
@@ -86,7 +87,9 @@ class Sensor3c():
                 msg = "All components must have equal `dt`."
                 raise ValueError(msg)
             if value.nsamples != nsamples:
-                logging.info("Components are not of the same length.")
+                txt = "".join([f"{_k}={_v.nsamples} " for _k, _v in values_dict.items()])
+                msg = f"Components are different length: {txt}"
+                logger.info(msg)
                 flag_cut = True
 
         if flag_cut:
@@ -95,7 +98,7 @@ class Sensor3c():
             for value in values_dict.values():
                 min_time = max(min_time, min(value.time))
                 max_time = min(max_time, max(value.time))
-            logging.info(f"Trimming between {min_time} and {max_time}.")
+            logger.info(f"Trimming between {min_time} and {max_time}.")
             for value in values_dict.values():
                 value.trim(min_time, max_time)
 
@@ -109,7 +112,7 @@ class Sensor3c():
         ns, ew, vt : TimeSeries
             `TimeSeries` object for each component.
         meta : dict, optional
-            Meta information for object, default is None.
+            Meta information for object, default is `None`.
 
         Returns
         -------
@@ -121,15 +124,6 @@ class Sensor3c():
                                                        "ew": ew,
                                                        "vt": vt})
         self.meta = {} if meta is None else meta
-
-    @property
-    def normalization_factor(self):
-        """Time history normalization factor across all components."""
-        factor = 1E-6
-        for attr in ["ns", "ew", "vt"]:
-            cmax = np.max(np.abs(getattr(self, attr).amp.flatten()))
-            factor = cmax if cmax > factor else factor
-        return factor
 
     @classmethod
     def from_mseed(cls, fname=None, fnames_1c=None):
@@ -209,22 +203,6 @@ class Sensor3c():
         meta = {"File Name": fname}
         return cls(ns, ew, vt, meta)
 
-    def to_dict(self):
-        """Dictionary representation of `Sensor3c` object.
-
-        Returns
-        -------
-        dict
-            With all of the components of the `Sensor3c`.
-
-        """
-        dictionary = {}
-        for name in ["ns", "ew", "vt"]:
-            value = getattr(self, name).to_dict()
-            dictionary[name] = value
-        dictionary["meta"] = self.meta
-        return dictionary
-
     @classmethod
     def from_dict(cls, dictionary):
         """Create `Sensor3c` object from dictionary representation.
@@ -249,18 +227,6 @@ class Sensor3c():
             components.append(TimeSeries.from_dict(dictionary[comp]))
         return cls(*components, meta=dictionary.get("meta"))
 
-    def to_json(self):
-        """Json string representation of `Sensor3c` object.
-
-        Returns
-        -------
-        str
-            With all of the components of the `Sensor3c`.
-
-        """
-        dictionary = self.to_dict()
-        return json.dumps(dictionary)
-
     @classmethod
     def from_json(cls, json_str):
         """Create `Sensor3c` object from Json-string representation.
@@ -283,6 +249,15 @@ class Sensor3c():
         """
         dictionary = json.loads(json_str)
         return cls.from_dict(dictionary)
+
+    @property
+    def normalization_factor(self):
+        """Time history normalization factor across all components."""
+        factor = 1E-6
+        for attr in ["ns", "ew", "vt"]:
+            cmax = np.max(np.abs(getattr(self, attr).amp.flatten()))
+            factor = cmax if cmax > factor else factor
+        return factor
 
     def split(self, windowlength):
         """Split component `TimeSeries` into `WindowedTimeSeries`.
@@ -463,27 +438,41 @@ class Sensor3c():
             Instantiated `Hvsr` object.
 
         """
+        # Bandpass filter raw signal.
         if bp_filter["flag"]:
-            self.bandpassfilter(flow=bp_filter["flow"],
-                                fhigh=bp_filter["fhigh"],
-                                order=bp_filter["order"])
+            del dp_filter["flag"]
+            self.bandpassfilter(**bp_filter)
+
+        # Split each time record into windows of length windowlength.
         self.split(windowlength)
+
+        # Detrend each window individually.
         self.detrend()
+
+        # Cosine taper each window individually.
         self.cosine_taper(width=taper_width)
 
+        # Combine horizontal components directly.
         if method in ["squared-average", "geometric-mean", "azimuth", "single-azimuth"]:
+            
+            # Deprecate `azimuth` in favor of the more descriptive `single-azimuth`.
             if method == "azimuth":
                 msg = "method='azimuth' is deprecated, replace with the more descriptive 'single-azimuth'."
                 warnings.warn(msg, DeprecationWarning)
                 method = "single-azimuth"
+
             return self._make_hvsr(method=method, resampling=resampling,
                                    bandwidth=bandwidth, f_low=f_low,
                                    f_high=f_high, azimuth=azimuth)
 
+        # Rotate horizontal components through a variety of azimuths.
         elif method in ["rotate", "multiple-azimuths"]:
+
+            # Deprecate `rotate` in favor of the more descriptive `multiple-azimuths`.
             if method == "rotate":
                 msg = "method='rotate' is deprecated, replace with the more descriptive 'multiple-azimuths'."
                 warnings.warn(msg, DeprecationWarning)
+
             hvsrs = np.empty(len(azimuth), dtype=object)
             for index, az in enumerate(azimuth):
                 hvsrs[index] = self._make_hvsr(method="single-azimuth",
@@ -533,7 +522,8 @@ class Sensor3c():
                                resampling["maxf"],
                                resampling["nf"])
         else:
-            raise NotImplementedError
+            msg = f"`res_type`={resampling['res_type']} has not been implemented."
+            raise NotImplementedError(msg)
 
         hor.smooth_konno_ohmachi_fast(frq, bandwidth)
         ver.smooth_konno_ohmachi_fast(frq, bandwidth)
@@ -541,6 +531,7 @@ class Sensor3c():
         hvsr = hor
         del ver
 
+        # TODO (jpv): Combine TimeSeries and WindowedTimeSeries.
         if self.ns.n_windows == 1:
             window_length = max(self.ns.time)
         else:
@@ -549,6 +540,34 @@ class Sensor3c():
         self.meta["Window Length"] = window_length
 
         return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, f_low=f_low, f_high=f_high, meta=self.meta)
+
+    def to_dict(self):
+        """`Sensor3c` object as `dict`.
+
+        Returns
+        -------
+        dict
+            Dictionary representation of a `Sensor3c`.
+
+        """
+        dictionary = {}
+        for name in ["ns", "ew", "vt"]:
+            value = getattr(self, name).to_dict()
+            dictionary[name] = value
+        dictionary["meta"] = self.meta
+        return dictionary
+
+    def to_json(self):
+        """`Sensor3c` object as JSON-string.
+
+        Returns
+        -------
+        str
+            JSON-string representation of `Sensor3c`.
+
+        """
+        dictionary = self.to_dict()
+        return json.dumps(dictionary)
 
     def __iter__(self):
         """Iterable representation of a Sensor3c object."""
