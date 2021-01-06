@@ -24,7 +24,7 @@ from pandas import DataFrame
 
 from hvsrpy import Hvsr, __version__
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("swprocess.hvsr_rotated")
 
 __all__ = ["HvsrRotated"]
 

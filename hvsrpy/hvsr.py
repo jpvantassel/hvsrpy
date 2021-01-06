@@ -26,8 +26,9 @@ from pandas import DataFrame
 
 from .meta import __version__
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger("swprocess.hvsr")
 
+__all__ = ["Hvsr"]
 
 class Hvsr():
     """Class for creating and manipulating HVSR objects.
