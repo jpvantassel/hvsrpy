@@ -28,7 +28,7 @@ from sigpropy import TimeSeries, FourierTransform, WindowedTimeSeries, FourierTr
 
 from hvsrpy import Hvsr, HvsrRotated
 
-logger = logging.getLogger("swprocess.sensor3c")
+logger = logging.getLogger("hvsrpy.sensor3c")
 
 __all__ = ["Sensor3c"]
 
@@ -74,33 +74,32 @@ class Sensor3c():
         if not isinstance(ns, TimeSeries):
             msg = f"'ns' must be a `TimeSeries`, not {type(ns)}."
             raise TypeError(msg)
-        dt = ns.dt
-        nsamples = ns.nsamples
+        dt = float(ns.dt)
+        nsamples = int(ns.nsamples)
         flag_cut = False
         for key, value in values_dict.items():
             if key == "ns":
                 continue
+
             if not isinstance(value, TimeSeries):
                 msg = f"`{key}`` must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
+            else:
+                if isinstance(value, WindowedTimeSeries):
+                    values_dict[key] = WindowedTimeSeries(value.amp, value.dt)
+                elif isinstance(value, TimeSeries):
+                    values_dict[key] = TimeSeries(value.amp, value.dt)
+                else:
+                    raise NotImplementedError
+
             if value.dt != dt:
                 msg = "All components must have equal `dt`."
                 raise ValueError(msg)
+
             if value.nsamples != nsamples:
                 txt = "".join([f"{_k}={_v.nsamples} " for _k, _v in values_dict.items()])
                 msg = f"Components are different length: {txt}"
-                logger.info(msg)
-                flag_cut = True
-
-        if flag_cut:
-            min_time = 0
-            max_time = np.inf
-            for value in values_dict.values():
-                min_time = max(min_time, min(value.time))
-                max_time = min(max_time, max(value.time))
-            logger.info(f"Trimming between {min_time} and {max_time}.")
-            for value in values_dict.values():
-                value.trim(min_time, max_time)
+                raise ValueError(msg)
 
         return (values_dict["ns"], values_dict["ew"], values_dict["vt"])
 
@@ -127,7 +126,7 @@ class Sensor3c():
 
     @classmethod
     def from_mseed(cls, fname=None, fnames_1c=None):
-        """Create 3-component sensor (Sensor3c) object from .mseed file.
+        """Create from .mseed file(s).
 
         Parameters
         ----------
