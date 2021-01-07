@@ -282,7 +282,7 @@ class Sensor3c():
         for comp in [self.ew, self.ns, self.vt]:
             comp.detrend()
 
-    def bandpassfilter(self, flow, fhigh, order):  # pragma: no cover
+    def bandpassfilter(self, flow, fhigh, order):
         """Bandpassfilter components.
 
         Refer to

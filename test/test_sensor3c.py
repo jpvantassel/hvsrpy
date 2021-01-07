@@ -28,7 +28,8 @@ import sigpropy
 import hvsrpy
 from testtools import unittest, TestCase, get_full_path
 
-logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger("hvsrpy.sensor3c")
+logger.setLevel(level=logging.INFO)
 
 
 class Test_Sensor3c(TestCase):
@@ -38,9 +39,9 @@ class Test_Sensor3c(TestCase):
 
     def test_init(self):
         # Successful init
-        ns = sigpropy.TimeSeries([1, 1, 1], dt=1)
-        ew = sigpropy.TimeSeries([1, 1, 1], dt=1)
-        vt = sigpropy.TimeSeries([1, 1, 1], dt=1)
+        ns = sigpropy.TimeSeries([1., 1, 1], dt=1)
+        ew = sigpropy.TimeSeries([1., 1, 1], dt=1)
+        vt = sigpropy.TimeSeries([1., 1, 1], dt=1)
         sensor = hvsrpy.Sensor3c(ns, ew, vt)
 
         # Check timeseries
@@ -49,23 +50,24 @@ class Test_Sensor3c(TestCase):
             self.assertEqual(expected, returned)
 
         # Bad ns, should be TimeSeries
-        _ns = [1, 1, 1]
+        _ns = [1., 1, 1]
         self.assertRaises(TypeError, hvsrpy.Sensor3c, _ns, ew, vt)
 
         # Bad ew, should be TimeSeries
-        _ew = [1, 1, 1]
+        _ew = [1., 1, 1]
         self.assertRaises(TypeError, hvsrpy.Sensor3c, ns, _ew, vt)
 
+        # Bad ew, should be TimeSeries
+        _vt = [1., 1, 1]
+        self.assertRaises(TypeError, hvsrpy.Sensor3c, ns, ew, _vt)
+
         # Bad dt, should be 1
-        ns = sigpropy.TimeSeries([1, 1, 1], dt=2)
+        ns = sigpropy.TimeSeries([1., 1, 1], dt=2)
         self.assertRaises(ValueError, hvsrpy.Sensor3c, ns, ew, vt)
 
-        # Bad length, will trim
-        amp = np.array([1., 1])
-        ns = sigpropy.TimeSeries(amp, dt=1)
-        hvsrpy.Sensor3c(ns, ew, vt)
-        self.assertArrayEqual(amp, ew.amp)
-        self.assertArrayEqual(amp, vt.amp)
+        # Bad length, len(ns) should be 3
+        ns = sigpropy.TimeSeries([1., 1], dt=1)
+        self.assertRaises(ValueError, hvsrpy.Sensor3c, ns, ew, vt)
 
     def test_normalization_factor(self):
         ns = sigpropy.TimeSeries([-1, 1, 1], dt=1)
@@ -73,10 +75,11 @@ class Test_Sensor3c(TestCase):
         vt = sigpropy.TimeSeries([1, 1, -5], dt=1)
         sensor = hvsrpy.Sensor3c(ns, ew, vt)
 
+        # Fist maximum == abs(-5)
         expected = 5
         self.assertEqual(expected, sensor.normalization_factor)
 
-        # Find second maximum
+        # Find second maximum == 2
         sensor.vt.amp[2] = 0
         expected = 2
         self.assertEqual(expected, sensor.normalization_factor)
@@ -86,30 +89,30 @@ class Test_Sensor3c(TestCase):
         ns = sigpropy.TimeSeries([1., 2, 3], dt=1)
         ew = sigpropy.TimeSeries([1., 4, 5], dt=1)
         vt = sigpropy.TimeSeries([1., 1, 1], dt=1)
-        expected = hvsrpy.Sensor3c(ns, ew, vt, meta={"windowlength": 1})
+        original = hvsrpy.Sensor3c(ns, ew, vt, meta={"windowlength": 1})
 
-        dict_repr = expected.to_dict()
-        returned = hvsrpy.Sensor3c.from_dict(dict_repr)
+        original_as_dict = original.to_dict()
+        recovered = hvsrpy.Sensor3c.from_dict(original_as_dict)
 
-        for comp in ["ns", "ew", "vt", "meta"]:
-            exp = getattr(expected, comp)
-            ret = getattr(returned, comp)
-            self.assertEqual(exp, ret)
+        for key in ["ns", "ew", "vt", "meta"]:
+            expected = getattr(original, key)
+            returned = getattr(recovered, key)
+            self.assertEqual(expected, returned)
 
     def test_to_and_from_json(self):
         # Simple Case
         ns = sigpropy.TimeSeries([1, 2, 3], dt=1)
         ew = sigpropy.TimeSeries([1, 4, 5], dt=1)
         vt = sigpropy.TimeSeries([1, -1, 1], dt=1)
-        expected = hvsrpy.Sensor3c(ns, ew, vt)
+        original = hvsrpy.Sensor3c(ns, ew, vt)
 
-        json_repr = expected.to_json()
-        returned = hvsrpy.Sensor3c.from_json(json_repr)
+        original_as_json_string = original.to_json()
+        recovered = hvsrpy.Sensor3c.from_json(original_as_json_string)
 
-        for comp in ["ns", "ew", "vt"]:
-            exp = getattr(expected, comp).amp
-            ret = getattr(returned, comp).amp
-            self.assertArrayEqual(exp, ret)
+        for key in ["ns", "ew", "vt", "meta"]:
+            expected = getattr(original, key)
+            returned = getattr(recovered, key)
+            self.assertEqual(expected, returned)
 
     def test_from_mseed(self):
         # fname is not None
@@ -132,7 +135,7 @@ class Test_Sensor3c(TestCase):
         self.assertRaises(ValueError, hvsrpy.Sensor3c.from_mseed, fname)
 
         # fnames_1c is not None
-        # -------------------------
+        # ---------------------
 
         # 0101010 custom files
         prefix = self.full_path + "data/custom"
@@ -187,6 +190,21 @@ class Test_Sensor3c(TestCase):
         expected = signal
         for returned in sensor:
             self.assertArrayAlmostEqual(expected, returned.amp, delta=0.1)
+
+    def test_bandpassfilter(self):
+        # Simple case
+        tseries = np.random.random(50)
+        component = sigpropy.TimeSeries(tseries, dt=1/10)
+
+        sensor = hvsrpy.Sensor3c(component, component, component)
+        settings = dict(flow=0.3, fhigh=3, order=5)
+        sensor.bandpassfilter(**settings)
+
+        expected = sigpropy.TimeSeries(tseries, dt=1/10)
+        expected.bandpassfilter(**settings)
+
+        for returned in sensor:
+            self.assertArrayEqual(expected.amp, returned.amp)
 
     def test_cosine_taper(self):
 
