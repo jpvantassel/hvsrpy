@@ -74,8 +74,9 @@ class Sensor3c():
         if not isinstance(ns, TimeSeries):
             msg = f"'ns' must be a `TimeSeries`, not {type(ns)}."
             raise TypeError(msg)
-        dt = float(ns.dt)
-        nsamples = int(ns.nsamples)
+        
+        dt = ns.dt
+        nsamples = ns.nsamples
         flag_cut = False
         for key, value in values_dict.items():
             if key == "ns":
@@ -84,12 +85,13 @@ class Sensor3c():
             if not isinstance(value, TimeSeries):
                 msg = f"`{key}`` must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
+            # TODO (jpv): Harmonize TimeSeries and WindowedTimeSeries
             else:
                 if isinstance(value, WindowedTimeSeries):
                     values_dict[key] = WindowedTimeSeries(value.amp, value.dt)
                 elif isinstance(value, TimeSeries):
                     values_dict[key] = TimeSeries(value.amp, value.dt)
-                else:
+                else: # pragma: no cover
                     raise NotImplementedError
 
             if value.dt != dt:
@@ -122,7 +124,8 @@ class Sensor3c():
         self.ns, self.ew, self.vt = self._check_input({"ns": ns,
                                                        "ew": ew,
                                                        "vt": vt})
-        self.meta = {} if meta is None else meta
+        meta = {} if meta is None else meta
+        self.meta = {"File Name": "NA", **meta}
 
     @classmethod
     def from_mseed(cls, fname=None, fnames_1c=None):
@@ -196,7 +199,7 @@ class Sensor3c():
                 vt = TimeSeries.from_trace(trace)
                 found_vt = True
             else:
-                msg = "Missing, duplicate, or incorrectly named components. See documentation."
+                msg = "Missing, duplicate, or incorrectly named components."
                 raise ValueError(msg)
 
         meta = {"File Name": fname}
@@ -252,7 +255,7 @@ class Sensor3c():
     @property
     def normalization_factor(self):
         """Time history normalization factor across all components."""
-        factor = 1E-6
+        factor = 0
         for attr in ["ns", "ew", "vt"]:
             cmax = np.max(np.abs(getattr(self, attr).amp.flatten()))
             factor = cmax if cmax > factor else factor
@@ -326,47 +329,23 @@ class Sensor3c():
             ffts[attr] = fft
         return ffts
 
-    def combine_horizontals(self, method, horizontals, azimuth=None):
-        """Combine two horizontal components (`ns` and `ew`).
+    @staticmethod
+    def _combine_horizontal_fd(method, ns, ew):
+        """Combine horizontal components in the frequency domain.
 
         Parameters
         ----------
-        method : {'squared-average', 'geometric-mean', 'single-azimuth', 'multiple-azimuths'}
-            Defines how the two horizontal components are combined
-            to represent a single horizontal component.
-        horizontals : dict
-            If combination is done in the frequency-domain (i.e.,
-            `method in ['squared-average', 'geometric-mean']`)
-            horizontals is a `dict` of `FourierTransform` objects,
-            see :meth:`transform <Sensor3c.transform>` for details. If
-            combination is done in the time-domain
-            (i.e., `method in ['single-azimuth', 'multiple-azimuths']`)
-            horizontals is a `dict` of `TimeSeries` objects.
-        azimuth : float, optional
-            Valid only if `method` is `single-azimuth` in which case an
-            azimuth (clockwise positive) from North (i.e., 0 degrees) is
-            required.
+        method : {'squared-average', 'geometric-mean'}
+            Defines how the two horizontal components are combined.
+        ns, ew : FourierTransform
+            Frequency domain representation of each component.
 
         Returns
         -------
-        TimeSeries or FourierTransform
-            Depending upon the specified `method` requires the
-            combination to happen in the time or frequency domain.
+        FourierTransform
+            Representing the combined horizontal components.
 
         """
-        if method in ["squared-average", "geometric-mean"]:
-            return self._combine_horizontal_fd(method, horizontals)
-        elif method in ["azimuth", "single-azimuth"]:
-            return self._combine_horizontal_td(method, horizontals, azimuth=azimuth)
-        else:
-            msg = f"`method`={method} has not been implemented."
-            raise NotImplementedError(msg)
-
-    @staticmethod
-    def _combine_horizontal_fd(method, horizontals, **kwargs):
-        ns = horizontals["ns"]
-        ew = horizontals["ew"]
-
         if method == "squared-average":
             horizontal = np.sqrt((ns.mag*ns.mag + ew.mag*ew.mag)/2)
         elif method == "geometric-mean":
@@ -382,21 +361,30 @@ class Sensor3c():
         else:
             raise NotImplementedError
 
-    def _combine_horizontal_td(self, method, horizontals, azimuth):
+    def _combine_horizontal_td(self, method, azimuth):
+        """Combine horizontal components in the time domain.
+
+        azimuth : float, optional
+            Azimuth (clockwise positive) from North (i.e., 0 degrees).
+
+        Returns
+        -------
+        TimeSeries
+            Representing the combined horizontal components.
+
+        """
         az_rad = math.radians(azimuth)
-        ns = horizontals["ns"]
-        ew = horizontals["ew"]
 
         if method in ["azimuth", "single-azimuth"]:
-            horizontal = ns.amp*math.cos(az_rad) + ew.amp*math.sin(az_rad)
+            horizontal = self.ns.amp*math.cos(az_rad) + self.ew.amp*math.sin(az_rad)
         else:
             msg = f"method={method} has not been implemented."
             raise NotImplementedError(msg)
 
-        if isinstance(ns, WindowedTimeSeries):
-            return WindowedTimeSeries(horizontal, ns.dt)
-        elif isinstance(ns, TimeSeries):
-            return TimeSeries(horizontal, ns.dt)
+        if isinstance(self.ns, WindowedTimeSeries):
+            return WindowedTimeSeries(horizontal, self.ns.dt)
+        elif isinstance(self.ns, TimeSeries):
+            return TimeSeries(horizontal, self.ns.dt)
         else:
             raise NotImplementedError
 
@@ -439,8 +427,9 @@ class Sensor3c():
         """
         # Bandpass filter raw signal.
         if bp_filter["flag"]:
-            del dp_filter["flag"]
-            self.bandpassfilter(**bp_filter)
+            self.bandpassfilter(bp_filter["flow"],
+                                bp_filter["fhigh"],
+                                bp_filter["order"])
 
         # Split each time record into windows of length windowlength.
         self.split(windowlength)
@@ -489,14 +478,12 @@ class Sensor3c():
     def _make_hvsr(self, method, resampling, bandwidth, f_low=None, f_high=None, azimuth=None):
         if method in ["squared-average", "geometric-mean"]:
             ffts = self.transform()
-            hor = self.combine_horizontals(method=method, horizontals=ffts)
+            hor = self._combine_horizontal_fd(method=method, ew=ffts["ew"], ns=ffts["ns"])
             ver = ffts["vt"]
             del ffts
         elif method == "single-azimuth":
-            hor = self.combine_horizontals(method=method,
-                                           horizontals={"ew": self.ew,
-                                                        "ns": self.ns},
-                                           azimuth=azimuth)
+            hor = self._combine_horizontal_td(method=method,
+                                              azimuth=azimuth)
             if isinstance(hor, WindowedTimeSeries):
                 hor = FourierTransformSuite.from_timeseries(hor)
                 ver = FourierTransformSuite.from_timeseries(self.vt)

@@ -69,21 +69,6 @@ class Test_Sensor3c(TestCase):
         ns = sigpropy.TimeSeries([1., 1], dt=1)
         self.assertRaises(ValueError, hvsrpy.Sensor3c, ns, ew, vt)
 
-    def test_normalization_factor(self):
-        ns = sigpropy.TimeSeries([-1, 1, 1], dt=1)
-        ew = sigpropy.TimeSeries([1, 2, 1], dt=1)
-        vt = sigpropy.TimeSeries([1, 1, -5], dt=1)
-        sensor = hvsrpy.Sensor3c(ns, ew, vt)
-
-        # Fist maximum == abs(-5)
-        expected = 5
-        self.assertEqual(expected, sensor.normalization_factor)
-
-        # Find second maximum == 2
-        sensor.vt.amp[2] = 0
-        expected = 2
-        self.assertEqual(expected, sensor.normalization_factor)
-
     def test_to_and_from_dict(self):
         # Simple Case
         ns = sigpropy.TimeSeries([1., 2, 3], dt=1)
@@ -166,6 +151,21 @@ class Test_Sensor3c(TestCase):
         # fname and fnames_1c are None
         # --------------------------------
         self.assertRaises(ValueError, hvsrpy.Sensor3c.from_mseed)
+
+    def test_normalization_factor(self):
+        ns = sigpropy.TimeSeries([-1, 1, 1], dt=1)
+        ew = sigpropy.TimeSeries([1, 2, 1], dt=1)
+        vt = sigpropy.TimeSeries([1, 1, -5], dt=1)
+        sensor = hvsrpy.Sensor3c(ns, ew, vt)
+
+        # Fist maximum == abs(-5)
+        expected = 5
+        self.assertEqual(expected, sensor.normalization_factor)
+
+        # Find second maximum == 2
+        sensor.vt.amp[2] = 0
+        expected = 2
+        self.assertEqual(expected, sensor.normalization_factor)
 
     def test_split(self):
         # Simple Case
@@ -281,11 +281,29 @@ class Test_Sensor3c(TestCase):
         sensor.ew = "bad TimeSeries"
         self.assertRaises(NotImplementedError, sensor.transform)
 
+    def test_combine_horizontals(self):
+        dt = 0.01
+        amp = np.sin(2*np.pi*1*np.arange(0, 4, dt))
+        tseries = sigpropy.TimeSeries(amp, dt)
+        fseries = sigpropy.FourierTransform.from_timeseries(tseries)
+        sensor = hvsrpy.Sensor3c(tseries, tseries, tseries)
+
+        for invalid_method in ["average"]:
+            self.assertRaises(NotImplementedError,
+                              sensor._combine_horizontal_td,
+                              method=invalid_method,
+                              azimuth=2.)
+            self.assertRaises(NotImplementedError,
+                              sensor._combine_horizontal_fd,
+                              method=invalid_method,
+                              ns=fseries,
+                              ew=fseries)
+
     def test_hv(self):
         with open(self.full_path+"data/integration/int_singlewindow_cases.json", "r") as f:
             cases = json.load(f)
 
-        bp_filter = {"flag": False, "flow": 0.001, "fhigh": 49.9, "order": 5}
+        bp_filter = {"flag": True, "flow": 0.001, "fhigh": 49.99, "order": 3}
 
         for key, value in cases.items():
             if key in ["f", "k", "l"]:
