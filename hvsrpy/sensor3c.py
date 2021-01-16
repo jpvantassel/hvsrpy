@@ -24,7 +24,7 @@ import warnings
 
 import numpy as np
 import obspy
-from sigpropy import TimeSeries, FourierTransform, WindowedTimeSeries, FourierTransformSuite
+from sigpropy import TimeSeries, FourierTransform
 
 from hvsrpy import Hvsr, HvsrRotated
 
@@ -71,10 +71,13 @@ class Sensor3c():
 
         """
         ns = values_dict["ns"]
-        if not isinstance(ns, TimeSeries):
+        try:
+            ns = TimeSeries.from_timeseries(ns)
+        except AttributeError as e:
             msg = f"'ns' must be a `TimeSeries`, not {type(ns)}."
-            raise TypeError(msg)
-        
+            raise TypeError(msg) from e
+        values_dict["ns"] = ns
+
         dt = ns.dt
         nsamples = ns.nsamples
         flag_cut = False
@@ -85,21 +88,16 @@ class Sensor3c():
             if not isinstance(value, TimeSeries):
                 msg = f"`{key}`` must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
-            # TODO (jpv): Harmonize TimeSeries and WindowedTimeSeries
             else:
-                if isinstance(value, WindowedTimeSeries):
-                    values_dict[key] = WindowedTimeSeries(value.amp, value.dt)
-                elif isinstance(value, TimeSeries):
-                    values_dict[key] = TimeSeries(value.amp, value.dt)
-                else: # pragma: no cover
-                    raise NotImplementedError
+                values_dict[key] = TimeSeries.from_timeseries(value)
 
             if value.dt != dt:
                 msg = "All components must have equal `dt`."
                 raise ValueError(msg)
 
             if value.nsamples != nsamples:
-                txt = "".join([f"{_k}={_v.nsamples} " for _k, _v in values_dict.items()])
+                txt = "".join([f"{_k}={_v.nsamples} " for _k,
+                               _v in values_dict.items()])
                 msg = f"Components are different length: {txt}"
                 raise ValueError(msg)
 
@@ -121,9 +119,9 @@ class Sensor3c():
             Initialized 3-component sensor object.
 
         """
-        self.ns, self.ew, self.vt = self._check_input({"ns": ns,
-                                                       "ew": ew,
-                                                       "vt": vt})
+        values_dict = {"ns": ns, "ew": ew, "vt": vt}
+        self.ns, self.ew, self.vt = self._check_input(values_dict)
+
         meta = {} if meta is None else meta
         self.meta = {"File Name": "NA", **meta}
 
@@ -157,10 +155,11 @@ class Sensor3c():
             If both `fname` and `fname_verbose` are `None`.
 
         """
-        if fnames_1c is None and fname is None:
-            msg = "`fnames_1c` and `fname` cannot both be `None`."
-            raise ValueError(msg)
-        if fnames_1c is not None:
+        # One miniSEED file is provided, which contains all three components.
+        if fname is not None and fnames_1c is None:
+            traces = obspy.read(fname, format="MSEED")
+        # Three miniSEED files are provided, one per component.
+        elif fnames_1c is not None and fname is None:
             trace_list = []
             for key in ["e", "n", "z"]:
                 stream = obspy.read(fnames_1c[key], format="MSEED")
@@ -180,11 +179,14 @@ class Sensor3c():
                         key.capitalize()
                 trace_list.append(trace)
             traces = obspy.Stream(trace_list)
+            fname = fnames_1c["n"]
+        # Both or neither miniSEED file option is provided.
         else:
-            traces = obspy.read(fname, format="MSEED")
+            msg = "`fnames_1c` and `fname` cannot both be defined or both be `None`."
+            raise ValueError(msg)
 
         if len(traces) != 3:
-            msg = f"miniseed file {fname} has {len(traces)} traces, but should have 3."
+            msg = f"Provided {len(traces)} traces, but must only provide 3."
             raise ValueError(msg)
 
         found_ew, found_ns, found_vt = False, False, False
@@ -257,12 +259,12 @@ class Sensor3c():
         """Time history normalization factor across all components."""
         factor = 0
         for attr in ["ns", "ew", "vt"]:
-            cmax = np.max(np.abs(getattr(self, attr).amp.flatten()))
+            cmax = np.max(np.abs(getattr(self, attr).amplitude))
             factor = cmax if cmax > factor else factor
         return factor
 
     def split(self, windowlength):
-        """Split component `TimeSeries` into `WindowedTimeSeries`.
+        """Split component `TimeSeries`.
 
         Refer to
         `SigProPy <https://sigpropy.readthedocs.io/en/latest/?badge=latest>`_
@@ -270,9 +272,7 @@ class Sensor3c():
 
         """
         for attr in ["ew", "ns", "vt"]:
-            wtseries = WindowedTimeSeries.from_timeseries(getattr(self, attr),
-                                                          windowlength)
-            setattr(self, attr, wtseries)
+            getattr(self, attr).split(windowlength)
 
     def detrend(self):
         """Detrend components.
@@ -320,12 +320,7 @@ class Sensor3c():
         ffts = {}
         for attr in ["ew", "ns", "vt"]:
             tseries = getattr(self, attr)
-            if isinstance(tseries, WindowedTimeSeries):
-                fft = FourierTransformSuite.from_timeseries(tseries, **kwargs)
-            elif isinstance(tseries, TimeSeries):
-                fft = FourierTransform.from_timeseries(tseries, **kwargs)
-            else:
-                raise NotImplementedError
+            fft = FourierTransform.from_timeseries(tseries, **kwargs)
             ffts[attr] = fft
         return ffts
 
@@ -354,12 +349,7 @@ class Sensor3c():
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
 
-        if isinstance(ns, FourierTransformSuite):
-            return FourierTransformSuite(horizontal, ns.frq)
-        elif isinstance(ns, FourierTransform):
-            return FourierTransform(horizontal, ns.frq)
-        else:
-            raise NotImplementedError
+        return FourierTransform(horizontal, ns.frequency, dtype=float)
 
     def _combine_horizontal_td(self, method, azimuth):
         """Combine horizontal components in the time domain.
@@ -376,17 +366,13 @@ class Sensor3c():
         az_rad = math.radians(azimuth)
 
         if method in ["azimuth", "single-azimuth"]:
-            horizontal = self.ns.amp*math.cos(az_rad) + self.ew.amp*math.sin(az_rad)
+            horizontal = self.ns.amp * \
+                math.cos(az_rad) + self.ew.amp*math.sin(az_rad)
         else:
             msg = f"method={method} has not been implemented."
             raise NotImplementedError(msg)
 
-        if isinstance(self.ns, WindowedTimeSeries):
-            return WindowedTimeSeries(horizontal, self.ns.dt)
-        elif isinstance(self.ns, TimeSeries):
-            return TimeSeries(horizontal, self.ns.dt)
-        else:
-            raise NotImplementedError
+        return TimeSeries(horizontal, self.ns.dt)
 
     def hv(self, windowlength, bp_filter, taper_width, bandwidth,
            resampling, method, f_low=None, f_high=None, azimuth=None):
@@ -442,7 +428,7 @@ class Sensor3c():
 
         # Combine horizontal components directly.
         if method in ["squared-average", "geometric-mean", "azimuth", "single-azimuth"]:
-            
+
             # Deprecate `azimuth` in favor of the more descriptive `single-azimuth`.
             if method == "azimuth":
                 msg = "method='azimuth' is deprecated, replace with the more descriptive 'single-azimuth'."
@@ -478,20 +464,15 @@ class Sensor3c():
     def _make_hvsr(self, method, resampling, bandwidth, f_low=None, f_high=None, azimuth=None):
         if method in ["squared-average", "geometric-mean"]:
             ffts = self.transform()
-            hor = self._combine_horizontal_fd(method=method, ew=ffts["ew"], ns=ffts["ns"])
+            hor = self._combine_horizontal_fd(
+                method=method, ew=ffts["ew"], ns=ffts["ns"])
             ver = ffts["vt"]
             del ffts
         elif method == "single-azimuth":
             hor = self._combine_horizontal_td(method=method,
                                               azimuth=azimuth)
-            if isinstance(hor, WindowedTimeSeries):
-                hor = FourierTransformSuite.from_timeseries(hor)
-                ver = FourierTransformSuite.from_timeseries(self.vt)
-            elif isinstance(hor, TimeSeries):
-                hor = FourierTransform.from_timeseries(hor)
-                ver = FourierTransform.from_timeseries(self.vt)
-            else:
-                raise NotImplementedError
+            hor = FourierTransform.from_timeseries(hor)
+            ver = FourierTransform.from_timeseries(self.vt)
         else:
             msg = f"`method`={method} has not been implemented."
             raise NotImplementedError(msg)
@@ -513,11 +494,10 @@ class Sensor3c():
 
         hor.smooth_konno_ohmachi_fast(frq, bandwidth)
         ver.smooth_konno_ohmachi_fast(frq, bandwidth)
-        hor.amp /= ver.amp
+        hor._amp /= ver._amp
         hvsr = hor
         del ver
 
-        # TODO (jpv): Combine TimeSeries and WindowedTimeSeries.
         if self.ns.n_windows == 1:
             window_length = max(self.ns.time)
         else:
@@ -525,7 +505,8 @@ class Sensor3c():
 
         self.meta["Window Length"] = window_length
 
-        return Hvsr(hvsr.amp, hvsr.frq, find_peaks=False, f_low=f_low, f_high=f_high, meta=self.meta)
+        return Hvsr(hvsr.amplitude, hvsr.frequency, find_peaks=False,
+                    f_low=f_low, f_high=f_high, meta=self.meta)
 
     def to_dict(self):
         """`Sensor3c` object as `dict`.
@@ -561,7 +542,7 @@ class Sensor3c():
 
     def __str__(self):
         """Human-readable representation of `Sensor3c` object."""
-        return "Sensor3c"
+        return f"Sensor3c at {id(self)}"
 
     def __repr__(self):
         """Unambiguous representation of `Sensor3c` object."""
