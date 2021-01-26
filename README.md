@@ -7,8 +7,8 @@
 [![CircleCI](https://circleci.com/gh/jpvantassel/hvsrpy.svg?style=svg)](https://circleci.com/gh/jpvantassel/hvsrpy)
 [![Documentation Status](https://readthedocs.org/projects/hvsrpy/badge/?version=latest)](https://hvsrpy.readthedocs.io/en/latest/?badge=latest)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/jpvantassel/hvsrpy.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jpvantassel/hvsrpy/context:python)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/528737ade629492e8652be369528c756)](https://www.codacy.com/manual/jpvantassel/hvsrpy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jpvantassel/hvsrpy&amp;utm_campaign=Badge_Grade)
-[![codecov](https://codecov.io/gh/jpvantassel/hvsrpy/branch/master/graph/badge.svg)](https://codecov.io/gh/jpvantassel/hvsrpy)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/528737ade629492e8652be369528c756)](https://www.codacy.com/gh/jpvantassel/hvsrpy/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jpvantassel/hvsrpy&amp;utm_campaign=Badge_Grade)
+[![codecov](https://codecov.io/gh/jpvantassel/hvsrpy/branch/master/graph/badge.svg?token=MJ3WDNRIM0)](https://codecov.io/gh/jpvantassel/hvsrpy)
 
 ## Table of Contents
 
