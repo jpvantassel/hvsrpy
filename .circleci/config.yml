@@ -21,7 +21,7 @@ workflows:
       #       - docker
 
 jobs:
-  test-3.6: &test-template
+  test-36: &test-template
     docker:
       - image: circleci/python:3.6.9
         auth:
