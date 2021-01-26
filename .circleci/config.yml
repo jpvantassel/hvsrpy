@@ -63,7 +63,7 @@ jobs:
             . venv/bin/activate
             mv test/.coverage test-results
             cd test-results
-            coverage xml -o coverage.xml
+            coverage xml -o cobertura.xml
       - store_test_results:
           path: test-results
       - store_artifacts:
