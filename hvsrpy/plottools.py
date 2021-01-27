@@ -24,6 +24,8 @@ import pandas as pd
 
 import hvsrpy
 
+__all__ = ["quick_plot", "quick_voronoi_plot"]
+
 
 def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
                minf=0.2, maxf=20, nf=128, res_type="log",

@@ -22,7 +22,6 @@ from termcolor import colored
 from hvsrpy import Hvsr
 import numpy as np
 
-
 def pass_fail(value):
     return colored("Pass", "green") if value > 0 else colored("Fail", "red")
 
