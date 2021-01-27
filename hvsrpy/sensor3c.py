@@ -78,7 +78,6 @@ class Sensor3c():
 
         dt = ns.dt
         nsamples = ns.nsamples
-        flag_cut = False
         for key, value in values_dict.items():
             if key == "ns":
                 continue
