@@ -18,7 +18,6 @@
 """Class definition for Sensor3c, a 3-component sensor."""
 
 import math
-import logging
 import json
 import warnings
 
@@ -28,7 +27,6 @@ from sigpropy import TimeSeries, FourierTransform
 
 from hvsrpy import Hvsr, HvsrRotated
 
-logger = logging.getLogger("hvsrpy.sensor3c")
 
 __all__ = ["Sensor3c"]
 
