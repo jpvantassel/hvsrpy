@@ -687,6 +687,10 @@ class Hvsr():
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""
+        # Correct distribution
+        distribution_f0 = self.correct_distribution(distribution_f0)
+        distribution_mc = self.correct_distribution(distribution_mc)
+
         # f0 from windows
         mean_f = self.mean_f0_frq(distribution_f0)
         sigm_f = self.std_f0_frq(distribution_f0)

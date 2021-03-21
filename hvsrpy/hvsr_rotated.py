@@ -430,7 +430,7 @@ class HvsrRotated():
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""
-
+        # Correct distribution
         distribution_f0 = Hvsr.correct_distribution(distribution_f0)
         distribution_mc = Hvsr.correct_distribution(distribution_mc)
 
