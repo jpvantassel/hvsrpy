@@ -13,7 +13,7 @@
 # Mean T0 (s) [LMT0],NA
 # Standard deviation T0 () [SigmaT0],NA
 # 68 % Confidence Interval T0 (s),NA
-# Median Curve Distribution (),log-normal
+# Median Curve Distribution (),lognormal
 # Median Curve Peak Frequency (Hz) [f0mc],0.7378
 # Median Curve Peak Amplitude (),3.9661
 # Frequency (Hz),Median Curve,1 STD Below Median Curve,1 STD Above Median Curve
