@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ class Hvsr():
         curve/time window and each column a frequency.
     frq : ndarray
         Vector of frequencies corresponds to each column.
-    n_windows : int
+    nseries : int
         Number of windows in `Hvsr` object.
     valid_window_indices : ndarray
         Boolean array indicating valid windows.
@@ -137,10 +137,10 @@ class Hvsr():
             msg = f"Size of amplitude={self.amp.size} and frequency={self.frq.size} must be compatable."
             raise ValueError(msg)
 
-        self.n_windows = self.amp.shape[0]
-        self.valid_window_indices = np.ones(self.n_windows, dtype=bool)
-        self._main_peak_frq = np.zeros(self.n_windows)
-        self._main_peak_amp = np.zeros(self.n_windows)
+        self.nseries = self.amp.shape[0]
+        self.valid_window_indices = np.ones(self.nseries, dtype=bool)
+        self._main_peak_frq = np.zeros(self.nseries)
+        self._main_peak_amp = np.zeros(self.nseries)
         
         self.f_low = None if f_low is None else float(f_low) 
         if self.f_low is None:
@@ -233,7 +233,7 @@ class Hvsr():
         peak_indices, _ = self.find_peaks(self.amp[self.valid_window_indices, self.i_low:self.i_high],
                                           starting_index=self.i_low,
                                           **kwargs)
-        valid_indices = np.zeros(self.n_windows, dtype=bool)
+        valid_indices = np.zeros(self.nseries, dtype=bool)
         valid_count = 0
         for c_window, valid in enumerate(self.valid_window_indices):
             if not valid:
@@ -410,7 +410,7 @@ class Hvsr():
             If `distribution` does not match the available options.
 
         """
-        if self.n_windows == 1:
+        if self.nseries == 1:
             msg = "The standard deviation of the mean curve is not defined for a single window."
             raise ValueError(msg)
         else:
@@ -508,7 +508,7 @@ class Hvsr():
             lower_bound = self.nstd_f0_frq(-n, distribution_f0)
             upper_bound = self.nstd_f0_frq(+n, distribution_f0)
 
-            valid_indices = np.zeros(self.n_windows, dtype=bool)
+            valid_indices = np.zeros(self.nseries, dtype=bool)
             for c_window, (c_valid, c_peak) in enumerate(zip(self.valid_window_indices, self._main_peak_frq)):
                 if not c_valid:
                     continue
@@ -687,6 +687,10 @@ class Hvsr():
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""
+        # Correct distribution
+        distribution_f0 = self.correct_distribution(distribution_f0)
+        distribution_mc = self.correct_distribution(distribution_mc)
+
         # f0 from windows
         mean_f = self.mean_f0_frq(distribution_f0)
         sigm_f = self.std_f0_frq(distribution_f0)
@@ -700,7 +704,7 @@ class Hvsr():
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 
-        n_rejected = self.n_windows - sum(self.valid_window_indices)
+        n_rejected = self.nseries - sum(self.valid_window_indices)
         rejection = "False" if self.meta.get(
             'Performed Rejection') is None else "True"
         lines = [
@@ -709,12 +713,12 @@ class Hvsr():
             f"# Method (),{self.meta.get('method')}",
             f"# Azimuth (),{self.meta.get('azimuth')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
-            f"# Total Number of Windows (),{self.n_windows}",
+            f"# Total Number of Windows (),{self.nseries}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",
             f"# Lower frequency limit for peaks (Hz),{self.f_low}",
             f"# Upper frequency limit for peaks (Hz),{self.f_high}",
             f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
-            f"# Number of Accepted Windows (),{self.n_windows-n_rejected}",
+            f"# Number of Accepted Windows (),{self.nseries-n_rejected}",
             f"# Number of Rejected Windows (),{n_rejected}",
             f"# Distribution of f0 (),{distribution_f0}"]
 

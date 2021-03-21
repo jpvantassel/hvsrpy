@@ -1,6 +1,6 @@
 # This file is part of hvsrpy a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -192,12 +192,12 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
 
                 print("\nAnalysis summary:")
                 display(pd.DataFrame(columns=[""], index=["Window length", "No. of windows", "Number of iterations to convergence", "No. of rejected windows"],
-                                     data=[f"{windowlength}s", str(sensor.ns.n_windows), f"{c_iter} of {n_iteration} allowed", str(len(hv.rejected_window_indices))]))
+                                     data=[f"{windowlength}s", str(sensor.ns.nseries), f"{c_iter} of {n_iteration} allowed", str(len(hv.rejected_window_indices))]))
                 print("\nStatistics after rejection:")
                 hv.print_stats(distribution_f0)
         else:
             display(pd.DataFrame(columns=[""], index=["Window length", "No. of windows"],
-                                 data=[f"{windowlength}s", str(sensor.ns.n_windows)]))
+                                 data=[f"{windowlength}s", str(sensor.ns.nseries)]))
             hv.print_stats(distribution_f0)
             fig.legend(loc="upper center", bbox_to_anchor=(0.77, 0.4))
             break
@@ -210,7 +210,7 @@ def quick_plot(file_name, windowlength=60, width=0.1, bandwidth=40,
         ax.plot(ctime.T, amp.T, linewidth=0.2, color='#888888')
         ax.set_title(f"Time Records ({name})")
         ax.set_yticks([-1, -0.5, 0, 0.5, 1])
-        ax.set_xlim(0, windowlength*timerecord.n_windows)
+        ax.set_xlim(0, windowlength*timerecord.nseries)
         ax.set_ylim(-1, 1)
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Normalized Amplitude')

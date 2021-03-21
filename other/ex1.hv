@@ -1,8 +1,10 @@
-# hvsrpy output version 0.4.2
+# hvsrpy output version 0.5.2
 # File Name (),UT.STN11.A2_C150.miniseed
 # Window Length (s),60.0
 # Total Number of Windows (),60
 # Frequency Domain Window Rejection Performed (),True
+# Lower frequency limit for peaks (Hz),None
+# Upper frequency limit for peaks (Hz),None
 # Number of Standard Deviations Used for Rejection () [n],2
 # Number of Accepted Windows (),48
 # Number of Rejected Windows (),12
@@ -13,7 +15,7 @@
 # Mean T0 (s) [LMT0],NA
 # Standard deviation T0 () [SigmaT0],NA
 # 68 % Confidence Interval T0 (s),NA
-# Median Curve Distribution (),log-normal
+# Median Curve Distribution (),lognormal
 # Median Curve Peak Frequency (Hz) [f0mc],0.7378
 # Median Curve Peak Amplitude (),3.9661
 # Frequency (Hz),Median Curve,1 STD Below Median Curve,1 STD Above Median Curve

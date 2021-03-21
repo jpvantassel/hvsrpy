@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -430,7 +430,7 @@ class HvsrRotated():
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""
-
+        # Correct distribution
         distribution_f0 = Hvsr.correct_distribution(distribution_f0)
         distribution_mc = Hvsr.correct_distribution(distribution_mc)
 
@@ -449,14 +449,14 @@ class HvsrRotated():
 
         rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
 
-        n_windows = self.hvsrs[0].n_windows
+        nseries = self.hvsrs[0].nseries
         n_accepted = sum([sum(hvsr.valid_window_indices) for hvsr in self.hvsrs])
-        n_rejected = self.azimuth_count*n_windows - n_accepted
+        n_rejected = self.azimuth_count*nseries - n_accepted
         lines = [
             f"# hvsrpy output version {__version__}",
             f"# File Name (),{self.meta.get('File Name')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
-            f"# Total Number of Windows per Azimuth (),{n_windows}",
+            f"# Total Number of Windows per Azimuth (),{nseries}",
             f"# Total Number of Azimuths (),{self.azimuth_count}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",
             f"# Lower frequency limit for peaks (Hz),{self.hvsrs[0].f_low}",
@@ -476,28 +476,28 @@ class HvsrRotated():
             ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
 
             lines += [
-                f"# Median f0 (Hz) [LMf0,AZ],{fclean(mean_f)}",
-                f"# Lognormal standard deviation f0 () [SigmaLNf0,AZ],{fclean(sigm_f)}",
+                f"# Median f0 (Hz) [LMf0AZ],{fclean(mean_f)}",
+                f"# Lognormal standard deviation f0 () [SigmaLNf0AZ],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Median T0 (s) [LMT0,AZ],{fclean(mean_t)}",
-                f"# Lognormal standard deviation T0 () [SigmaLNT0,AZ],{fclean(sigm_t)}",
+                f"# Median T0 (s) [LMT0AZ],{fclean(mean_t)}",
+                f"# Lognormal standard deviation T0 () [SigmaLNT0AZ],{fclean(sigm_t)}",
                 f"# 68 % Confidence Interval T0 (s),{fclean(ci_68_lower_t)},to,{fclean(ci_68_upper_t)}",
             ]
 
         else:
             lines += [
-                f"# Mean f0 (Hz) [f0,AZ],{fclean(mean_f)}",
-                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{fclean(sigm_f)}",
+                f"# Mean f0 (Hz) [f0AZ],{fclean(mean_f)}",
+                f"# Standard deviation f0 (Hz) [Sigmaf0AZ],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Mean T0 (s) [LMT0,AZ],NAN",
-                f"# Standard deviation T0 () [SigmaT0,AZ],NAN",
+                f"# Mean T0 (s) [LMT0AZ],NAN",
+                f"# Standard deviation T0 () [SigmaT0AZ],NAN",
                 f"# 68 % Confidence Interval T0 (s),NAN",
             ]
 
         c_type = "Median" if distribution_mc == "lognormal" else "Mean"
         lines += [
             f"# {c_type} Curve Distribution (),{distribution_mc}",
-            f"# {c_type} Curve Peak Frequency (Hz) [f0mc,AZ],{fclean(mc_peak_frq)}",
+            f"# {c_type} Curve Peak Frequency (Hz) [f0mcAZ],{fclean(mc_peak_frq)}",
             f"# {c_type} Curve Peak Amplitude (),{fclean(mc_peak_amp)}",
             f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
         ]

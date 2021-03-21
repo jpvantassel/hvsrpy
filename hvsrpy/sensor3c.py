@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2020 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -363,8 +363,8 @@ class Sensor3c():
         az_rad = math.radians(azimuth)
 
         if method in ["azimuth", "single-azimuth"]:
-            horizontal = self.ns.amp * \
-                math.cos(az_rad) + self.ew.amp*math.sin(az_rad)
+            horizontal = self.ns._amp * \
+                math.cos(az_rad) + self.ew._amp*math.sin(az_rad)
         else:
             msg = f"method={method} has not been implemented."
             raise NotImplementedError(msg)
@@ -495,7 +495,7 @@ class Sensor3c():
         hvsr = hor
         del ver
 
-        if self.ns.n_windows == 1:
+        if self.ns.nseries == 1:
             window_length = max(self.ns.time)
         else:
             window_length = max(self.ns.time[0])
