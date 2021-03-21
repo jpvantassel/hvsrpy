@@ -22,7 +22,7 @@ with open("../hvsrpy/meta.py") as f:
 # -- Project information -----------------------------------------------------
 
 project = 'hvsrpy'
-copyright = '2019-2020, Joseph P. Vantassel'
+copyright = '2019-2021, Joseph P. Vantassel'
 author = 'Joseph P. Vantassel'
 
 # The full version, including alpha/beta/rc tags
