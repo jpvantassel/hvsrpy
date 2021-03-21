@@ -377,12 +377,14 @@ def parse_hvsrpy_output(fname):
     lookup = {"# Window Length (s)": ("windowlength", float),
               "# Total Number of Windows ()": ("total_windows", int),
               "# Frequency Domain Window Rejection Performed ()": ("rejection_bool", bool),
+              "# Lower frequency limit for peaks (Hz)": ("f_low", lambda x: None if x=="None" else float(x)),
+              "# Upper frequency limit for peaks (Hz)": ("f_high", lambda x: None if x=="None" else float(x)),
               "# Number of Standard Deviations Used for Rejection () [n]": ("n_for_rejection", float),
               "# Number of Accepted Windows ()": ("accepted_windows", int),
-              "# Distribution of f0 ()": ("distribution_f0", lambda x: x.rstrip()),
+              "# Distribution of f0 ()": ("distribution_f0", lambda x: x),
               "# Mean f0 (Hz)": ("mean_f0", float),
               "# Standard deviation f0 (Hz) [Sigmaf0]": ("std_f0", float),
-              "# Median Curve Distribution ()": ("distribution_mc", lambda x: x.rstrip()),
+              "# Median Curve Distribution ()": ("distribution_mc", lambda x: x),
               "# Median Curve Peak Frequency (Hz) [f0mc]": ("f0_mc", float),
               "# Median Curve Peak Amplitude ()": ("amplitude_f0_mc", float)
               }
@@ -397,7 +399,7 @@ def parse_hvsrpy_output(fname):
 
                 try:
                     subkey, operation = lookup[key]
-                    data[subkey] = operation(value)
+                    data[subkey] = operation(value.rstrip())
                 except KeyError:
                     continue
             else:

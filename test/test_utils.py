@@ -204,7 +204,7 @@ class Test_Utils(TestCase):
                      ([1, 1, 1], [1, 1, 1, 1, 1, 1])]
 
         for count, expected_tuple in enumerate(expecteds):
-            fname = self.full_path + f"data/utils/ex{count}.hv"
+            fname = self.full_path + f"../other/ex{count}.hv"
             with open(os.devnull, "w") as sys.stdout:
                 returned_tuple = load(fname)
                 sys.stdout = sys.__stdout__
@@ -228,7 +228,7 @@ class Test_Utils(TestCase):
                     raise ValueError
 
         # Ex 0
-        fname = self.full_path + "data/utils/ex0.hv"
+        fname = self.full_path + "../other/ex0.hv"
         expected = {"windowlength": 60.0,
                     "total_windows": 30,
                     "rejection_bool": True,
@@ -237,7 +237,7 @@ class Test_Utils(TestCase):
                     "distribution_f0": "normal",
                     "mean_f0": 0.6976,
                     "std_f0": 0.1353,
-                    "distribution_mc": "log-normal",
+                    "distribution_mc": "lognormal",
                     "f0_mc": 0.7116,
                     "amplitude_f0_mc": 3.8472,
                     }
@@ -249,7 +249,7 @@ class Test_Utils(TestCase):
         compare_data_dict(expected, returned)
 
         # Ex 1
-        fname = self.full_path + "data/utils/ex1.hv"
+        fname = self.full_path + "../other/ex1.hv"
         expected = {"windowlength": 60.0,
                     "total_windows": 60,
                     "rejection_bool": True,
@@ -258,7 +258,7 @@ class Test_Utils(TestCase):
                     "distribution_f0": "normal",
                     "mean_f0": 0.7155,
                     "std_f0": 0.0759,
-                    "distribution_mc": "log-normal",
+                    "distribution_mc": "lognormal",
                     "f0_mc": 0.7378,
                     "amplitude_f0_mc": 3.9661,
                     }
@@ -270,7 +270,7 @@ class Test_Utils(TestCase):
         compare_data_dict(expected, returned)
 
         # Ex 2
-        fname = self.full_path + "data/utils/ex2.hv"
+        fname = self.full_path + "../other/ex2.hv"
         expected = {"windowlength": 60.0,
                     "total_windows": 30,
                     "rejection_bool": True,
@@ -279,7 +279,7 @@ class Test_Utils(TestCase):
                     "distribution_f0": "normal",
                     "mean_f0": 0.7035,
                     "std_f0": 0.1391,
-                    "distribution_mc": "log-normal",
+                    "distribution_mc": "lognormal",
                     "f0_mc": 0.7116,
                     "amplitude_f0_mc": 3.9097,
                     }
@@ -291,7 +291,7 @@ class Test_Utils(TestCase):
         compare_data_dict(expected, returned)
 
         # Ex 3
-        fname = self.full_path + "data/utils/ex3.hv"
+        fname = self.full_path + "../other/ex3.hv"
         expected = {"windowlength": 60.0,
                     "total_windows": 60,
                     "rejection_bool": True,
@@ -300,7 +300,7 @@ class Test_Utils(TestCase):
                     "distribution_f0": "normal",
                     "mean_f0": 0.7994,
                     "std_f0": 0.0365,
-                    "distribution_mc": "log-normal",
+                    "distribution_mc": "lognormal",
                     "f0_mc": 0.7933,
                     "amplitude_f0_mc": 4.8444,
                     }

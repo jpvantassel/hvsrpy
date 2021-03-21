@@ -1,8 +1,10 @@
-# hvsrpy output version 0.4.2
+# hvsrpy output version 0.5.2
 # File Name (),SESAME: Clear peak
 # Window Length (s),60.0
 # Total Number of Windows (),60
 # Frequency Domain Window Rejection Performed (),False
+# Lower frequency limit for peaks (Hz),None
+# Upper frequency limit for peaks (Hz),None
 # Number of Standard Deviations Used for Rejection () [n],2
 # Number of Accepted Windows (),60
 # Number of Rejected Windows (),0
