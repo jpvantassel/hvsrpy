@@ -10,14 +10,14 @@
 # Number of Accepted Windows (),663
 # Number of Rejected Windows (),117
 # Distribution of f0 (),lognormal
-# Median f0 (Hz) [LMf0,AZ],0.6687
-# Lognormal standard deviation f0 () [SigmaLNf0,AZ],0.184
+# Median f0 (Hz) [LMf0AZ],0.6687
+# Lognormal standard deviation f0 () [SigmaLNf0AZ],0.184
 # 68 % Confidence Interval f0 (Hz),0.5563,to,0.8038
-# Median T0 (s) [LMT0,AZ],1.4954
-# Lognormal standard deviation T0 () [SigmaLNT0,AZ],0.184
+# Median T0 (s) [LMT0AZ],1.4954
+# Lognormal standard deviation T0 () [SigmaLNT0AZ],0.184
 # 68 % Confidence Interval T0 (s),1.2441,to,1.7976
 # Median Curve Distribution (),lognormal
-# Median Curve Peak Frequency (Hz) [f0mc,AZ],0.7651
+# Median Curve Peak Frequency (Hz) [f0mcAZ],0.7651
 # Median Curve Peak Amplitude (),4.2088
 # Frequency (Hz),Median Curve,1 STD Below Median Curve,1 STD Above Median Curve
 0.2,1.3407,0.7737,2.3234

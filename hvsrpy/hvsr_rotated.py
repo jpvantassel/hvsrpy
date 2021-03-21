@@ -476,28 +476,28 @@ class HvsrRotated():
             ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
 
             lines += [
-                f"# Median f0 (Hz) [LMf0,AZ],{fclean(mean_f)}",
-                f"# Lognormal standard deviation f0 () [SigmaLNf0,AZ],{fclean(sigm_f)}",
+                f"# Median f0 (Hz) [LMf0AZ],{fclean(mean_f)}",
+                f"# Lognormal standard deviation f0 () [SigmaLNf0AZ],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Median T0 (s) [LMT0,AZ],{fclean(mean_t)}",
-                f"# Lognormal standard deviation T0 () [SigmaLNT0,AZ],{fclean(sigm_t)}",
+                f"# Median T0 (s) [LMT0AZ],{fclean(mean_t)}",
+                f"# Lognormal standard deviation T0 () [SigmaLNT0AZ],{fclean(sigm_t)}",
                 f"# 68 % Confidence Interval T0 (s),{fclean(ci_68_lower_t)},to,{fclean(ci_68_upper_t)}",
             ]
 
         else:
             lines += [
-                f"# Mean f0 (Hz) [f0,AZ],{fclean(mean_f)}",
-                f"# Standard deviation f0 (Hz) [Sigmaf0,AZ],{fclean(sigm_f)}",
+                f"# Mean f0 (Hz) [f0AZ],{fclean(mean_f)}",
+                f"# Standard deviation f0 (Hz) [Sigmaf0AZ],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Mean T0 (s) [LMT0,AZ],NAN",
-                f"# Standard deviation T0 () [SigmaT0,AZ],NAN",
+                f"# Mean T0 (s) [LMT0AZ],NAN",
+                f"# Standard deviation T0 () [SigmaT0AZ],NAN",
                 f"# 68 % Confidence Interval T0 (s),NAN",
             ]
 
         c_type = "Median" if distribution_mc == "lognormal" else "Mean"
         lines += [
             f"# {c_type} Curve Distribution (),{distribution_mc}",
-            f"# {c_type} Curve Peak Frequency (Hz) [f0mc,AZ],{fclean(mc_peak_frq)}",
+            f"# {c_type} Curve Peak Frequency (Hz) [f0mcAZ],{fclean(mc_peak_frq)}",
             f"# {c_type} Curve Peak Amplitude (),{fclean(mc_peak_amp)}",
             f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
         ]
