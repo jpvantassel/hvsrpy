@@ -1,7 +1,9 @@
 numpy<1.19.0
 scipy
 obspy
+sigpropy>=0.3.0
 pandas
 shapely
-coverage
 termcolor
+matplotlib
+coverage
