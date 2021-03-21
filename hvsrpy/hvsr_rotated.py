@@ -449,14 +449,14 @@ class HvsrRotated():
 
         rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
 
-        n_windows = self.hvsrs[0].n_windows
+        nseries = self.hvsrs[0].nseries
         n_accepted = sum([sum(hvsr.valid_window_indices) for hvsr in self.hvsrs])
-        n_rejected = self.azimuth_count*n_windows - n_accepted
+        n_rejected = self.azimuth_count*nseries - n_accepted
         lines = [
             f"# hvsrpy output version {__version__}",
             f"# File Name (),{self.meta.get('File Name')}",
             f"# Window Length (s),{self.meta.get('Window Length')}",
-            f"# Total Number of Windows per Azimuth (),{n_windows}",
+            f"# Total Number of Windows per Azimuth (),{nseries}",
             f"# Total Number of Azimuths (),{self.azimuth_count}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",
             f"# Lower frequency limit for peaks (Hz),{self.hvsrs[0].f_low}",

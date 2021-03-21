@@ -363,8 +363,8 @@ class Sensor3c():
         az_rad = math.radians(azimuth)
 
         if method in ["azimuth", "single-azimuth"]:
-            horizontal = self.ns.amp * \
-                math.cos(az_rad) + self.ew.amp*math.sin(az_rad)
+            horizontal = self.ns._amp * \
+                math.cos(az_rad) + self.ew._amp*math.sin(az_rad)
         else:
             msg = f"method={method} has not been implemented."
             raise NotImplementedError(msg)
@@ -495,7 +495,7 @@ class Sensor3c():
         hvsr = hor
         del ver
 
-        if self.ns.n_windows == 1:
+        if self.ns.nseries == 1:
             window_length = max(self.ns.time)
         else:
             window_length = max(self.ns.time[0])
