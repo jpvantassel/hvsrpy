@@ -16,14 +16,14 @@ workflows:
       - test-38:
           context:
             - docker
-      # - test-39:
-      #     context:
-      #       - docker
+      - test-39:
+          context:
+            - docker
 
 jobs:
   test-36: &test-template
     docker:
-      - image: circleci/python:3.6.9
+      - image: circleci/python:3.6.14
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
@@ -40,7 +40,7 @@ jobs:
           name: Install numpy
           command: |
             . venv/bin/activate
-            pip install numpy==1.18.5
+            pip install numpy
       - run:
           name: Install sigpropy from source
           command: |
@@ -75,7 +75,7 @@ jobs:
   test-37:
     <<: *test-template
     docker:
-      - image: circleci/python:3.7.5
+      - image: circleci/python:3.7.11
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
@@ -83,15 +83,15 @@ jobs:
   test-38:
     <<: *test-template
     docker:
-      - image: circleci/python:3.8.0
+      - image: circleci/python:3.8.11
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
 
-  # test-39:
-  #   <<: *test-template
-  #   docker:
-  #     - image: circleci/python:3.9.0
-  #       auth:
-  #         username: jpvantassel
-  #         password: $DOCKER_PASS
+  test-39:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.9.6
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
