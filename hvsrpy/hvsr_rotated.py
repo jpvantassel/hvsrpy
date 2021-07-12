@@ -458,6 +458,7 @@ class HvsrRotated():
             f"# Window Length (s),{self.meta.get('Window Length')}",
             f"# Total Number of Windows per Azimuth (),{nseries}",
             f"# Total Number of Azimuths (),{self.azimuth_count}",
+            f"# Total Number of Windows (),{nseries*self.azimuth_count}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",
             f"# Lower frequency limit for peaks (Hz),{self.hvsrs[0].f_low}",
             f"# Upper frequency limit for peaks (Hz),{self.hvsrs[0].f_high}",
