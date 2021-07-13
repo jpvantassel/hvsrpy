@@ -3,12 +3,12 @@
 > Joseph P. Vantassel, The University of Texas at Austin
 
 [![DOI](https://zenodo.org/badge/219310971.svg)](https://zenodo.org/badge/latestdoi/219310971)
-[![PyPI - License](https://img.shields.io/pypi/l/hvsrpy)](https://github.com/jpvantassel/hvsrpy/blob/master/LICENSE.txt)
+[![PyPI - License](https://img.shields.io/pypi/l/hvsrpy)](https://github.com/jpvantassel/hvsrpy/blob/main/LICENSE.txt)
 [![CircleCI](https://circleci.com/gh/jpvantassel/hvsrpy.svg?style=svg)](https://circleci.com/gh/jpvantassel/hvsrpy)
 [![Documentation Status](https://readthedocs.org/projects/hvsrpy/badge/?version=latest)](https://hvsrpy.readthedocs.io/en/latest/?badge=latest)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/jpvantassel/hvsrpy.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jpvantassel/hvsrpy/context:python)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/528737ade629492e8652be369528c756)](https://www.codacy.com/gh/jpvantassel/hvsrpy/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jpvantassel/hvsrpy&amp;utm_campaign=Badge_Grade)
-[![codecov](https://codecov.io/gh/jpvantassel/hvsrpy/branch/master/graph/badge.svg?token=MJ3WDNRIM0)](https://codecov.io/gh/jpvantassel/hvsrpy)
+[![codecov](https://codecov.io/gh/jpvantassel/hvsrpy/branch/main/graph/badge.svg?token=MJ3WDNRIM0)](https://codecov.io/gh/jpvantassel/hvsrpy)
 
 ## Table of Contents
 
@@ -69,7 +69,7 @@ These works provide background for the calculations performed by `hvsrpy`.
 
 `hvsrpy` would not exist without the help of many others. As a small display of
 gratitude, we thank them individually
-[here](https://github.com/jpvantassel/hvsrpy/blob/master/thanks.md).
+[here](https://github.com/jpvantassel/hvsrpy/blob/main/thanks.md).
 
 ## Why use _hvsrpy_
 
@@ -94,7 +94,7 @@ criteria.
 
 ### Example output from `hvsrpy` when considering the geometric-mean of the horizontal components
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure.png?raw=true" width="775">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/example_hvsr_figure.png?raw=true" width="775">
 
 |                                   | Lognormal Median | Lognormal Standard Deviation |
 |-----------------------------------|------------------|------------------------------|
@@ -103,7 +103,7 @@ criteria.
 
 ### Example output from `hvsrpy` when considering azimuthal variability
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_az.png?raw=true" width="775">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/example_hvsr_figure_az.png?raw=true" width="775">
 
 |                                   | Lognormal Median | Lognormal Standard Deviation |
 |-----------------------------------|------------------|------------------------------|
@@ -112,7 +112,7 @@ criteria.
 
 ### Example output from `hvsrpy` when considering spatial variability
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/example_hvsr_figure_sp.png?raw=true" width="775">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/example_hvsr_figure_sp.png?raw=true" width="775">
 
 |                                   | Lognormal Median | Lognormal Standard Deviation |
 |-----------------------------------|------------------|------------------------------|
@@ -130,7 +130,7 @@ comparisons are shown below. One for a single time window (left) and one for
 multiple time windows (right). Additional examples and the information
 necessary to reproduce them are provided at the end of this document.
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_a.png?raw=true" width="425"> <img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN11_c050.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_a.png?raw=true" width="425"> <img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN11_c050.png?raw=true" width="425">
 
 ## Getting Started
 
@@ -153,7 +153,7 @@ last few lines of the text displayed in the console.
 
 ### Using _hvsrpy_
 
-1.  Download the contents of the [examples](https://github.com/jpvantassel/hvsrpy/tree/master/examples)
+1.  Download the contents of the [examples](https://github.com/jpvantassel/hvsrpy/tree/main/examples)
   directory to any location of your choice.
 
 2.  Launch the Jupyter notebook (`simple_hvsrpy_interface.ipynb`) in the examples
@@ -170,7 +170,7 @@ last few lines of the text displayed in the console.
 ### Looking for more information
 
 More information regarding HVSR processing and `hvsrpy` can be found
-[here](https://github.com/jpvantassel/hvsrpy/blob/master/additional_information.md).
+[here](https://github.com/jpvantassel/hvsrpy/blob/main/additional_information.md).
 
 ## Additional Comparisons between _hvsrpy_ and _Geopsy_
 
@@ -182,7 +182,7 @@ The examples in this section use the same settings applied to different
 noise records. The settings are provided in the __Settings__ section and the
 name of each file is provided above the corresponding figure in the __Results__
 section. The noise records (i.e., _.miniseed_ files) are provided in the
-[examples](https://github.com/jpvantassel/hvsrpy/tree/master/examples) directory
+[examples](https://github.com/jpvantassel/hvsrpy/tree/main/examples) directory
 and also as part of a large published data set
 [(Cox and Vantassel, 2018)](https://www.designsafe-ci.org/data/browser/public/designsafe.storage.published//PRJ-2075/Thorndon%20Warf%20(A2)/Unprocessed%20Data/Microtremor%20Array%20Measurements%20(MAM)).
 
@@ -205,19 +205,19 @@ and also as part of a large published data set
 
 __File Name:__ _UT.STN11.A2_C50.miniseed_
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN11_c050.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN11_c050.png?raw=true" width="425">
 
 __File Name:__ _UT.STN11.A2_C150.miniseed_
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN11_c150.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN11_c150.png?raw=true" width="425">
 
 __File Name:__ _UT.STN12.A2_C50.miniseed_
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN12_c050.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN12_c050.png?raw=true" width="425">
 
 __File Name:__ _UT.STN12.A2_C150.miniseed_
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/multiwindow_STN12_c150.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN12_c150.png?raw=true" width="425">
 
 ### Single Window
 
@@ -245,32 +245,32 @@ these settings noted for each example.
 
 __Default Case:__ No variation from those settings listed above.
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_a.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_a.png?raw=true" width="425">
 
 __Window Length:__ 120 seconds.
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_b.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_b.png?raw=true" width="425">
 
 __Cosine Taper Width:__ 20 % (i.e., 10 % in Geopsy)
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_e.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_e.png?raw=true" width="425">
 
 __Cosine Taper Width:__ 0.2 % (i.e., 0.1 % in Geopsy)
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_f.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_f.png?raw=true" width="425">
 
 __Konno and Ohmachi Smoothing Coefficient:__ 10
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_c.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_c.png?raw=true" width="425">
 
 __Konno and Ohmachi Smoothing Coefficient:__ 80
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_d.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_d.png?raw=true" width="425">
 
 __Number of Points:__ 512
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_g.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_g.png?raw=true" width="425">
 
 __Number of Points:__ 4096
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/master/figs/singlewindow_h.png?raw=true" width="425">
+<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_h.png?raw=true" width="425">
