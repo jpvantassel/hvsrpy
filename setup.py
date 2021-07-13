@@ -39,7 +39,7 @@ setup(
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
     python_requires = '>=3.6',
-    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy>=0.3.0', 'pandas', 'shapely', 'termcolor', 'matplotlib'],
+    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy>=0.3.0', 'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
     extras_require={
         'dev': ['coverage'],
     },
@@ -48,6 +48,9 @@ setup(
     data_files=[
         ],
     entry_points={
+        'console_scripts':[
+            'hvsrpy = hvsrpy.cli:cli'
+        ],
     },
     project_urls={
         'Bug Reports': 'https://github.com/jpvantassel/hvsrpy/issues',

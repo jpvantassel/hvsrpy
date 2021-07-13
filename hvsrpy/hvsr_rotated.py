@@ -512,7 +512,7 @@ class HvsrRotated():
 
         return _lines
 
-    def to_file(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
+    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):
         """Save HVSR data to file.
 
         Parameters
@@ -526,6 +526,8 @@ class HvsrRotated():
         distribution_mc : {'lognormal', 'normal'}, optional
             Assumed distribution of mean curve, the default is
             'lognormal'.
+        data_format : {'hvsrpy'}, optional
+            Format of output data file, default is 'hvsrpy'.
 
         Returns
         -------
@@ -533,6 +535,9 @@ class HvsrRotated():
             Writes file to disk.
 
         """
+        if data_format not in ["hvsrpy"]:
+            raise ValueError(f"data_format {data_format} unknown.")
+
         lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
 
         with open(fname, "w") as f:

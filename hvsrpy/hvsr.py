@@ -770,7 +770,7 @@ class Hvsr():
 
         return _lines
 
-    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):  # pragma: no cover
+    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):
         """Save HVSR data to summary file.
 
         Parameters
