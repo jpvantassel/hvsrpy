@@ -17,12 +17,15 @@
 
 """File for organizing a command line interface (CLI)."""
 
-import time
 import configparser
+import time
+import itertools
 import os
+from multiprocessing import Pool
 
 import click
 import numpy as np
+import matplotlib.pyplot as plt
 
 from .plottools import simple_plot, azimuthal_plot
 from .sensor3c import Sensor3c
@@ -77,6 +80,65 @@ def parse_config(fname):
     return config_kwargs
 
 
+def _process_hvsr(fname, kwargs):
+    start = time.time()
+    sensor = Sensor3c.from_mseed(fname)
+
+    bp_filter = {"flag": kwargs["filter_bool"],
+                    "flow": kwargs["filter_flow"],
+                    "fhigh": kwargs["filter_fhigh"],
+                    "order": kwargs["filter_order"]}
+
+    resampling = {"minf": kwargs["resample_fmin"],
+                    "maxf": kwargs["resample_fmax"],
+                    "nf": kwargs["resample_fnum"],
+                    "res_type": kwargs["resample_type"]}
+
+    if kwargs["method"] == "multiple-azimuths":
+        azimuth = np.arange(0, 180, kwargs["azimuthal_interval"])
+    else:
+        azimuth = kwargs["azimuth"]
+
+    hv = sensor.hv(kwargs["windowlength"], bp_filter, kwargs["width"],
+                    kwargs["bandwidth"], resampling, kwargs["method"],
+                    f_low=kwargs["peak_f_lower"], f_high=kwargs["peak_f_upper"],
+                    azimuth=azimuth)
+
+    end = time.time()
+    if not kwargs["no_time"]:
+        click.echo(f"{fname} completed in {(end-start):.2f} seconds")
+
+    fname_short = fname.split("/")[-1]
+    fname_short_no_ext = fname_short.split(".")[:-1]
+    fname_short_no_ext_out = ".".join(fname_short_no_ext)
+
+    if not kwargs["no_figure"]:
+        if kwargs["method"] in ["squared-average", "geometric-mean"]:
+            fig, _ = simple_plot(sensor, hv, kwargs["windowlength"], kwargs["distribution_f0"],
+                                    kwargs["distribution_mc"], kwargs["rejection_bool"], kwargs["n"], kwargs["max_iterations"],
+                                    kwargs["ymin"], kwargs["ymax"])
+        else:
+            fig, _ = azimuthal_plot(hv, kwargs["distribution_f0"], kwargs["distribution_mc"],
+                                    kwargs["rejection_bool"], kwargs["n"], kwargs["max_iterations"],
+                                    kwargs["ymin"], kwargs["ymax"])
+
+        suffix = "_az.png" if kwargs["method"] == "multiple-azimuths" else ".png"
+        fig.savefig(f"{fname_short_no_ext_out}{suffix}",
+                    dpi=300, bbox_inches="tight")
+        plt.close()
+
+    else:
+        if kwargs["rejection_bool"]:
+            hv.reject_windows(kwargs["n"], kwargs["max_iterations"],
+                                kwargs["distribution_f0"], kwargs["distribution_mc"])
+
+    if kwargs["summary_type"] != "none":
+        suffix = "_az.hv" if kwargs["method"] == "multiple-azimuths" else ".hv"
+        hv.to_file(f"{fname_short_no_ext_out}_{kwargs['summary_type']}{suffix}",
+                    kwargs["distribution_f0"], kwargs["distribution_mc"],
+                    data_format=kwargs["summary_type"])
+    
+
 @click.command()
 @click.argument('file_names', nargs=-1, type=click.Path())
 @click.option('--config', default=None, type=click.Path(), help="Path to configuration file.")
@@ -106,6 +168,7 @@ def parse_config(fname):
 @click.option('--ymin', default=None, type=float, help="Manually set the lower y limit of the HVSR figure.")
 @click.option('--ymax', default=None, type=float, help="Manually set the upper y limit of the HVSR figure.")
 @click.option('--summary_type', default="hvsrpy", type=click.Choice(["none", "hvsrpy", "geopsy"]), help="Summary file format to save, default is 'hvsrpy'.")
+@click.option('--nproc', default=None, type=int, help="Number of subprocesses to launch, default is number of cpus minus 1.")
 @click.pass_context
 def cli(ctx, **kwargs):
     """Command line interface to hvsrpy."""
@@ -119,60 +182,8 @@ def cli(ctx, **kwargs):
             if ctx.get_parameter_source("key") != "COMMANDLINE":
                 kwargs[key] = value
 
-    # TODO (jpv): Add multi-processing
-    for fname in kwargs["file_names"]:
-        start = time.time()
-        sensor = Sensor3c.from_mseed(fname)
-
-        bp_filter = {"flag": kwargs["filter_bool"],
-                     "flow": kwargs["filter_flow"],
-                     "fhigh": kwargs["filter_fhigh"],
-                     "order": kwargs["filter_order"]}
-
-        resampling = {"minf": kwargs["resample_fmin"],
-                      "maxf": kwargs["resample_fmax"],
-                      "nf": kwargs["resample_fnum"],
-                      "res_type": kwargs["resample_type"]}
-
-        if kwargs["method"] == "multiple-azimuths":
-            azimuth = np.arange(0, 180, kwargs["azimuthal_interval"])
-        else:
-            azimuth = kwargs["azimuth"]
-
-        hv = sensor.hv(kwargs["windowlength"], bp_filter, kwargs["width"],
-                       kwargs["bandwidth"], resampling, kwargs["method"],
-                       f_low=kwargs["peak_f_lower"], f_high=kwargs["peak_f_upper"],
-                       azimuth=azimuth)
-
-        end = time.time()
-        if not kwargs["no_time"]:
-            click.echo(f"{fname} completed in {(end-start):.2f} seconds")
-
-        fname_short = fname.split("/")[-1]
-        fname_short_no_ext = fname_short.split(".")[:-1]
-        fname_short_no_ext_out = ".".join(fname_short_no_ext)
-
-        if not kwargs["no_figure"]:
-            if kwargs["method"] in ["squared-average", "geometric-mean"]:
-                fig, _ = simple_plot(sensor, hv, kwargs["windowlength"], kwargs["distribution_f0"],
-                                     kwargs["distribution_mc"], kwargs["rejection_bool"], kwargs["n"], kwargs["max_iterations"],
-                                     kwargs["ymin"], kwargs["ymax"])
-            else:
-                fig, _ = azimuthal_plot(hv, kwargs["distribution_f0"], kwargs["distribution_mc"],
-                                        kwargs["rejection_bool"], kwargs["n"], kwargs["max_iterations"],
-                                        kwargs["ymin"], kwargs["ymax"])
-
-            suffix = "_az.png" if kwargs["method"] == "multiple-azimuths" else ".png"
-            fig.savefig(f"{fname_short_no_ext_out}{suffix}",
-                        dpi=300, bbox_inches="tight")
-
-        else:
-            if kwargs["rejection_bool"]:
-                hv.reject_windows(kwargs["n"], kwargs["max_iterations"],
-                                  kwargs["distribution_f0"], kwargs["distribution_mc"])
-
-        if kwargs["summary_type"] != "none":
-            suffix = "_az.hv" if kwargs["method"] == "multiple-azimuths" else ".hv"
-            hv.to_file(f"{fname_short_no_ext_out}_{kwargs['summary_type']}{suffix}",
-                       kwargs["distribution_f0"], kwargs["distribution_mc"],
-                       data_format=kwargs["summary_type"])
+    nproc = os.cpu_count()-1 if kwargs["nproc"] is None else kwargs["nproc"]
+    fnames = kwargs["file_names"]
+    ntasks = len(fnames)
+    with Pool(min(ntasks, nproc)) as p:
+        p.starmap(_process_hvsr, zip(fnames, itertools.repeat(kwargs)), chunksize=max(1, ntasks//nproc))
