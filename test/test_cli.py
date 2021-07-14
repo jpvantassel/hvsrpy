@@ -97,7 +97,10 @@ class Test_CLI(TestCase):
     def test_cli(self):
         # Simple - use config.
         fname = "UT.STN11.A2_C150"
-        subprocess.run(f"hvsrpy --config {self.full_path}data/cli/settings_cli_simple.cfg --no_time {self.full_path}data/a2/{fname}.miniseed")
+        subprocess.run(["hvsrpy", "--no_time", "--config",
+                        f"{self.full_path}data/cli/settings_cli_simple.cfg",
+                        f"{self.full_path}data/a2/{fname}.miniseed"],
+                       check=True)
         self.assertTrue(os.path.exists(f"{fname}_hvsrpy.hv"))
         self.assertTrue(os.path.exists(f"{fname}.png"))
         os.remove(f"{fname}_hvsrpy.hv")
@@ -105,14 +108,14 @@ class Test_CLI(TestCase):
 
         # Azimuthal - use config.
         fname = "UT.STN11.A2_C150"
-        subprocess.run(f"hvsrpy --config {self.full_path}data/cli/settings_cli_azimuthal.cfg --no_time {self.full_path}data/a2/{fname}.miniseed")
+        subprocess.run(["hvsrpy", "--no_time", "--config",
+                        f"{self.full_path}data/cli/settings_cli_azimuthal.cfg",
+                        f"{self.full_path}data/a2/{fname}.miniseed"],
+                       check=True)
         self.assertTrue(os.path.exists(f"{fname}_hvsrpy_az.hv"))
         self.assertTrue(os.path.exists(f"{fname}_az.png"))
         os.remove(f"{fname}_hvsrpy_az.hv")
         os.remove(f"{fname}_az.png")
-
-
-
 
 
 if __name__ == "__main__":
