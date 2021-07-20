@@ -23,6 +23,7 @@ Contents:
 
    install
    api
+   cli
    license
 
 Indices and tables

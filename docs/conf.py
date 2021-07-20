@@ -35,7 +35,8 @@ release = meta['__version__']
 # ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosectionlabel',
-              'sphinx.ext.napoleon'
+              'sphinx.ext.napoleon',
+              'sphinx_click',
               ]
 
 napoleon_google_docstring = False
