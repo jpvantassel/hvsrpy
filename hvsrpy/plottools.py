@@ -27,7 +27,7 @@ __all__ = ["simple_plot", "azimuthal_plot", "voronoi_plot"]
 
 
 def simple_plot(sensor, hv, windowlength, distribution_f0, distribution_mc,
-                rejection_bool, n, n_iteration, ymin, ymax):
+                rejection_bool, n, n_iteration, ymin, ymax): # pragma: no cover
 
     fig = plt.figure(figsize=(6,6), dpi=150)
     gs = fig.add_gridspec(nrows=6, ncols=6)
@@ -148,7 +148,7 @@ def simple_plot(sensor, hv, windowlength, distribution_f0, distribution_mc,
     return (fig, axs)
 
 def azimuthal_plot(hv, distribution_f0, distribution_mc,
-                   rejection_bool, n, n_iteration, ymin, ymax):
+                   rejection_bool, n, n_iteration, ymin, ymax): # pragma: no cover
 
     if rejection_bool:
         hv.reject_windows(n=n, max_iterations=n_iteration, distribution_f0=distribution_f0, distribution_mc=distribution_mc)

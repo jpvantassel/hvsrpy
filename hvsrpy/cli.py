@@ -65,7 +65,7 @@ TRANSLATOR = {
 }
 
 
-def parse_config(fname):
+def parse_config(fname): # pragma: no cover
     if not os.path.exists(fname):
         raise FileNotFoundError(f"File {fname} not found.")
 
@@ -80,7 +80,7 @@ def parse_config(fname):
     return config_kwargs
 
 
-def _process_hvsr(fname, kwargs):
+def _process_hvsr(fname, kwargs): # pragma: no cover
     start = time.time()
     sensor = Sensor3c.from_mseed(fname)
 
@@ -170,7 +170,7 @@ def _process_hvsr(fname, kwargs):
 @click.option('--summary_type', default="hvsrpy", type=click.Choice(["none", "hvsrpy", "geopsy"]), help="Summary file format to save, default is 'hvsrpy'.")
 @click.option('--nproc', default=None, type=int, help="Number of subprocesses to launch, default is number of cpus minus 1.")
 @click.pass_context
-def cli(ctx, **kwargs):
+def cli(ctx, **kwargs): # pragma: no cover
     """Command line interface to hvsrpy."""
     # If config file is provided use entries as new defaults.
     if kwargs["config"] is not None:
