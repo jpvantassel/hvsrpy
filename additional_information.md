@@ -18,7 +18,7 @@ European Commission - Research General Directorate, 62.
 The effect of the processing settings will vary on a case-by-case basis. Some
 simple examples showing how the processing settings affect a single time window
 are shown in the
-[README](https://github.com/jpvantassel/hvsrpy/blob/master/README.md).
+[README](https://github.com/jpvantassel/hvsrpy/blob/main/README.md).
 For most sites the default/recommended settings (as detailed in the
 Jupyter notebook) should be sufficient. Refer to the literature including
 Cox et al. (2020) and the SESAME Guidelines (2004) specifically for more
