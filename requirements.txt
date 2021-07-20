@@ -1,4 +1,4 @@
-numpy<1.19.0
+numpy
 scipy
 obspy
 sigpropy>=0.3.0
@@ -6,4 +6,6 @@ pandas
 shapely
 termcolor
 matplotlib
+click>8.0.0
 coverage
+sphinx-click

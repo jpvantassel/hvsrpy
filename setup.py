@@ -41,7 +41,7 @@ setup(
     python_requires = '>=3.6',
     install_requires=['numpy', 'scipy', 'obspy', 'sigpropy>=0.3.0', 'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
     extras_require={
-        'dev': ['coverage'],
+        'dev': ['coverage', 'sphinx-click'],
     },
     package_data={
     },
