@@ -39,7 +39,7 @@ setup(
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
     python_requires = '>=3.6',
-    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy>=0.3.0', 'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
+    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy>=1.0.0', 'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
     extras_require={
         'dev': ['coverage', 'sphinx-click'],
     },
