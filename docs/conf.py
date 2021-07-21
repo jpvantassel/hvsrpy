@@ -11,9 +11,18 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../hvsrpy'))
 
-meta = {}
-with open("../hvsrpy/meta.py") as f:
-    exec(f.read(), meta)
+
+def parse_meta(path_to_meta):
+    with open(path_to_meta) as f:
+        meta = {}
+        for line in f.readlines():
+            if line.startswith("__version__"):
+                meta["__version__"] = line.split('"')[1]
+    return meta
+
+
+meta = parse_meta("../hvsrpy/meta.py")
+
 
 # -- Project information -----------------------------------------------------
 
@@ -58,7 +67,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 add_module_names = False
 
 latex_elements = {
-  'extraclassoptions': 'openany,oneside'
+    'extraclassoptions': 'openany,oneside'
 }
 
 master_doc = 'index'
@@ -76,6 +85,6 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ['_static']
 
 html_sidebars = {
-   '**': ['localtoc.html', 'sourcelink.html', 'searchbox.html'],
-   'using/windows': ['windowssidebar.html', 'searchbox.html'],
+    '**': ['localtoc.html', 'sourcelink.html', 'searchbox.html'],
+    'using/windows': ['windowssidebar.html', 'searchbox.html'],
 }

@@ -2,9 +2,17 @@
 
 from setuptools import setup, find_packages
 
-meta = {}
-with open("hvsrpy/meta.py") as f:
-    exec(f.read(), meta)
+
+def parse_meta(path_to_meta):
+    with open(path_to_meta) as f:
+        meta = {}
+        for line in f.readlines():
+            if line.startswith("__version__"):
+                meta["__version__"] = line.split('"')[1]
+    return meta
+
+
+meta = parse_meta("hvsrpy/meta.py")
 
 with open("README.md", encoding="utf8") as f:
     long_description = f.read()
@@ -38,17 +46,18 @@ setup(
     ],
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
-    python_requires = '>=3.6',
-    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy>=1.0.0', 'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
+    python_requires='>=3.6',
+    install_requires=['numpy', 'scipy', 'obspy', 'sigpropy>=1.0.0',
+                      'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
     extras_require={
         'dev': ['coverage', 'sphinx-click'],
     },
     package_data={
     },
     data_files=[
-        ],
+    ],
     entry_points={
-        'console_scripts':[
+        'console_scripts': [
             'hvsrpy = hvsrpy.cli:cli'
         ],
     },
