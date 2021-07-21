@@ -748,8 +748,8 @@ class Hvsr():
                 f"# Mean f0 (Hz),{fclean(mean_f)}",
                 f"# Standard deviation f0 (Hz) [Sigmaf0],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Mean T0 (s) [LMT0],NA",
-                f"# Standard deviation T0 () [SigmaT0],NA",
+                "# Mean T0 (s) [LMT0],NA",
+                "# Standard deviation T0 () [SigmaT0],NA",
                 "# 68 % Confidence Interval T0 (s),NA",
             ]
 

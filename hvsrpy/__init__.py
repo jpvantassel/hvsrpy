@@ -25,4 +25,4 @@ from .hvsr_rotated import HvsrRotated
 from .sensor3c import Sensor3c
 from .hvsr_spatial import HvsrVault, montecarlo_f0
 
-logging.getLogger('swprocess').addHandler(logging.NullHandler())
+logging.getLogger('hvsrpy').addHandler(logging.NullHandler())

@@ -33,7 +33,7 @@ from .sensor3c import Sensor3c
 TRANSLATOR = {
     "Time Domain Settings": {
         "windowlength": float,
-        "filter_bool": lambda x: False if x.lower() == "false" else True,
+        "filter_bool": lambda x: (x.lower() != "false"),
         "filter_flow": float,
         "filter_fhigh": float,
         "filter_forder": int,
