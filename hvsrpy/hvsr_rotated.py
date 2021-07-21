@@ -490,9 +490,9 @@ class HvsrRotated():
                 f"# Mean f0 (Hz) [f0AZ],{fclean(mean_f)}",
                 f"# Standard deviation f0 (Hz) [Sigmaf0AZ],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Mean T0 (s) [LMT0AZ],NAN",
-                f"# Standard deviation T0 () [SigmaT0AZ],NAN",
-                f"# 68 % Confidence Interval T0 (s),NAN",
+                "# Mean T0 (s) [LMT0AZ],NAN",
+                "# Standard deviation T0 () [SigmaT0AZ],NAN",
+                "# 68 % Confidence Interval T0 (s),NAN",
             ]
 
         c_type = "Median" if distribution_mc == "lognormal" else "Mean"

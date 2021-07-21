@@ -21,6 +21,7 @@ import unittest
 
 import numpy as np
 
+
 def get_full_path(path):
     if path.count("/") > 1:
         file_name = path.split(r"/")[-1]
@@ -29,6 +30,7 @@ def get_full_path(path):
         file_name = path.split(r"\\")[-1]
         full_path = path[:-len(file_name)]
     return full_path
+
 
 class TestCase(unittest.TestCase):
 
@@ -42,7 +44,7 @@ class TestCase(unittest.TestCase):
             raise AssertionError(msg)
 
         for l1, l2 in zip(list1, list2):
-                self.assertListEqual(l1, l2, **kwargs)
+            self.assertListEqual(l1, l2, **kwargs)
 
     def assertArrayEqual(self, array1, array2):
         try:
@@ -65,4 +67,3 @@ class TestCase(unittest.TestCase):
         except AssertionError as e:
             msg = f"\nExpected:\n{array1}\nReturned:\n{array2})"
             raise AssertionError(msg) from e
-        

@@ -52,7 +52,7 @@ TRANSLATOR = {
         "method": str,
         "azimuth": float,
         "azimuthal_interval": float,
-        "rejection_bool": lambda x: False if x.lower() == "false" else True,
+        "rejection_bool": lambda x: (x.lower() != "false"),
         "n": float,
         "max_iterations": int,
         "distribution_f0": str,
@@ -65,7 +65,7 @@ TRANSLATOR = {
 }
 
 
-def parse_config(fname): # pragma: no cover
+def parse_config(fname):  # pragma: no cover
     if not os.path.exists(fname):
         raise FileNotFoundError(f"File {fname} not found.")
 
@@ -80,19 +80,19 @@ def parse_config(fname): # pragma: no cover
     return config_kwargs
 
 
-def _process_hvsr(fname, kwargs): # pragma: no cover
+def _process_hvsr(fname, kwargs):  # pragma: no cover
     start = time.time()
     sensor = Sensor3c.from_mseed(fname)
 
     bp_filter = {"flag": kwargs["filter_bool"],
-                    "flow": kwargs["filter_flow"],
-                    "fhigh": kwargs["filter_fhigh"],
-                    "order": kwargs["filter_order"]}
+                 "flow": kwargs["filter_flow"],
+                 "fhigh": kwargs["filter_fhigh"],
+                 "order": kwargs["filter_order"]}
 
     resampling = {"minf": kwargs["resample_fmin"],
-                    "maxf": kwargs["resample_fmax"],
-                    "nf": kwargs["resample_fnum"],
-                    "res_type": kwargs["resample_type"]}
+                  "maxf": kwargs["resample_fmax"],
+                  "nf": kwargs["resample_fnum"],
+                  "res_type": kwargs["resample_type"]}
 
     if kwargs["method"] == "multiple-azimuths":
         azimuth = np.arange(0, 180, kwargs["azimuthal_interval"])
@@ -100,9 +100,9 @@ def _process_hvsr(fname, kwargs): # pragma: no cover
         azimuth = kwargs["azimuth"]
 
     hv = sensor.hv(kwargs["windowlength"], bp_filter, kwargs["width"],
-                    kwargs["bandwidth"], resampling, kwargs["method"],
-                    f_low=kwargs["peak_f_lower"], f_high=kwargs["peak_f_upper"],
-                    azimuth=azimuth)
+                   kwargs["bandwidth"], resampling, kwargs["method"],
+                   f_low=kwargs["peak_f_lower"], f_high=kwargs["peak_f_upper"],
+                   azimuth=azimuth)
 
     end = time.time()
     if not kwargs["no_time"]:
@@ -115,8 +115,8 @@ def _process_hvsr(fname, kwargs): # pragma: no cover
     if not kwargs["no_figure"]:
         if kwargs["method"] in ["squared-average", "geometric-mean"]:
             fig, _ = simple_plot(sensor, hv, kwargs["windowlength"], kwargs["distribution_f0"],
-                                    kwargs["distribution_mc"], kwargs["rejection_bool"], kwargs["n"], kwargs["max_iterations"],
-                                    kwargs["ymin"], kwargs["ymax"])
+                                 kwargs["distribution_mc"], kwargs["rejection_bool"], kwargs["n"], kwargs["max_iterations"],
+                                 kwargs["ymin"], kwargs["ymax"])
         else:
             fig, _ = azimuthal_plot(hv, kwargs["distribution_f0"], kwargs["distribution_mc"],
                                     kwargs["rejection_bool"], kwargs["n"], kwargs["max_iterations"],
@@ -130,14 +130,14 @@ def _process_hvsr(fname, kwargs): # pragma: no cover
     else:
         if kwargs["rejection_bool"]:
             hv.reject_windows(kwargs["n"], kwargs["max_iterations"],
-                                kwargs["distribution_f0"], kwargs["distribution_mc"])
+                              kwargs["distribution_f0"], kwargs["distribution_mc"])
 
     if kwargs["summary_type"] != "none":
         suffix = "_az.hv" if kwargs["method"] == "multiple-azimuths" else ".hv"
         hv.to_file(f"{fname_short_no_ext_out}_{kwargs['summary_type']}{suffix}",
-                    kwargs["distribution_f0"], kwargs["distribution_mc"],
-                    data_format=kwargs["summary_type"])
-    
+                   kwargs["distribution_f0"], kwargs["distribution_mc"],
+                   data_format=kwargs["summary_type"])
+
 
 @click.command()
 @click.argument('file_names', nargs=-1, type=click.Path())
@@ -170,7 +170,7 @@ def _process_hvsr(fname, kwargs): # pragma: no cover
 @click.option('--summary_type', default="hvsrpy", type=click.Choice(["none", "hvsrpy", "geopsy"]), help="Summary file format to save, default is 'hvsrpy'.")
 @click.option('--nproc', default=None, type=int, help="Number of subprocesses to launch, default is number of cpus minus 1.")
 @click.pass_context
-def cli(ctx, **kwargs): # pragma: no cover
+def cli(ctx, **kwargs):  # pragma: no cover
     """Command line interface to hvsrpy."""
     # If config file is provided use entries as new defaults.
     if kwargs["config"] is not None:
@@ -186,4 +186,5 @@ def cli(ctx, **kwargs): # pragma: no cover
     fnames = kwargs["file_names"]
     ntasks = len(fnames)
     with Pool(min(ntasks, nproc)) as p:
-        p.starmap(_process_hvsr, zip(fnames, itertools.repeat(kwargs)), chunksize=max(1, ntasks//nproc))
+        p.starmap(_process_hvsr, zip(fnames, itertools.repeat(
+            kwargs)), chunksize=max(1, ntasks//nproc))

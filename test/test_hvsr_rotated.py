@@ -27,7 +27,7 @@ from testtools import unittest, TestCase, get_full_path
 logging.basicConfig(level=logging.WARNING)
 
 
-class Test_HvsrRotated(TestCase):
+class TestHvsrRotated(TestCase):
 
     @classmethod
     def setUpClass(cls):

@@ -27,7 +27,7 @@ from testtools import unittest, TestCase, get_full_path
 logging.basicConfig(level=logging.ERROR)
 
 
-class Test_CLI(TestCase):
+class TestCLI(TestCase):
 
     @classmethod
     def setUpClass(cls):

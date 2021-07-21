@@ -32,7 +32,7 @@ logger = logging.getLogger("hvsrpy.sensor3c")
 logger.setLevel(level=logging.INFO)
 
 
-class Test_Sensor3c(TestCase):
+class TestSensor3c(TestCase):
 
     def setUp(self):
         self.full_path = get_full_path(__file__)

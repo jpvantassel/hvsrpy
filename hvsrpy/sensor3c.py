@@ -82,11 +82,11 @@ class Sensor3c():
             if key == "ns":
                 continue
 
-            if not isinstance(value, TimeSeries):
+            if isinstance(value, TimeSeries):
+                values_dict[key] = TimeSeries.from_timeseries(value)
+            else:
                 msg = f"`{key}`` must be a `TimeSeries`, not {type(value)}."
                 raise TypeError(msg)
-            else:
-                values_dict[key] = TimeSeries.from_timeseries(value)
 
             if value.dt != dt:
                 msg = "All components must have equal `dt`."

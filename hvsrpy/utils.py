@@ -22,6 +22,7 @@ from termcolor import colored
 from hvsrpy import Hvsr
 import numpy as np
 
+
 def pass_fail(value):
     return colored("Pass", "green") if value > 0 else colored("Fail", "red")
 
@@ -377,8 +378,8 @@ def parse_hvsrpy_output(fname):
     lookup = {"# Window Length (s)": ("windowlength", float),
               "# Total Number of Windows ()": ("total_windows", int),
               "# Frequency Domain Window Rejection Performed ()": ("rejection_bool", bool),
-              "# Lower frequency limit for peaks (Hz)": ("f_low", lambda x: None if x=="None" else float(x)),
-              "# Upper frequency limit for peaks (Hz)": ("f_high", lambda x: None if x=="None" else float(x)),
+              "# Lower frequency limit for peaks (Hz)": ("f_low", lambda x: None if x == "None" else float(x)),
+              "# Upper frequency limit for peaks (Hz)": ("f_high", lambda x: None if x == "None" else float(x)),
               "# Number of Standard Deviations Used for Rejection () [n]": ("n_for_rejection", float),
               "# Number of Accepted Windows ()": ("accepted_windows", int),
               "# Distribution of f0 ()": ("distribution_f0", lambda x: x),
@@ -417,7 +418,7 @@ def parse_hvsrpy_output(fname):
 
     return data
 
-# """This file contains the class Hvsr for organizing data 
+# """This file contains the class Hvsr for organizing data
 # related to the horizontal-to-vertical spectral ratio method."""
 
 # import os
@@ -460,7 +461,7 @@ def parse_hvsrpy_output(fname):
 
 #         for num, line in enumerate(lines):
 #             if line.startswith("# Frequency"):
-#                 start_line = num + 1 
+#                 start_line = num + 1
 #                 break
 
 #         frq, amp = [], []

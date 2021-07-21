@@ -28,7 +28,7 @@ from testtools import unittest, TestCase
 logging.basicConfig(level=logging.WARNING)
 
 
-class Test_Spatial(TestCase):
+class TestSpatial(TestCase):
     def test_statistics(self):
         values = np.array([[1, 3, 5], [1, 5, 6], [1, 1, 1], [3, 2, 4]])
         weights = np.array([1, 2, 4, 3])
