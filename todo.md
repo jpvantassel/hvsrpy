@@ -7,7 +7,6 @@
 ## Under Consideration for a Future Release
 
 - Automatic consideration of multiple peaks.
-- Command line interface (CLI) for `hvsrpy`.
 
 ## Unassigned
 

@@ -141,25 +141,25 @@ class Hvsr():
         self.valid_window_indices = np.ones(self.nseries, dtype=bool)
         self._main_peak_frq = np.zeros(self.nseries)
         self._main_peak_amp = np.zeros(self.nseries)
-        
-        self.f_low = None if f_low is None else float(f_low) 
+
+        self.f_low = None if f_low is None else float(f_low)
         if self.f_low is None:
             self.i_low = 0
         else:
             diff = np.abs(self.frq - self.f_low)
             self.i_low = int(np.where(diff == np.min(diff))[0])
-        
-        self.f_high = None if f_high is None else float(f_high) 
+
+        self.f_high = None if f_high is None else float(f_high)
         if self.f_high is None:
             self.i_high = len(self.frq)
         else:
             diff = np.abs(self.frq - self.f_high)
             self.i_high = int(np.where(diff == np.min(diff))[0]) + 1
-        
+
         self._initialized_peaks = find_peaks
         if find_peaks:
             self.update_peaks()
-        
+
         self.meta = meta
 
     @property
@@ -410,11 +410,11 @@ class Hvsr():
             If `distribution` does not match the available options.
 
         """
-        if self.nseries == 1:
+        if self.nseries > 1:
+            return self._std_factory(distribution, self.amp[self.valid_window_indices], axis=0)
+        else:
             msg = "The standard deviation of the mean curve is not defined for a single window."
             raise ValueError(msg)
-        else:
-            return self._std_factory(distribution, self.amp[self.valid_window_indices], axis=0)
 
     def mc_peak_frq(self, distribution='lognormal'):
         """Frequency of the peak of the mean HVSR curve.
@@ -672,8 +672,8 @@ class Hvsr():
             f"# f0 from windows\t{fclean(mean)}\t{fclean(lower)}\t{fclean(upper)}",
             f"# Peak amplitude\t{fclean(mc_peak_amp)}",
             f"# Position\t{0} {0} {0}",
-            f"# Category\tDefault",
-            f"# Frequency\tAverage\tMin\tMax",
+            "# Category\tDefault",
+            "# Frequency\tAverage\tMin\tMax",
         ]
 
         _lines = []
@@ -748,9 +748,9 @@ class Hvsr():
                 f"# Mean f0 (Hz),{fclean(mean_f)}",
                 f"# Standard deviation f0 (Hz) [Sigmaf0],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Mean T0 (s) [LMT0],NA",
-                f"# Standard deviation T0 () [SigmaT0],NA",
-                f"# 68 % Confidence Interval T0 (s),NA",
+                "# Mean T0 (s) [LMT0],NA",
+                "# Standard deviation T0 () [SigmaT0],NA",
+                "# 68 % Confidence Interval T0 (s),NA",
             ]
 
         c_type = "Median" if distribution_mc == "lognormal" else "Mean"
@@ -770,7 +770,7 @@ class Hvsr():
 
         return _lines
 
-    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):  # pragma: no cover
+    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):
         """Save HVSR data to summary file.
 
         Parameters

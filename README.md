@@ -9,6 +9,7 @@
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/jpvantassel/hvsrpy.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jpvantassel/hvsrpy/context:python)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/528737ade629492e8652be369528c756)](https://www.codacy.com/gh/jpvantassel/hvsrpy/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jpvantassel/hvsrpy&amp;utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/jpvantassel/hvsrpy/branch/main/graph/badge.svg?token=MJ3WDNRIM0)](https://codecov.io/gh/jpvantassel/hvsrpy)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/hvsrpy)
 
 ## Table of Contents
 
@@ -27,12 +28,14 @@
 ---
 
 `hvsrpy` is a Python package for performing horizontal-to-vertical spectral
-ratio (H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
+ratio (HVSR) processing. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
 Cox at The University of Texas at Austin. The automated frequency-domain
-window-rejection algorithm and log-normal statistics implemented in `hvsrpy`
+window-rejection algorithm and lognormal statistics implemented in `hvsrpy`
 are detailed in Cox et al. (2020). The statistical approach to incorporate
-azimuth variability implemented in `hvsrpy` are detailed in Cheng et al. (2020).
+azimuth variability implemented in `hvsrpy` is detailed in Cheng et al. (2020).
+The approach to define statistics from spatially distributed HVSR measurements
+implemented in `hvsrpy` is detailed in Cheng et al. (2021).
 
 If you use `hvsrpy` in your research or consulting, we ask you please cite the
 following:
@@ -57,10 +60,11 @@ These works provide background for the calculations performed by `hvsrpy`.
 > HVSR measurements." Geophysical Journal International, 223(2), 1040–1053.
 > https://doi.org/10.1093/gji/ggaa342
 
-> Cheng, T., Hallal, M. M., Vantassel, J. P., and  Cox, B. R. (2021).
+> Cheng, T., Hallal, M. M., Vantassel, J. P., and Cox, B. R., (2021).
 > "Estimating Unbiased Statistics for Fundamental Site Frequency Using
-> Spatially Distributed HVSR Measurements and Voronoi Tessellation."
-> Submitted to Journal of Geotechnical and Geoenvironmental Engineering.
+> Spatially Distributed HVSR Measurements and Voronoi Tessellation.
+> J. Geotech. Geoenviron. Eng. 147, 04021068.
+> https://doi.org/10.1061/(ASCE)GT.1943-5606.0002551
 
 > SESAME. (2004). Guidelines for the Implementation of the H/V Spectral Ratio
 > Technique on Ambient Vibrations Measurements, Processing, and Interpretation.
@@ -90,7 +94,7 @@ variability.
 -   A fully-automated frequency-domain window-rejection algorithm.
 -   Automatic checking of the SESAME (2004) peak reliability and clarity
 criteria.
--   A performant framework for batch-style processing.
+-   A command line interface for highly performant batch-style processing.
 
 ### Example output from `hvsrpy` when considering the geometric-mean of the horizontal components
 

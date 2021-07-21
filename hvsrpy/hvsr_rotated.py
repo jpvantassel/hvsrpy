@@ -458,6 +458,7 @@ class HvsrRotated():
             f"# Window Length (s),{self.meta.get('Window Length')}",
             f"# Total Number of Windows per Azimuth (),{nseries}",
             f"# Total Number of Azimuths (),{self.azimuth_count}",
+            f"# Total Number of Windows (),{nseries*self.azimuth_count}",
             f"# Frequency Domain Window Rejection Performed (),{rejection}",
             f"# Lower frequency limit for peaks (Hz),{self.hvsrs[0].f_low}",
             f"# Upper frequency limit for peaks (Hz),{self.hvsrs[0].f_high}",
@@ -489,9 +490,9 @@ class HvsrRotated():
                 f"# Mean f0 (Hz) [f0AZ],{fclean(mean_f)}",
                 f"# Standard deviation f0 (Hz) [Sigmaf0AZ],{fclean(sigm_f)}",
                 f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Mean T0 (s) [LMT0AZ],NAN",
-                f"# Standard deviation T0 () [SigmaT0AZ],NAN",
-                f"# 68 % Confidence Interval T0 (s),NAN",
+                "# Mean T0 (s) [LMT0AZ],NAN",
+                "# Standard deviation T0 () [SigmaT0AZ],NAN",
+                "# 68 % Confidence Interval T0 (s),NAN",
             ]
 
         c_type = "Median" if distribution_mc == "lognormal" else "Mean"
@@ -511,7 +512,7 @@ class HvsrRotated():
 
         return _lines
 
-    def to_file(self, fname, distribution_f0, distribution_mc):  # pragma: no cover
+    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):
         """Save HVSR data to file.
 
         Parameters
@@ -525,6 +526,8 @@ class HvsrRotated():
         distribution_mc : {'lognormal', 'normal'}, optional
             Assumed distribution of mean curve, the default is
             'lognormal'.
+        data_format : {'hvsrpy'}, optional
+            Format of output data file, default is 'hvsrpy'.
 
         Returns
         -------
@@ -532,6 +535,9 @@ class HvsrRotated():
             Writes file to disk.
 
         """
+        if data_format not in ["hvsrpy"]:
+            raise ValueError(f"data_format {data_format} unknown.")
+
         lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
 
         with open(fname, "w") as f:

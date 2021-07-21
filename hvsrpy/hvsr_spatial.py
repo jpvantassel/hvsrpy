@@ -203,7 +203,7 @@ class HvsrVault():  # pragma: no cover
             msg = f"coordinates must have shape (N,2), not {coordinates.shape}."
             raise ValueError(msg)
         if npts < 3:
-            raise ValueError(f"Requires at least three coordinates")
+            raise ValueError("Requires at least three coordinates")
 
         self.coordinates = coordinates
         self.means = np.array(means, dtype=np.double)

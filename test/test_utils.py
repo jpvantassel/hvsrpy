@@ -27,7 +27,7 @@ from hvsrpy import utils
 from testtools import TestCase, unittest, get_full_path
 
 
-class Test_Utils(TestCase):
+class TestUtils(TestCase):
 
     @classmethod
     def setUpClass(cls):

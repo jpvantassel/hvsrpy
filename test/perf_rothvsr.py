@@ -42,6 +42,7 @@ def main():
                    bandwidth, resampling, method, azimuth=azimuth)
     hv.reject_windows(n=n, max_iterations=max_iter)
 
+
 fname = full_path+"data/.tmp_profiler_run"
 data = cProfile.run('main()', filename=fname)
 stat = pstats.Stats(fname)
