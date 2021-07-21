@@ -28,12 +28,14 @@
 ---
 
 `hvsrpy` is a Python package for performing horizontal-to-vertical spectral
-ratio (H/V) processing. `hvsrpy` was developed by Joseph P. Vantassel with
+ratio (HVSR) processing. `hvsrpy` was developed by Joseph P. Vantassel with
 contributions from Dana M. Brannon under the supervision of Professor Brady R.
 Cox at The University of Texas at Austin. The automated frequency-domain
-window-rejection algorithm and log-normal statistics implemented in `hvsrpy`
+window-rejection algorithm and lognormal statistics implemented in `hvsrpy`
 are detailed in Cox et al. (2020). The statistical approach to incorporate
-azimuth variability implemented in `hvsrpy` are detailed in Cheng et al. (2020).
+azimuth variability implemented in `hvsrpy` is detailed in Cheng et al. (2020).
+The approach to define statistics from spatially distributed HVSR measurements
+implemented in `hvsrpy` is detailed in Cheng et al. (2021).
 
 If you use `hvsrpy` in your research or consulting, we ask you please cite the
 following:
