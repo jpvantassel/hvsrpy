@@ -23,7 +23,88 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-__all__ = ["simple_plot", "azimuthal_plot", "voronoi_plot"]
+__all__ = ["single_plot", "simple_plot", "azimuthal_plot", "voronoi_plot"]
+
+
+def single_plot(hvsr, peaks_valid, peaks_invalid, distribution_mc,
+ax=None,
+    individual_width = 0.3,
+    median_width = 1.3,
+    ylims=None
+):
+    """Creates plot of Hvsr object."""
+    ax_was_none = False
+    if ax is None:
+        ax_was_none = True
+        fig, ax = plt.subplots(figsize=(9, 6), dpi=150)
+
+    # Rejected Windows
+    label = "Rejected"
+    for amp in hvsr.amp[hvsr.rejected_window_indices]:
+        ax.plot(hvsr.frq, amp, color='#00ffff',
+                linewidth=individual_width, zorder=2, label=label)
+        label = None
+
+    # Accepted Windows
+    label = "Accepted"
+    for amp in hvsr.amp[hvsr.valid_window_indices]:
+        ax.plot(hvsr.frq, amp, color='#888888', linewidth=individual_width,
+                label=label)
+        label = None
+
+    # Window Peaks - Valid
+    if peaks_valid is None:
+        raise NotImplementedError
+
+    pfs, pas = peaks_valid
+    label = r"$f_{0,i}$"
+    for pf, pa in zip(pfs, pas):
+        ax.plot(pf, pa, linestyle="", zorder=2,
+                marker='o', markersize=2.5, markerfacecolor="#ffffff", markeredgewidth=0.5, markeredgecolor='k',
+                label=label)
+        label = None
+
+    # Window Peaks - Invalid
+    if peaks_invalid is not None:
+        pfs, pas = peaks_valid
+        label = None
+        for pf, pa in zip(pfs, pas):
+            ax.plot(pf, pa, linestyle="", zorder=2,
+                    marker='s', markersize=2.5, markerfacecolor="red", markeredgewidth=0.5, markeredgecolor='k',
+                    label=label)
+            label = None
+
+    # # Peak Mean Curve
+    # ax.plot(hvsr.mc_peak_frq(distribution_mc), hvsr.mc_peak_amp(distribution_mc), linestyle="", zorder=4,
+    #         marker='D', markersize=4, markerfacecolor='#66ff33', markeredgewidth=1, markeredgecolor='k',
+    #         label=r"$f_{0,mc}$")
+
+    # Mean Curve
+    label = r"$LM_{curve}$" if distribution_mc == "lognormal" else "Mean"
+    ax.plot(hvsr.frq, hvsr.mean_curve(distribution_mc), color='k', linewidth=median_width,
+            label=label)
+
+    # Mean +/- Curve
+    label = r"$LM_{curve}$" + \
+        " ± 1 STD" if distribution_mc == "lognormal" else "Mean ± 1 STD"
+    ax.plot(hvsr.frq, hvsr.nstd_curve(-1, distribution_mc),
+            color='k', linestyle='--', linewidth=median_width, zorder=3,
+            label=label)
+    ax.plot(hvsr.frq, hvsr.nstd_curve(+1, distribution_mc),
+            color='k', linestyle='--', linewidth=median_width, zorder=3)
+
+    ax.set_xscale("log")
+    ax.set_xlabel("Frequency (Hz)")
+    ax.set_ylabel("HVSR Amplitude")
+    ax.legend(loc="upper right")
+
+    if ylims is not None:
+        ax.set_ylim(ylims)
+
+    if ax_was_none:
+        return (fig, ax)
+    else:
+        return ax
 
 
 def simple_plot(sensor, hv, windowlength, distribution_f0, distribution_mc,

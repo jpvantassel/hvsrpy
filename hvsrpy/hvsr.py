@@ -17,13 +17,17 @@
 
 """Class definition for Hvsr object."""
 
+from importlib.metadata import distribution
 import logging
 import warnings
+from xml.etree.ElementPath import find
 
 import numpy as np
 import scipy.signal as sg
 from pandas import DataFrame
 
+from .plottools import single_plot
+from .interact import ginput_session
 from .meta import __version__
 
 logger = logging.getLogger("swprocess.hvsr")
@@ -543,6 +547,79 @@ class Hvsr():
                 msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
                 logger.info(msg)
                 return c_iteration
+
+    def reject_windows_manual(self,
+                              distribution_mc='lognormal',
+                              find_peaks_kwargs=None,
+                              ylims=None):
+        """Rejection spurious HVSR windows manually.
+
+        Parameters
+        ----------
+        distribution_f0 : {'lognormal', 'normal'}, optional
+            Assumed distribution of `f0` from time windows, the
+            default is 'lognormal'.
+        distribution_mc : {'lognormal', 'normal'}, optional
+            Assumed distribution of mean curve, the default is
+            'lognormal'.
+
+        Returns
+        -------
+        None
+            Modifies Hvsr object's internal state.
+
+        """
+        if find_peaks_kwargs is None:
+            raise NotImplementedError
+        (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
+        
+        frqs, amps = [], []
+        for amp, col_ids in zip(self.amp, valid_idxs):
+            frqs.extend(self.frq[col_ids])
+            amps.extend(amp[col_ids])
+        peaks_valid = (frqs, amps)
+        peaks_invalid = ([], [])
+
+        fig, ax = single_plot(self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
+        fig.show()
+        pxlim = ax.get_xlim()
+        pylim = ax.get_ylim()
+
+        while True:
+            xs, ys = ginput_session(ax, initial_adjustment=False, npts=2, ask_to_confirm_point=False, ask_to_continue=False)
+
+            selected_columns = np.logical_and(self.frq > min(xs), self.frq < max(xs))
+            was_empty=True
+            for idx, (amp) in enumerate(zip(self.amp[:, selected_columns])):
+                if np.any(np.logical_and(amp>min(ys), amp<max(ys))):
+                    was_empty=False
+                    self.valid_window_indices[idx] = False
+
+            vfrqs, vamps = [], []
+            ivfrqs, ivamps = [], []
+            (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
+            for amp, col_ids, window_valid in zip(self.amp, valid_idxs, self.valid_window_indices):
+                if window_valid:
+                    vfrqs.extend(self.frq[col_ids])
+                    vamps.extend(amp[col_ids])
+                else:
+                    ivfrqs.extend(self.frq[col_ids])
+                    ivamps.extend(amp[col_ids])
+
+            peaks_valid = (vfrqs, vamps)
+            peaks_invalid = (ivfrqs, ivamps)
+
+            # Clear, set axis limits, and lock axis.
+            ax.clear()
+            ax.set_xlim(pxlim)
+            ax.set_ylim(pylim)
+            # Note: ax.clear() re-enables autoscale.
+            ax.autoscale(enable=False)
+            ax = single_plot(self, peaks_valid, peaks_invalid, distribution_mc, ax=ax, ylims=ylims)
+
+            if was_empty:
+                if int(input("Continue trimming? (0=no, 1=yes)")) == 0:
+                    break        
 
     @staticmethod
     def _nth_std_factory(n, distribution, mean, std):
