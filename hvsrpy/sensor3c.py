@@ -477,17 +477,21 @@ class Sensor3c():
         self.meta["method"] = method
         self.meta["azimuth"] = azimuth
 
-        if resampling["res_type"] == "linear":
-            frq = np.linspace(resampling["minf"],
-                              resampling["maxf"],
-                              resampling["nf"])
-        elif resampling["res_type"] == "log":
-            frq = np.geomspace(resampling["minf"],
-                               resampling["maxf"],
-                               resampling["nf"])
+        # TODO (jpv): Move these sampling out of the make method
+        if isinstance(resampling, dict):
+            if resampling["res_type"] == "linear":
+                frq = np.linspace(resampling["minf"],
+                                resampling["maxf"],
+                                resampling["nf"])
+            elif resampling["res_type"] == "log":
+                frq = np.geomspace(resampling["minf"],
+                                resampling["maxf"],
+                                resampling["nf"])
+            else:
+                msg = f"`res_type`={resampling['res_type']} has not been implemented."
+                raise NotImplementedError(msg)
         else:
-            msg = f"`res_type`={resampling['res_type']} has not been implemented."
-            raise NotImplementedError(msg)
+            frq = np.array(resampling)
 
         hor.smooth_konno_ohmachi_fast(frq, bandwidth)
         ver.smooth_konno_ohmachi_fast(frq, bandwidth)
