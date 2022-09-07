@@ -25,6 +25,7 @@ from xml.etree.ElementPath import find
 import numpy as np
 import scipy.signal as sg
 from pandas import DataFrame
+import matplotlib.pyplot as plt
 
 from .plottools import single_plot
 from .interact import ginput_session
@@ -581,12 +582,28 @@ class Hvsr():
         peaks_invalid = ([], [])
 
         fig, ax = single_plot(self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
+        ax.autoscale(enable=False)
         fig.show()
         pxlim = ax.get_xlim()
         pylim = ax.get_ylim()
 
+        # continue button
+        upper_right_corner = (0.05, 0.95)
+        _xc, _yc = upper_right_corner
+        box_size = 0.1
+        scale_x = (np.log10(max(pxlim)) - np.log10(min(pxlim)))
+        scale_y = max(pylim) - min(pylim)
+        x_lower, x_upper = np.exp(_xc*scale_x + np.log10(min(pxlim))), np.exp((_xc+box_size)*scale_x + np.log10(min(pxlim)))
+        y_lower, y_upper = (_yc - box_size)*scale_y + min(pylim), _yc*scale_y + min(pylim)
+
+        def draw_continue_box(ax):
+            ax.fill([x_lower, x_upper, x_upper, x_lower],
+                    [y_upper, y_upper, y_lower, y_lower], color="lightgreen")
+            ax.text(_xc, _yc-box_size/2, "continue?", ha="left", va="center", transform=ax.transAxes)
+        draw_continue_box(ax)
+
         while True:
-            xs, ys = ginput_session(ax, initial_adjustment=False, npts=2, ask_to_confirm_point=False, ask_to_continue=False)
+            xs, ys = ginput_session(fig, ax, initial_adjustment=False, npts=2, ask_to_confirm_point=False, ask_to_continue=False)
 
             selected_columns = np.logical_and(self.frq > min(xs), self.frq < max(xs))
             was_empty=True
@@ -616,10 +633,21 @@ class Hvsr():
             # Note: ax.clear() re-enables autoscale.
             ax.autoscale(enable=False)
             ax = single_plot(self, peaks_valid, peaks_invalid, distribution_mc, ax=ax, ylims=ylims)
+            draw_continue_box(ax)
+            fig.canvas.draw_idle()
 
             if was_empty:
-                if int(input("Continue trimming? (0=no, 1=yes)")) == 0:
-                    break        
+                in_continue_box = False
+                for _x, _y in zip(xs, ys):
+                    if (_x < x_upper) and (_x > x_lower) and (_y > y_lower) and (_y < y_upper):
+                        in_continue_box = True
+                        break
+
+                if in_continue_box:
+                    plt.close()
+                    break
+                else:
+                    continue
 
     @staticmethod
     def _nth_std_factory(n, distribution, mean, std):

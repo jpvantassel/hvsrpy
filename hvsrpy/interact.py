@@ -22,8 +22,10 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 
 
-def ginput_session(ax, initial_adjustment=True,
-                   initial_adjustment_message=None, npts=1,
+def ginput_session(fig, ax,
+                   initial_adjustment=True,
+                   initial_adjustment_message=None,
+                   npts=1,
                    ask_to_confirm_point=True,
                    ask_to_continue=True,
                    ask_to_continue_message=None):
@@ -31,6 +33,8 @@ def ginput_session(ax, initial_adjustment=True,
 
     Parameters
     ----------
+    fig : Figure
+        Active Figure.
     ax : Axes
         Axes on which points are to be selected.
     initial_adjustment : bool, optional
@@ -59,7 +63,7 @@ def ginput_session(ax, initial_adjustment=True,
 
     """
     # Enable cursor to make precise selection easier.
-    Cursor(ax, color='k', linewidth=1)
+    Cursor(ax, useblit=True, color='k', linewidth=1)
 
     # Permit initial adjustment with blocking call to figure.
     if initial_adjustment:
@@ -98,6 +102,7 @@ def ginput_session(ax, initial_adjustment=True,
         xs.append(x)
         ys.append(y)
         npt += 1
+        fig.canvas.draw_idle()
 
         if ask_to_continue:
             if ask_to_continue_message is None:
