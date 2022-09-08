@@ -53,20 +53,18 @@ ax=None,
         label = None
 
     # Window Peaks - Valid
-    if peaks_valid is None:
-        raise NotImplementedError
-
-    pfs, pas = peaks_valid
-    label = r"$f_{0,i}$"
-    for pf, pa in zip(pfs, pas):
-        ax.plot(pf, pa, linestyle="", zorder=2,
-                marker='o', markersize=2.5, markerfacecolor="#ffffff", markeredgewidth=0.5, markeredgecolor='k',
-                label=label)
-        label = None
+    if peaks_valid is not None:
+        pfs, pas = peaks_valid
+        label = r"$f_{0,i}$"
+        for pf, pa in zip(pfs, pas):
+            ax.plot(pf, pa, linestyle="", zorder=2,
+                    marker='o', markersize=3, markerfacecolor="lightgreen", markeredgewidth=0.5, markeredgecolor='k',
+                    label=label)
+            label = None
 
     # Window Peaks - Invalid
     if peaks_invalid is not None:
-        pfs, pas = peaks_valid
+        pfs, pas = peaks_invalid
         label = None
         for pf, pa in zip(pfs, pas):
             ax.plot(pf, pa, linestyle="", zorder=2,

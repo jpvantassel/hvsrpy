@@ -649,6 +649,67 @@ class Hvsr():
                 else:
                     continue
 
+    def resonance_identification_manual(self,
+                                        distribution_mc='lognormal',
+                                        find_peaks_kwargs=None,
+                                        ylims=None):
+        if find_peaks_kwargs is None:
+            raise NotImplementedError
+        (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
+        
+        frqs, amps = [], []
+        for amp, col_ids in zip(self.amp, valid_idxs):
+            frqs.extend(self.frq[col_ids])
+            amps.extend(amp[col_ids])
+        peaks_valid = (frqs, amps)
+        peaks_invalid = ([], [])
+
+        fig, ax = single_plot(self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
+        ax.autoscale(enable=False)
+        fig.show()
+        pxlim = ax.get_xlim()
+        pylim = ax.get_ylim()
+
+        # continue button
+        upper_right_corner = (0.05, 0.95)
+        _xc, _yc = upper_right_corner
+        box_size = 0.1
+        scale_x = (np.log10(max(pxlim)) - np.log10(min(pxlim)))
+        scale_y = max(pylim) - min(pylim)
+        x_lower, x_upper = np.exp(_xc*scale_x + np.log10(min(pxlim))), np.exp((_xc+box_size)*scale_x + np.log10(min(pxlim)))
+        y_lower, y_upper = (_yc - box_size)*scale_y + min(pylim), _yc*scale_y + min(pylim)
+
+        def draw_continue_box(ax):
+            ax.fill([x_lower, x_upper, x_upper, x_lower],
+                    [y_upper, y_upper, y_lower, y_lower], color="lightgreen")
+            ax.text(_xc, _yc-box_size/2, "continue?", ha="left", va="center", transform=ax.transAxes)
+        draw_continue_box(ax)
+
+        f_lows, f_highs = [], []
+        while True:
+            xs, ys = ginput_session(fig, ax, initial_adjustment=False, npts=2, ask_to_confirm_point=False, ask_to_continue=False)
+            
+            in_continue_box = False
+            for _x, _y in zip(xs, ys):
+                if (_x < x_upper) and (_x > x_lower) and (_y > y_lower) and (_y < y_upper):
+                    in_continue_box = True
+                    break
+
+            if in_continue_box:
+                plt.close()
+                break
+            else:
+                f_lows.append(min(xs))
+                f_highs.append(max(xs))
+                continue
+
+        f_lows.sort()
+        f_highs.sort()
+        limits = [[fl, fh] for fl, fh in zip(f_lows, f_highs)]
+        limits = np.array(limits)
+            
+        return limits
+
     @staticmethod
     def _nth_std_factory(n, distribution, mean, std):
         distribution = Hvsr.correct_distribution(distribution)
