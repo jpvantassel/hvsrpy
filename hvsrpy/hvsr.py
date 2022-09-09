@@ -17,10 +17,8 @@
 
 """Class definition for Hvsr object."""
 
-from importlib.metadata import distribution
 import logging
 import warnings
-from xml.etree.ElementPath import find
 
 import numpy as np
 import scipy.signal as sg
@@ -47,7 +45,7 @@ class Hvsr():
         Vector of frequencies corresponds to each column.
     nseries : int
         Number of windows in `Hvsr` object.
-    valid_window_indices : ndarray
+    valid_window_boolean_mask : ndarray
         Boolean array indicating valid windows.
 
     """
@@ -139,11 +137,11 @@ class Hvsr():
             self.amp = self.amp.reshape((1, self.amp.size))
 
         if self.frq.size != self.amp.shape[1]:
-            msg = f"Size of amplitude={self.amp.size} and frequency={self.frq.size} must be compatable."
+            msg = f"Size of amplitude={self.amp.size} and frequency={self.frq.size} must be compatible."
             raise ValueError(msg)
 
         self.nseries = self.amp.shape[0]
-        self.valid_window_indices = np.ones(self.nseries, dtype=bool)
+        self.valid_window_boolean_mask = np.ones(self.nseries, dtype=bool)
         self._main_peak_frq = np.zeros(self.nseries)
         self._main_peak_amp = np.zeros(self.nseries)
 
@@ -168,23 +166,30 @@ class Hvsr():
         self.meta = meta
 
     @property
+    def valid_window_indices(self):
+        """Return depricated valid_window_indices."""
+        msg = "The property `valid_window_indices` is deprecated use `valid_window_boolean_mask` instead."
+        warnings.warn(msg, DeprecationWarning)
+        return self.valid_window_boolean_mask
+
+    @property
     def rejected_window_indices(self):
         """Rejected window indices."""
-        return np.invert(self.valid_window_indices)
+        return np.invert(self.valid_window_boolean_mask)
 
     @property
     def peak_frq(self):
         """Valid peak frequency vector."""
         if not self._initialized_peaks:
             self.update_peaks()
-        return self._main_peak_frq[self.valid_window_indices]
+        return self._main_peak_frq[self.valid_window_boolean_mask]
 
     @property
     def peak_amp(self):
         """Valid peak amplitude vector."""
         if not self._initialized_peaks:
             self.update_peaks()
-        return self._main_peak_amp[self.valid_window_indices]
+        return self._main_peak_amp[self.valid_window_boolean_mask]
 
     @staticmethod
     def find_peaks(amp, starting_index=0, **kwargs):
@@ -235,12 +240,11 @@ class Hvsr():
         if not self._initialized_peaks:
             self._initialized_peaks = True
 
-        peak_indices, _ = self.find_peaks(self.amp[self.valid_window_indices, self.i_low:self.i_high],
+        peak_indices, _ = self.find_peaks(self.amp[self.valid_window_boolean_mask, self.i_low:self.i_high],
                                           starting_index=self.i_low,
                                           **kwargs)
-        valid_indices = np.zeros(self.nseries, dtype=bool)
         valid_count = 0
-        for c_window, valid in enumerate(self.valid_window_indices):
+        for c_window, valid in enumerate(self.valid_window_boolean_mask):
             if not valid:
                 continue
 
@@ -254,14 +258,15 @@ class Hvsr():
                     c_index = c_index[0]
                 self._main_peak_amp[c_window] = self.amp[c_window, c_index]
                 self._main_peak_frq[c_window] = self.frq[c_index]
-                valid_indices[c_window] = True
+                self.valid_window_boolean_mask[c_window] = True
             except ValueError as e:
                 if len(c_window_peaks) == 0:
+                    # TODO (jpv): Assess breaking change of setting window to invalid.
+                    self.valid_window_boolean_mask[c_window] = False
                     logger.warning(f"No peak found in window #{c_window}.")
                 else:
                     raise e
             valid_count += 1
-        self.valid_window_indices = valid_indices
 
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
@@ -391,7 +396,7 @@ class Hvsr():
             If `distribution` does not match the available options.
 
         """
-        return self._mean_factory(distribution, self.amp[self.valid_window_indices], axis=0)
+        return self._mean_factory(distribution, self.amp[self.valid_window_boolean_mask], axis=0)
 
     def std_curve(self, distribution='lognormal'):
         """Sample standard deviation of the mean HVSR curve.
@@ -416,7 +421,7 @@ class Hvsr():
 
         """
         if self.nseries > 1:
-            return self._std_factory(distribution, self.amp[self.valid_window_indices], axis=0)
+            return self._std_factory(distribution, self.amp[self.valid_window_boolean_mask], axis=0)
         else:
             msg = "The standard deviation of the mean curve is not defined for a single window."
             raise ValueError(msg)
@@ -498,7 +503,7 @@ class Hvsr():
         for c_iteration in range(1, max_iterations+1):
 
             logger.debug(f"c_iteration: {c_iteration}")
-            logger.debug(f"valid_window_indices: {self.valid_window_indices}")
+            logger.debug(f"valid_window_boolean_mask: {self.valid_window_boolean_mask}")
 
             mean_f0_before = self.mean_f0_frq(distribution_f0)
             std_f0_before = self.std_f0_frq(distribution_f0)
@@ -514,14 +519,14 @@ class Hvsr():
             upper_bound = self.nstd_f0_frq(+n, distribution_f0)
 
             valid_indices = np.zeros(self.nseries, dtype=bool)
-            for c_window, (c_valid, c_peak) in enumerate(zip(self.valid_window_indices, self._main_peak_frq)):
+            for c_window, (c_valid, c_peak) in enumerate(zip(self.valid_window_boolean_mask, self._main_peak_frq)):
                 if not c_valid:
                     continue
 
                 if c_peak > lower_bound and c_peak < upper_bound:
                     valid_indices[c_window] = True
 
-            self.valid_window_indices = valid_indices
+            self.valid_window_boolean_mask = valid_indices
 
             mean_f0_after = self.mean_f0_frq(distribution_f0)
             std_f0_after = self.std_f0_frq(distribution_f0)
@@ -610,12 +615,12 @@ class Hvsr():
             for idx, (amp) in enumerate(zip(self.amp[:, selected_columns])):
                 if np.any(np.logical_and(amp>min(ys), amp<max(ys))):
                     was_empty=False
-                    self.valid_window_indices[idx] = False
+                    self.valid_window_boolean_mask[idx] = False
 
             vfrqs, vamps = [], []
             ivfrqs, ivamps = [], []
             (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
-            for amp, col_ids, window_valid in zip(self.amp, valid_idxs, self.valid_window_indices):
+            for amp, col_ids, window_valid in zip(self.amp, valid_idxs, self.valid_window_boolean_mask):
                 if window_valid:
                     vfrqs.extend(self.frq[col_ids])
                     vamps.extend(amp[col_ids])
@@ -832,9 +837,9 @@ class Hvsr():
 
         lines = [
             f"# hvsrpy output version {__version__}",
-            f"# Number of windows = {sum(self.valid_window_indices)}",
+            f"# Number of windows = {sum(self.valid_window_boolean_mask)}",
             f"# f0 from average\t{fclean(mc_peak_frq)}",
-            f"# Number of windows for f0 = {sum(self.valid_window_indices)}",
+            f"# Number of windows for f0 = {sum(self.valid_window_boolean_mask)}",
             f"# f0 from windows\t{fclean(mean)}\t{fclean(lower)}\t{fclean(upper)}",
             f"# Peak amplitude\t{fclean(mc_peak_amp)}",
             f"# Position\t{0} {0} {0}",
@@ -870,7 +875,7 @@ class Hvsr():
         _min = self.nstd_curve(-1, distribution_mc)
         _max = self.nstd_curve(+1, distribution_mc)
 
-        n_rejected = self.nseries - sum(self.valid_window_indices)
+        n_rejected = self.nseries - sum(self.valid_window_boolean_mask)
         rejection = "False" if self.meta.get(
             'Performed Rejection') is None else "True"
         lines = [
