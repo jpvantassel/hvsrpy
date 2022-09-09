@@ -43,11 +43,12 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
     python_requires='>=3.6',
-    install_requires=['numpy<=1.20', 'scipy', 'obspy', 'sigpropy>=1.0.0',
+    install_requires=['numpy>=1.22', 'scipy', 'obspy', 'sigpropy>=1.0.0',
                       'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
     extras_require={
         'dev': ['coverage', 'sphinx-click'],

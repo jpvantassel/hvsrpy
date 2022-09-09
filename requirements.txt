@@ -1,4 +1,4 @@
-numpy<=1.20
+numpy>=1.22
 scipy
 obspy
 sigpropy>=1.0.0
