@@ -7,23 +7,20 @@ orbs:
 workflows:
   build:
     jobs:
-      - test-36:
-          context:
-            - docker          
-      - test-37:
-          context:
-            - docker
       - test-38:
           context:
             - docker
       - test-39:
           context:
             - docker
+      - test-310:
+          context:
+            - docker
 
 jobs:
-  test-36: &test-template
+  test-38: &test-template
     docker:
-      - image: circleci/python:3.6.14
+      - image: cimg/python:3.8.13
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
@@ -72,26 +69,18 @@ jobs:
           file: test-results/cobertura.xml
       - coverage-reporter/send_report
 
-  test-37:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.7.11
-        auth:
-          username: jpvantassel
-          password: $DOCKER_PASS
-
-  test-38:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.8.11
-        auth:
-          username: jpvantassel
-          password: $DOCKER_PASS
-
   test-39:
     <<: *test-template
     docker:
-      - image: circleci/python:3.9.6
+      - image: cimg/python:3.9.13
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
+
+  test-310:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.10.6
         auth:
           username: jpvantassel
           password: $DOCKER_PASS

@@ -25,7 +25,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/jpvantassel/hvsrpy',
     author='Joseph P. Vantassel',
-    author_email='jvantassel@utexas.edu',
+    author_email='joseph.p.vantassel@gmail.com',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
 
@@ -39,15 +39,13 @@ setup(
 
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
 
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ],
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     install_requires=['numpy>=1.22', 'scipy', 'obspy', 'sigpropy>=1.0.0',
                       'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
     extras_require={
