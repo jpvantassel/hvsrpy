@@ -32,39 +32,41 @@ class TestDataWrangler(TestCase):
     def setUpClass(cls):
         cls.full_path = get_full_path(__file__, result_as_string=False)
 
-    def test_read_data_with_mseed_combined(self):
+    def test_read_mseed_with_mseed_combined(self):
         fname = self.full_path / "data/input/mseed_combined/ut.stn11.a2_c50.miniseed"
         data = hvsrpy.read_data(fname)
         self.assertTrue(isinstance(data, hvsrpy.SeismicRecording3C))
 
-    def test_read_data_with_mseed_individual(self):
+    def test_read_mseed_with_mseed_individual(self):
         fnames = []
         for component in ["bhe", "bhz", "bhn"]:
              fnames.append(self.full_path / f"data/input/mseed_individual/ut.stn11.a2_c50_{component}.mseed")
         data = hvsrpy.read_data(fnames)
         self.assertTrue(isinstance(data, hvsrpy.SeismicRecording3C))
 
-    def test_read_data_with_saf(self):
+    def test_read_saf_with_saf(self):
         fname = self.full_path / "data/input/saf/mt_20211122_133110.saf"
         data = hvsrpy.read_data(fname)
         self.assertTrue(isinstance(data, hvsrpy.SeismicRecording3C))
 
-    def test_read_data_with_minishark(self):
+    def test_read_minishark_with_minishark(self):
         fname = self.full_path / "data/input/minishark/0003_181115_0441.minishark"
         data = hvsrpy.read_data(fname)
         self.assertTrue(isinstance(data, hvsrpy.SeismicRecording3C))
 
-    def test_use_read_data_on_sac(self):
-        fname = self.full_path / "data/input/ambient_noise/ut.stn11.a2_c50.miniseed"
-        data = hvsrpy.read_data(fname)
+    def test_read_sac_on_sac(self):
+        fnames = []
+        for component in ["e", "n", "z"]:
+            fnames.append(self.full_path / f"data/input/sac_big_endian/ut.stn11.a2_c50_{component}.sac")
+        data = hvsrpy.read_data(fnames)
         self.assertTrue(isinstance(data, hvsrpy.SeismicRecording3C))
 
-    def test_use_read_data_on_gcf(self):
+    def test_read_gcf_on_gcf(self):
         fname = self.full_path / "data/input/gcf/sample.gcf"
         data = hvsrpy.read_data(fname)
         self.assertTrue(isinstance(data, hvsrpy.SeismicRecording3C))
 
-    def test_use_read_data_on_peer(self):
+    def test_read_peer_on_peer(self):
         fnames = []
         for component in ["090", "360", "-up"]:
             fnames.append(self.full_path / f"data/input/peer/rsn942_northr_alh{component}.vt2")
