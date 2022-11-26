@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
-# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -18,19 +18,14 @@
 """Testing tools."""
 
 import unittest
+import pathlib
 
 import numpy as np
 
 
-def get_full_path(path):
-    if path.count("/") > 1:
-        file_name = path.split(r"/")[-1]
-        full_path = path[:-len(file_name)]
-    else:
-        file_name = path.split(r"\\")[-1]
-        full_path = path[:-len(file_name)]
-    return full_path
-
+def get_full_path(path, result_as_string=True):
+    full_path = pathlib.Path(path).resolve().parent
+    return str(full_path) if result_as_string else full_path
 
 class TestCase(unittest.TestCase):
 
