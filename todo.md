@@ -1,8 +1,10 @@
-# A to-do list
+# _hvsrpy_ todo list
 
-> Joseph P. Vantassel, The University of Texas at Austin
+> Joseph P. Vantassel
 
 ## In-Progress for Upcoming Release
+
+- Add support for multiple file types.
 
 ## Under Consideration for a Future Release
 
@@ -12,3 +14,7 @@
 
 - Reject time windows based on LTA, STA in the time domain.
 - Reject time windows based on maximum amplitude in the time domain.
+- Include orientation of horizontal components relative to north in metadata.
+- Add function to rotate station to true north.
+- Add RotD50
+- Seperate development packages from production packages.

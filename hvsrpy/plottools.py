@@ -1,6 +1,6 @@
 # This file is part of hvsrpy a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -78,18 +78,20 @@ ax=None,
     #         label=r"$f_{0,mc}$")
 
     # Mean Curve
-    label = r"$LM_{curve}$" if distribution_mc == "lognormal" else "Mean"
-    ax.plot(hvsr.frq, hvsr.mean_curve(distribution_mc), color='k', linewidth=median_width,
-            label=label)
+    if sum(hvsr.valid_window_indices) > 0:
+        label = r"$LM_{curve}$" if distribution_mc == "lognormal" else "Mean"
+        ax.plot(hvsr.frq, hvsr.mean_curve(distribution_mc), color='k', linewidth=median_width,
+                label=label)
 
     # Mean +/- Curve
-    label = r"$LM_{curve}$" + \
-        " ± 1 STD" if distribution_mc == "lognormal" else "Mean ± 1 STD"
-    ax.plot(hvsr.frq, hvsr.nstd_curve(-1, distribution_mc),
-            color='k', linestyle='--', linewidth=median_width, zorder=3,
-            label=label)
-    ax.plot(hvsr.frq, hvsr.nstd_curve(+1, distribution_mc),
-            color='k', linestyle='--', linewidth=median_width, zorder=3)
+    if sum(hvsr.valid_window_indices) > 1:
+        label = r"$LM_{curve}$" + \
+            " ± 1 STD" if distribution_mc == "lognormal" else "Mean ± 1 STD"
+        ax.plot(hvsr.frq, hvsr.nstd_curve(-1, distribution_mc),
+                color='k', linestyle='--', linewidth=median_width, zorder=3,
+                label=label)
+        ax.plot(hvsr.frq, hvsr.nstd_curve(+1, distribution_mc),
+                color='k', linestyle='--', linewidth=median_width, zorder=3)
 
     ax.set_xscale("log")
     ax.set_xlabel("Frequency (Hz)")

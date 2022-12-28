@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 hvsrpy = {editable = true, path = "."}
 tox = "*"
+jupyterlab = "*"
+matplotlib = "*"
+autopep8 = "*"
 
 [dev-packages]
 

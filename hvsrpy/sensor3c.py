@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -121,88 +121,6 @@ class Sensor3c():
 
         meta = {} if meta is None else meta
         self.meta = {"File Name": "NA", **meta}
-
-    @classmethod
-    def from_mseed(cls, fname=None, fnames_1c=None):
-        """Create from .mseed file(s).
-
-        Parameters
-        ----------
-        fname : str, optional
-            Name of miniseed file, full path may be used if desired.
-            The file should contain three traces with the
-            appropriate channel names. Refer to the `SEED` Manual
-            `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
-            for specifics, default is `None`.
-        fnames_1c : dict, optional
-            Some data acquisition systems supply three separate miniSEED
-            files rather than a single combined file. To use those types
-            of files, simply specify the three files in a `dict` of
-            the form `{'e':'east.mseed', 'n':'north.mseed',
-            'z':'vertical.mseed'}`, default is `None`.
-
-        Returns
-        -------
-        Sensor3c
-            Initialized 3-component sensor object.
-
-        Raises
-        ------
-        ValueError
-            If both `fname` and `fname_verbose` are `None`.
-
-        """
-        # One miniSEED file is provided, which contains all three components.
-        if fname is not None and fnames_1c is None:
-            traces = obspy.read(fname, format="MSEED")
-        # Three miniSEED files are provided, one per component.
-        elif fnames_1c is not None and fname is None:
-            trace_list = []
-            for key in ["e", "n", "z"]:
-                stream = obspy.read(fnames_1c[key], format="MSEED")
-                if len(stream) > 1:
-                    msg = f"File {fnames_1c[key]} contained {len(stream)}"
-                    msg += "traces, rather than 1 as was expected."
-                    raise IndexError(msg)
-                trace = stream[0]
-                if trace.meta.channel[-1] != key.capitalize():
-                    msg = "Component indicated in the header of "
-                    msg += f"{fnames_1c[key]} is {trace.meta.channel[-1]} "
-                    msg += f"which does not match the key {key} specified. "
-                    msg += "Ignore this warning only if you know "
-                    msg += "your digitizer's header is incorrect."
-                    warnings.warn(msg)
-                    trace.meta.channel = trace.meta.channel[:-1] + \
-                        key.capitalize()
-                trace_list.append(trace)
-            traces = obspy.Stream(trace_list)
-            fname = fnames_1c["n"]
-        # Both or neither miniSEED file option is provided.
-        else:
-            msg = "`fnames_1c` and `fname` cannot both be defined or both be `None`."
-            raise ValueError(msg)
-
-        if len(traces) != 3:
-            msg = f"Provided {len(traces)} traces, but must only provide 3."
-            raise ValueError(msg)
-
-        found_ew, found_ns, found_vt = False, False, False
-        for trace in traces:
-            if trace.meta.channel.endswith("E") and not found_ew:
-                ew = TimeSeries.from_trace(trace)
-                found_ew = True
-            elif trace.meta.channel.endswith("N") and not found_ns:
-                ns = TimeSeries.from_trace(trace)
-                found_ns = True
-            elif trace.meta.channel.endswith("Z") and not found_vt:
-                vt = TimeSeries.from_trace(trace)
-                found_vt = True
-            else:
-                msg = "Missing, duplicate, or incorrectly named components."
-                raise ValueError(msg)
-
-        meta = {"File Name": fname}
-        return cls(ns, ew, vt, meta)
 
     @classmethod
     def from_dict(cls, dictionary):

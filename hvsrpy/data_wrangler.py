@@ -20,6 +20,7 @@
 import pathlib
 import warnings
 import logging
+import itertools
 
 import obspy
 import numpy as np
@@ -61,11 +62,13 @@ def _check_npts(npts_header, npts_found):
         msg += "(https://github.com/jpvantassel/hvsrpy/issues)."
         raise ValueError(msg)
 
+
 def _quiet_obspy_read(*args, **kwargs):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         results = obspy.read(*args, **kwargs)
     return results
+
 
 def read_mseed(fnames, read_kwargs=None):
     """Read ambient noise data from file(s) in miniSEED format.
@@ -328,18 +331,17 @@ READ_FUNCTION_DICT = {
 }
 
 
-def read(fnames, read_kwargs=None):
-    """Read file(s) presented.
+def read_single(fnames, read_kwargs=None):
+    """Read file(s) associated with a single recording.
 
     Parameters
     ----------
-    fnames : str, list
+    fnames: {list, str}
         If `str`, name of file to be read, may include a relative or the
-        full path. File should contain all three components
+        full path. The file should contain all three components
         (2 horizontal and 1 vertical).
         If `list`, names of files to be read, each may be a relative or
         the full path. Each file should contain only one component.
-    # TODO (jpv): Check this renders correctly.
     read_kwargs : dict, optional
         Keyword arguments to be passed directly to `obspy.read`, in
         general this should not be needed, default is `None` indicating
@@ -349,6 +351,7 @@ def read(fnames, read_kwargs=None):
     -------
     SeismicRecording3C
         Initialized three-component seismic recording object.
+    # TODO (jpv): Check this renders correctly.
 
     """
     logger.info(f"Attempting to read {fnames}")
@@ -367,3 +370,43 @@ def read(fnames, read_kwargs=None):
         msg += f"{READ_FUNCTION_DICT.keys()}."
         raise ValueError(msg)
     return srecording_3c
+
+
+def read(fnames, read_kwargs=None):
+    """Read file(s) presented.
+
+    Parameters
+    ----------
+    fnames : iterable of lists of str or interable of str
+        Collection of file name(s) to be read. All entries should be
+        readable by the function `hvsrpy.read_single()`.
+    read_kwargs : dict or iterable of dicts, optional
+        Keyword arguments to be passed directly to
+        `hvsrpy.read_single()`. If `dict`, keyword argument will be
+        repeated for all file names provided. If `iterable of dicts`
+        each keyword arguments will be provided in order. Default is
+        `None` indicating read behavior will be used.
+
+    Returns
+    -------
+    list
+        Of initialized SeismicRecording3C objects, one for each each
+        file name provided.
+
+    """
+    # scale read_kwargs as needed to match length of fnames.
+    if isinstance(read_kwargs, (dict, type(None))):
+        read_kwargs_iter = itertools.repeat(read_kwargs)
+    else:
+        read_kwargs_iter = read_kwargs
+
+    seismic_recordings = []
+    for fname, read_kwargs in zip(fnames, read_kwargs_iter):
+
+        # if entry is a list with only a single entry, remove the list.
+        if len(fname) == 1:
+            fname = fname[0]
+
+        seismic_recordings.append(read_single(fname, read_kwargs=read_kwargs))
+
+    return seismic_recordings
