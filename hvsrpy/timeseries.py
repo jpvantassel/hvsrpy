@@ -134,12 +134,12 @@ class TimeSeries():
         self.amplitude = self.amplitude[start_index:end_index+1]
 
     def detrend(self, type="linear"):
-        """Remove linear trend from `TimeSeries`.
+        """Remove trend from `TimeSeries`.
 
         Parameters
         ----------
         type = {"constant", "linear"}, optional
-            The type of detrending. If type == 'linear' (default), the
+            Type of detrending. If type == 'linear' (default), the
             result of a linear least-squares fit to data is subtracted
             from data. If type == 'constant', only the mean of data is
             subtracted.
@@ -154,8 +154,7 @@ class TimeSeries():
 
     # TODO (jpv): Consider adding the ability to overlap windows.
     def split(self, window_length_in_seconds):
-        """
-        Split record into `n` series of length `windowlength`.
+        """Split record into `n` series of length `windowlength`.
 
         Parameters
         ----------
