@@ -19,7 +19,7 @@
 
 import logging
 
-from .meta import __version__
+from .metadata import __version__
 from .hvsr import Hvsr
 from .hvsr_rotated import HvsrRotated
 from .sensor3c import Sensor3c
