@@ -24,9 +24,7 @@ import numpy as np
 from scipy.signal.windows import tukey
 from scipy.signal import butter, filtfilt, detrend
 
-from .windowed_timeseries import WindowedTimeSeries
-
-logger = logging.getLogger("hvsrpy.timeseries")
+logger = logging.getLogger(__name__)
 
 __all__ = ['TimeSeries']
 
@@ -67,6 +65,7 @@ class TimeSeries():
             raise TypeError(msg)
 
         self.dt = float(dt)
+        logger.info(f"Created {self}.")
 
     @property
     def nsamples(self):
@@ -80,11 +79,7 @@ class TimeSeries():
     def fnyq(self):
         return 0.5*self.fs
 
-    # @property
-    # def df(self):
-    #     return self.fs/self.nsamples
-
-    @property
+    # TODO (jpv): Consider adding absolute time information.
     def time(self):
         return np.arange(self.nsamples)*self.dt
 
@@ -106,13 +101,13 @@ class TimeSeries():
         Raises
         ------
         IndexError
-            If the `start_time` and/or `end_time` is illogical.
-            For example, `start_time` is less than zero, `start_time` is
+            If the `start_time` and/or `end_time` is illogical. Checks
+            include `start_time` is less than zero, `start_time` is
             after `end_time`, or `end_time` is after the end of the
             record.
 
         """
-        current_time = self.time
+        current_time = self.time()
         start = 0
         end = max(current_time)
 
@@ -130,7 +125,7 @@ class TimeSeries():
         if end_time > end:
             msg = f"Illogical end_time for trim; "
             msg += f"`end_time` of {end_time} must be less than "
-            msg += f"durection of the the timeseries of `{end:.2f}"
+            msg += f"duration of the the timeseries of `{end:.2f}"
             raise IndexError(msg)
 
         start_index = np.argmin(np.absolute(current_time - start_time))
@@ -155,57 +150,47 @@ class TimeSeries():
             Performs detrend on the `amplitude` attribute.
 
         """
-        detrend(self.amplitude, type=type, inplace=True)
+        detrend(self.amplitude, type=type, overwrite_data=True)
 
-    def split(self, windowlength):
+    # TODO (jpv): Consider adding the ability to overlap windows.
+    def split(self, window_length_in_seconds):
         """
         Split record into `n` series of length `windowlength`.
 
         Parameters
         ----------
-        windowlength : float
-            Duration of desired shorter series in seconds. If
-            `windowlength` is not an integer multiple of `dt`, the
-            window length is rounded to up to the next integer
-            multiple of `dt`.
+        window_length_in_seconds : float
+            Window length duration in seconds.
 
         Returns
         -------
-        None
-            Updates the object's internal attributes
-            (e.g., `amplitude`).
+        list
+            List of `TimeSeries` objects, one per window.
 
         Notes
         -----
             The last sample of each window is repeated as the first
             sample of the following time window to ensure an intuitive
             number of windows. Without this, for example, a 10-minute
-            record could not be broken into 10 1-minute records.
+            record could not be broken into 10, 1-minute records.
 
-        Examples
-        --------
-            >>> import numpy as np
-            >>> from sigpropy import TimeSeries
-            >>> amp = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-            >>> tseries = TimeSeries(amp, dt=1)
-            >>> wseries = tseries.split(2)
-            >>> wseries.amplitude
-            array([[0, 1, 2],
-                [2, 3, 4],
-                [4, 5, 6],
-                [6, 7, 8]])
         """
-        steps_per_win = int(windowlength/self.dt)
-        nwindows = int((self.nsamples-1)/steps_per_win)
-        rec_samples = (steps_per_win*nwindows)+1
+        samples_per_window = int(window_length_in_seconds/self.dt) + 1
+        nwindows = int(self.nsamples / (samples_per_window-1))
 
-        right_cols = np.reshape(self.amplitude[1:rec_samples],
-                                (nwindows, steps_per_win))
-        left_col = self.amplitude[:-steps_per_win:steps_per_win].T
-        amplitudes = np.column_stack((left_col, right_cols))
+        if nwindows < 1:
+            msg = f"Window length of {window_length_in_seconds} s is larger "
+            msg += f"than the record length of {(self.nsamples-1)*self.dt} s."
+            raise ValueError(msg)
 
-        windows = [TimeSeries(amp, dt=self.dt) for amp in amplitudes]
-        return WindowedTimeSeries(windows)
+        start_idx = 0
+        windows = []
+        for _ in range(nwindows):
+            end_idx = start_idx + samples_per_window
+            tseries = TimeSeries(self.amplitude[start_idx:end_idx], self.dt)
+            windows.append(tseries)
+            start_idx = end_idx - 1
+        return windows
 
     def window(self, type="tukey", width=0.1):
         """Apply window to time series.
@@ -215,58 +200,63 @@ class TimeSeries():
         width : {0.-1.}
             Fraction of the time series to be windowed.
         type : {"tukey"}, optional
-
-            `0` is equal to a rectangular and `1` a Hann window.
+            If type='tukey', a width of `0` is a rectangular window
+            and `1` is a Hann window.
 
         Returns
         -------
         None
-            Applies window to the `amplitude` attribute.
+            Applies window to the `amplitude` attribute in-place.
 
         """
         if type == "tukey":
             window = tukey(self.nsamples, alpha=width)
         else:
-            raise NotImplementedError
+            msg = f"Window type '{type}' not recognized, try ['tukey',]."
+            raise NotImplementedError(msg)
 
         self.amplitude *= window 
 
-    # def bandpassfilter(self, flow, fhigh, order=5):
-    #     """
-    #     Apply bandpass Butterworth filter to time series.
-    #     Parameters
-    #     ----------
-    #     flow : float
-    #         Low-cut frequency (content below `flow` is filtered).
-    #     fhigh : float
-    #         High-cut frequency (content above `fhigh` is filtered).
-    #     order : int, optional
-    #         Filter order, default is 5.
-    #     Returns
-    #     -------
-    #     None
-    #         Filters attribute `amplitude`.
-    #     """
-    #     fnyq = self.fnyq
-    #     b, a = butter(order, [flow/fnyq, fhigh/fnyq], btype='bandpass')
-    #     self._amp = filtfilt(b, a, self._amp, padlen=3*(max(len(b), len(a))-1))
+    def butterworth_filter(self, fcs, order=5):
+        """Apply Butterworth filter.
+        
+        Parameters
+        ----------
+        fcs : tuple
+            Butterworth filter's corner frequencies in Hz. `None` should
+            be used to specify a one-sided filter. For example a high
+            pass filter at 3 Hz would be specified with `fcs=(3, None)`.
+        order : int, optional
+            Butterworth filter order, default is 5.
 
-    # @classmethod
-    # def from_trace(cls, trace):
-    #     """
-    #     Initialize a `TimeSeries` object from a trace object.
-    #     Parameters
-    #     ----------
-    #     trace : Trace
-    #         Refer to
-    #         `obspy documentation <https://github.com/obspy/obspy/wiki>`_
-    #         for more information
-    #     Returns
-    #     -------
-    #     TimeSeries
-    #         Initialized with information from `trace`.
-    #     """
-    #     return cls(amplitude=trace.data, dt=trace.stats.delta)
+        Returns
+        -------
+        None
+            Filters `amplitude` attribute in-place.
+
+        """
+        fc_low, fc_high = fcs
+        if fc_low is None and fc_high is not None:
+            btype = "lowpass"
+            wn = fc_high
+        elif fc_low is not None and fc_high is None:
+            btype = "highpass"
+            wn = fc_low
+        elif fc_low is not None and fc_high is not None:
+            btype = "bandpass"
+            wn = [fc_low, fc_high]
+        else:
+            msg = "No corner frequencies provided; no filtering performed."
+            warnings.warn(msg)
+            return None
+
+        b, a = butter(order, wn, btype, fs=self.fs)
+        self.amplitude = filtfilt(b, a, self.amplitude)
+
+    @classmethod
+    def from_trace(cls, trace):
+        """Initialize a `TimeSeries` object from `obspy` `Trace` object."""
+        return cls(amplitude=trace.data, dt=trace.stats.delta)
 
     @classmethod
     def from_timeseries(cls, timeseries):
@@ -290,7 +280,7 @@ class TimeSeries():
         if not isinstance(other, TimeSeries):
             return False
 
-        if abs(other.dt - self.dt) < 1E-6:
+        if abs(other.dt - self.dt) > 1E-8:
             return False
 
         if other.nsamples != self.nsamples:
@@ -300,9 +290,8 @@ class TimeSeries():
 
     def __eq__(self, other):
         """Check if `other` is equal to `self`."""
-        for attr in ["nseries", "nsamples", "dt"]:
-            if getattr(self, attr) != getattr(other, attr):
-                return False
+        if not self.is_similar(other):
+            return False
 
         if not np.allclose(self.amplitude, other.amplitude):
             return False

@@ -3,23 +3,23 @@
 from setuptools import setup, find_packages
 
 
-def parse_meta(path_to_meta):
-    with open(path_to_meta) as f:
-        meta = {}
+def parse_meta(path_to_metadata):
+    with open(path_to_metadata) as f:
+        metadata = {}
         for line in f.readlines():
             if line.startswith("__version__"):
-                meta["__version__"] = line.split('"')[1]
-    return meta
+                metadata["__version__"] = line.split('"')[1]
+    return metadata
 
 
-meta = parse_meta("hvsrpy/meta.py")
+metadata = parse_meta("hvsrpy/metadata.py")
 
 with open("README.md", encoding="utf8") as f:
     long_description = f.read()
 
 setup(
     name='hvsrpy',
-    version=meta['__version__'],
+    version=metadata['__version__'],
     description='A Python package for horizontal-to-vertical spectral ratio processing',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -46,7 +46,7 @@ setup(
     keywords='horizontal-to-vertical spectral ratio hv hvsr',
     packages=find_packages(),
     python_requires='>=3.8',
-    install_requires=['numpy>=1.22', 'scipy', 'obspy', 'sigpropy>=1.0.0',
+    install_requires=['numpy>=1.22', 'scipy', 'obspy',
                       'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
     extras_require={
         'dev': ['coverage', 'sphinx-click'],
