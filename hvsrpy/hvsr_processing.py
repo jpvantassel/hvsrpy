@@ -15,10 +15,13 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-def preprocess(recordings, settings):
+import numpy as np
+from numpy import fft
+
+def preprocess(records, settings):
     """Preprocess time domain data before performing HVSR calculations.
 
-    recordings: iterable of SeismicRecording3C
+    records: iterable of SeismicRecording3C
         Time-domain data in the form of an interable object containing
         SeismicRecording3C objects. This is the data that will be
         preprocessed.
@@ -29,13 +32,13 @@ def preprocess(recordings, settings):
     Returns
     -------
     List of SeismicRecording3C
-        Seismic recordings that have been preprocessed and are ready for
+        Seismic records that have been preprocessed and are ready for
         HVSR processing. 
 
     """
-    preprocessed_recordings = []
+    preprocessed_records = []
 
-    for timeseries in recordings:
+    for timeseries in records:
 
         # TODO(jpv): Add orient to north functionality.
 
@@ -54,15 +57,128 @@ def preprocess(recordings, settings):
             if settings.detrend is not None:
                 window.detrend(type=settings.detrend)
 
-        preprocessed_recordings.extend(windows)
+        preprocessed_records.extend(windows)
 
-    return preprocessed_recordings
+    return preprocessed_records
+
+def arithmetic_mean(ns, ew):
+    """Computes the arithmetic mean of two vectors."""
+    return (ns+ew) / 2
+
+def squared_average(ns, ew):
+    """Computes the squared average (aka quadratic mean) of two vectors."""
+    return np.sqrt((ns*ns + ew*ew)/2)
+
+def geometric_mean(ns, ew):
+    """Computes the geometric mean of two vectors."""
+    return np.sqrt(ns * ew)
+
+def total_horizontal_energy(ns, ew):
+    """Computes the magnitude of sum of two orthoginal vectors."""
+    return np.sqrt((ns*ns + ew*ew))
+
+def maximum_horizontal_value(ns, ew):
+    """Computes the entry-by-entry maximum of the vecotrs provided."""
+    return np.where(ns>ew, ns, ew)
+
+METHODS_TO_COMBINE_HORIZONTAL_COMPONENTS = {
+    "arithmetic_mean" :arithmetic_mean,
+    "squared_average": squared_average,
+    "quadratic_mean" : squared_average,
+    "geometric_mean": geometric_mean,
+    "total_horizontal_energy" : total_horizontal_energy,
+    "maximum_horizontal_value" : maximum_horizontal_value
+}
+
+# PREPARATION_METHODS = {
+#     "arithmetic_mean" : prepare_in_frequency_domain,
+#     "squared_average": prepare_in_frequency_domain,
+#     "quadratic_mean" : prepare_in_frequency_domain,
+#     "geometric_mean": prepare_in_frequency_domain,
+#     "total_horizontal_energy" : prepare_in_frequency_domain,
+#     "maximum_horizontal_value" : prepare_in_frequency_domain,
+#     "single_azimuth": prepare_in_time_domain,
+#     "multiple_azimuth": prepare_in_time_domain,
+#     "rotd50" : prepare_in_time_domain,
+# }
+
+# def single_azimuth(ns, ew):
+#     """Computes the magnitude of two vectors along a specifc azimuth."""
+#     radians_from_north = np.radians(degrees_from_north)
+#     return ns*np.cos(radians_from_north) + ew*np.sin(radians_from_north)
+
+# def prepare_in_time_domain(record, settings):
+#     pass
+
+# def prepare_in_frequency_domain(record, settings):
+#     pass
+
+# def hvsr_process_typical(recordings, settings):
+
+#     return HvsrTypical
 
 
-def process(recordings, settings):
+# def hvsr_process_azimuthal(recordings, settings):
+
+#     hvsrs = np.empty(len(azimuth), dtype=object)
+#     for index, az in enumerate(azimuth):
+#         hvsrs[index] = self._make_hvsr(method="single-azimuth",
+#                                         resampling=resampling,
+#                                         bandwidth=bandwidth,
+#                                         f_low=f_low,
+#                                         f_high=f_high,
+#                                         azimuth=az)
+#     return HvsrRotated.from_iter(hvsrs, azimuth, meta=self.meta)
+
+def traditional_hvsr_processing(records, settings):
+    hvsr_spectra = []
+    for record in records:
+        # window time series to mitigate frequency-domain artifacts.
+        record.window(*settings.window_type_and_width)
+
+        # compute fourier transform.
+        if settings.fft_settings is None:
+            settings.fft_settings = dict(n=records.ns.nsamples)
+        ns = np.abs(fft.fft(record.ns.amplitude, **settings.fft_settings)
+        ew = np.abs(fft.fft(record.ew.amplitude, **settings.fft_settings)
+        vt = np.abs(fft.fft(record.vt.amplitude, **settings.fft_settings)
+        # TODO (jpv): Finish HVSR processing calculations.
+
+        # prepare frequency vector
+        frq = fft.fftfreq(n, d=records.ns.dt)
+
+        # 
+
+
+
+        method = PREPARATION_METHODS[settings.method_to_combine_horizontals]
+        h, v = method(record, settings)
+
+        # smoothing
+
+    return Hvsr
+
+
+
+def azimuthal_hvsr_processing(records, settings):
+    pass
+
+def diffuse_field_hvsr_processing(records, settings):
+    pass
+
+
+PROCESSING_METHODS = {
+    "traditional" : traditional_hvsr_processing,
+    "azimuthal" : azimuthal_hvsr_processing,
+    "diffuse_field" : diffuse_field_hvsr_processing
+}
+
+
+
+def process(records, settings):
     """Process time domain domain data.
 
-    recordings: iterable of SeismicRecording3C
+    records: iterable of SeismicRecording3C
         Time-domain data in the form of interable object containing
         SeismicRecording3C objects. This is the data that will be
         processed.
@@ -73,172 +189,78 @@ def process(recordings, settings):
     Returns
     -------
     Hvsr
-        Seismic recordings that have been preprocessed and are ready for
-        HVSR processing. 
+        # TODO(jpv): Finish docstring.
 
     """
-    for recording in recordings:
-
-        # window time series to mitigate frequency-domain artifacts
-        recording.window(*settings.window_type_and_width)
-
-        
+    return PROCESSING_METHODS[settings.processing_method](records, settings)
 
 
-    if settings.processing_method in ["squared-average", "geometric-mean", "single-azimuth"]:
 
-        # def hvsr_process_typical(recordings, settings):
+# def _make_hvsr(self, method, resampling, bandwidth, f_low=None, f_high=None, azimuth=None):
+#     if method in ["squared-average", "geometric-mean"]:
+#         ffts = self.transform()
+#         hor = self._combine_horizontal_fd(
+#             method=method, ew=ffts["ew"], ns=ffts["ns"])
+#         ver = ffts["vt"]
+#         del ffts
+#     elif method == "single-azimuth":
+#         hor = self._combine_horizontal_td(method=method,
+#                                             azimuth=azimuth)
+#         hor = FourierTransform.from_timeseries(hor)
+#         ver = FourierTransform.from_timeseries(self.vt)
+#     else:
+#         msg = f"`method`={method} has not been implemented."
+#         raise NotImplementedError(msg)
 
-        #     # Cosine taper each window individually.
-        #     recording.cosine_taper(settings.tukey_window_size)
+#     self.meta["method"] = method
+#     self.meta["azimuth"] = azimuth
 
-        #     return self._make_hvsr(method=method, resampling=resampling,
-        #                             bandwidth=bandwidth, f_low=f_low,
-        #                             f_high=f_high, azimuth=azimuth)
-        #     return HvsrTypical
+#     # TODO (jpv): Move these sampling out of the make method
+#     if isinstance(resampling, dict):
+#         if resampling["res_type"] == "linear":
+#             frq = np.linspace(resampling["minf"],
+#                             resampling["maxf"],
+#                             resampling["nf"])
+#         elif resampling["res_type"] == "log":
+#             frq = np.geomspace(resampling["minf"],
+#                             resampling["maxf"],
+#                             resampling["nf"])
+#         else:
+#             msg = f"`res_type`={resampling['res_type']} has not been implemented."
+#             raise NotImplementedError(msg)
+#     else:
+#         frq = np.array(resampling)
 
-        # def hvsr_process_azimuthal(recordings, settings):
+#     hor.smooth_konno_ohmachi_fast(frq, bandwidth)
+#     ver.smooth_konno_ohmachi_fast(frq, bandwidth)
+#     hor._amp /= ver._amp
+#     hvsr = hor
+#     del ver
 
-        #         # # Combine horizontal components directly.
+#     if self.ns.nseries == 1:
+#         window_length = max(self.ns.time)
+#     else:
+#         window_length = max(self.ns.time[0])
 
-        #     # # Rotate horizontal components through a variety of azimuths.
-        #     # elif method in ["rotate", "multiple-azimuths"]:
+#     self.meta["Window Length"] = window_length
 
-        #     # Deprecate `rotate` in favor of the more descriptive `multiple-azimuths`.
-        #     if method == "rotate":
-        #         msg = "method='rotate' is deprecated, replace with the more descriptive 'multiple-azimuths'."
-        #         warnings.warn(msg, DeprecationWarning)
+#     return Hvsr(hvsr.amplitude, hvsr.frequency, find_peaks=False,
+#                 f_low=f_low, f_high=f_high, meta=self.meta)
 
-        #     hvsrs = np.empty(len(azimuth), dtype=object)
-        #     for index, az in enumerate(azimuth):
-        #         hvsrs[index] = self._make_hvsr(method="single-azimuth",
-        #                                         resampling=resampling,
-        #                                         bandwidth=bandwidth,
-        #                                         f_low=f_low,
-        #                                         f_high=f_high,
-        #                                         azimuth=az)
-        #     return HvsrRotated.from_iter(hvsrs, azimuth, meta=self.meta)
+# def transform(self, **kwargs):
+#     """Perform Fourier transform on components.
 
-        # else:
-        #     msg = f"`method`={method} has not been implemented."
-        #     raise NotImplementedError(msg)
+#     Returns
+#     -------
+#     dict
+#         With `FourierTransform`-like objects, one for for each
+#         component, indicated by the key 'ew','ns', 'vt'.
 
-        # return HvsrAzimuthal
+#     """
+#     ffts = {}
+#     for attr in ["ew", "ns", "vt"]:
+#         tseries = getattr(self, attr)
+#         fft = FourierTransform.from_timeseries(tseries, **kwargs)
+#         ffts[attr] = fft
+#     return ffts
 
-        # def _make_hvsr(self, method, resampling, bandwidth, f_low=None, f_high=None, azimuth=None):
-        #     if method in ["squared-average", "geometric-mean"]:
-        #         ffts = self.transform()
-        #         hor = self._combine_horizontal_fd(
-        #             method=method, ew=ffts["ew"], ns=ffts["ns"])
-        #         ver = ffts["vt"]
-        #         del ffts
-        #     elif method == "single-azimuth":
-        #         hor = self._combine_horizontal_td(method=method,
-        #                                             azimuth=azimuth)
-        #         hor = FourierTransform.from_timeseries(hor)
-        #         ver = FourierTransform.from_timeseries(self.vt)
-        #     else:
-        #         msg = f"`method`={method} has not been implemented."
-        #         raise NotImplementedError(msg)
-
-        #     self.meta["method"] = method
-        #     self.meta["azimuth"] = azimuth
-
-        #     # TODO (jpv): Move these sampling out of the make method
-        #     if isinstance(resampling, dict):
-        #         if resampling["res_type"] == "linear":
-        #             frq = np.linspace(resampling["minf"],
-        #                             resampling["maxf"],
-        #                             resampling["nf"])
-        #         elif resampling["res_type"] == "log":
-        #             frq = np.geomspace(resampling["minf"],
-        #                             resampling["maxf"],
-        #                             resampling["nf"])
-        #         else:
-        #             msg = f"`res_type`={resampling['res_type']} has not been implemented."
-        #             raise NotImplementedError(msg)
-        #     else:
-        #         frq = np.array(resampling)
-
-        #     hor.smooth_konno_ohmachi_fast(frq, bandwidth)
-        #     ver.smooth_konno_ohmachi_fast(frq, bandwidth)
-        #     hor._amp /= ver._amp
-        #     hvsr = hor
-        #     del ver
-
-        #     if self.ns.nseries == 1:
-        #         window_length = max(self.ns.time)
-        #     else:
-        #         window_length = max(self.ns.time[0])
-
-        #     self.meta["Window Length"] = window_length
-
-        #     return Hvsr(hvsr.amplitude, hvsr.frequency, find_peaks=False,
-        #                 f_low=f_low, f_high=f_high, meta=self.meta)
-
-        #     def transform(self, **kwargs):
-        #         """Perform Fourier transform on components.
-
-        #         Returns
-        #         -------
-        #         dict
-        #             With `FourierTransform`-like objects, one for for each
-        #             component, indicated by the key 'ew','ns', 'vt'.
-
-        #         """
-        #         ffts = {}
-        #         for attr in ["ew", "ns", "vt"]:
-        #             tseries = getattr(self, attr)
-        #             fft = FourierTransform.from_timeseries(tseries, **kwargs)
-        #             ffts[attr] = fft
-        #         return ffts
-
-        #     @staticmethod
-        #     def _combine_horizontal_fd(method, ns, ew):
-        #         """Combine horizontal components in the frequency domain.
-
-        #         Parameters
-        #         ----------
-        #         method : {'squared-average', 'geometric-mean'}
-        #             Defines how the two horizontal components are combined.
-        #         ns, ew : FourierTransform
-        #             Frequency domain representation of each component.
-
-        #         Returns
-        #         -------
-        #         FourierTransform
-        #             Representing the combined horizontal components.
-
-        #         """
-        #         if method == "squared-average":
-        #             horizontal = np.sqrt((ns.mag*ns.mag + ew.mag*ew.mag)/2)
-        #         elif method == "geometric-mean":
-        #             horizontal = np.sqrt(ns.mag * ew.mag)
-        #         else:
-        #             msg = f"`method`={method} has not been implemented."
-        #             raise NotImplementedError(msg)
-
-        #         return FourierTransform(horizontal, ns.frequency, dtype=float)
-
-        #     def _combine_horizontal_td(self, method, azimuth):
-        #         """Combine horizontal components in the time domain.
-
-        #         azimuth : float, optional
-        #             Azimuth (clockwise positive) from North (i.e., 0 degrees).
-
-        #         Returns
-        #         -------
-        #         TimeSeries
-        #             Representing the combined horizontal components.
-
-        #         """
-        #         az_rad = math.radians(azimuth)
-
-        #         if method in ["azimuth", "single-azimuth"]:
-        #             horizontal = self.ns._amp * \
-        #                 math.cos(az_rad) + self.ew._amp*math.sin(az_rad)
-        #         else:
-        #             msg = f"method={method} has not been implemented."
-        #             raise NotImplementedError(msg)
-
-        #         return TimeSeries(horizontal, self.ns.dt)

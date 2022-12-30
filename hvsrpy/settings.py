@@ -19,6 +19,8 @@
 
 import json
 
+import numpy as np
+
 from .metadata import __version__
 
 
@@ -74,8 +76,46 @@ class HvsrProcessingSettings(Settings):
             "window_type_and_width": ("tukey", 0.1),
             "smoothing_type_and_bandwidth": ("konno_and_ohmachi", 40),
             "frequency_resampling": (0.1, 50, 200),
-            "processing_method": "standard",
-            "method_to_combine_horizontals": ("geometric_mean",)
+            "fft_settings":None
+        }
+        self.attrs.extend([attributes_with_defaults.keys()])
+        for attr, value in attributes_with_defaults.items():
+            setattr(self, attr, value)
+
+
+class HvsrTraditionalProcessingSettings(HvsrProcessingSettings):
+
+    def __init__(self):
+        super().__iter__()
+        attributes_with_defaults = {
+            "processing_method": "traditional",
+            "method_to_combine_horizontals": "geometric_mean",
+            "azimuth_if_method_single_azimuth": None
+        }
+        self.attrs.extend([attributes_with_defaults.keys()])
+        for attr, value in attributes_with_defaults.items():
+            setattr(self, attr, value)
+
+class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
+
+    def __init__(self):
+        super().__iter__()
+        attributes_with_defaults = {
+            "processing_method": "azimuthal",
+            "method_to_combine_horizontals": "multiple_azimuth",
+            "azimuths": np.arange(0, 180, 5)
+        }
+        self.attrs.extend([attributes_with_defaults.keys()])
+        for attr, value in attributes_with_defaults.items():
+            setattr(self, attr, value)
+
+class HvsrDiffuseFieldProcessingSettings(HvsrProcessingSettings):
+
+    def __init__(self):
+        super().__iter__()
+        attributes_with_defaults = {
+            "processing_method": "diffuse_field",
+            "method_to_combine_horizontals": "geometric_mean",
         }
         self.attrs.extend([attributes_with_defaults.keys()])
         for attr, value in attributes_with_defaults.items():
