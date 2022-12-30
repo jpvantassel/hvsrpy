@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Class definition for Hvsr object."""
+"""Class definition for HvsrTraditional object."""
 
 import logging
 import warnings
@@ -27,13 +27,13 @@ import matplotlib.pyplot as plt
 
 from .plottools import single_plot
 from .interact import ginput_session
-from .meta import __version__
+from .metadata import __version__
 
-logger = logging.getLogger("swprocess.hvsr")
+logger = logging.getLogger(__name__)
 
-__all__ = ["Hvsr"]
+__all__ = ["HvsrTraditional"]
 
-class Hvsr():
+class HvsrTraditional():
     """Class for creating and manipulating HVSR objects.
 
     Attributes
@@ -814,9 +814,9 @@ class Hvsr():
                               "Fundamental Site Period, T0"])
         return df
 
-    def print_stats(self, distribution_f0, places=2):  # pragma: no cover
-        """Print basic statistics of `Hvsr` instance."""
-        display(self._stats(distribution_f0=distribution_f0).round(places))
+    # def print_stats(self, distribution_f0, places=2):  # pragma: no cover
+    #     """Print basic statistics of `Hvsr` instance."""
+    #     display(self._stats(distribution_f0=distribution_f0).round(places))
 
     def _geopsy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for Geopsy-style file."""

@@ -24,12 +24,12 @@ from pandas import DataFrame
 
 from hvsrpy import Hvsr, __version__
 
-logger = logging.getLogger("swprocess.hvsr_rotated")
+logger = logging.getLogger(__name__)
 
-__all__ = ["HvsrRotated"]
+__all__ = ["HvsrAzimuthal"]
 
 
-class HvsrRotated():
+class HvsrAzimuthal():
     """Class definition for rotated Horizontal-to-Vertical calculations.
 
     Attributes
@@ -424,9 +424,9 @@ class HvsrRotated():
                               "Fundamental Site Period, T0,AZ"])
         return df
 
-    def print_stats(self, distribution_f0, places=2):  # pragma: no cover
-        """Print basic statistics of `Hvsr` instance."""
-        display(self._stats(distribution_f0=distribution_f0).round(places))
+    # def print_stats(self, distribution_f0, places=2):  # pragma: no cover
+    #     """Print basic statistics of `Hvsr` instance."""
+    #     display(self._stats(distribution_f0=distribution_f0).round(places))
 
     def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
         """Lines for hvsrpy-style file."""

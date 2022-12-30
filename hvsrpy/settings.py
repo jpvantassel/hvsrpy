@@ -75,7 +75,7 @@ class HvsrProcessingSettings(Settings):
         attributes_with_defaults = {
             "window_type_and_width": ("tukey", 0.1),
             "smoothing_type_and_bandwidth": ("konno_and_ohmachi", 40),
-            "frequency_resampling": (0.1, 50, 200),
+            "frequency_resampling": np.geomspace(0.1, 50, 200),
             "fft_settings":None
         }
         self.attrs.extend([attributes_with_defaults.keys()])
@@ -102,7 +102,6 @@ class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
         super().__iter__()
         attributes_with_defaults = {
             "processing_method": "azimuthal",
-            "method_to_combine_horizontals": "multiple_azimuth",
             "azimuths": np.arange(0, 180, 5)
         }
         self.attrs.extend([attributes_with_defaults.keys()])
@@ -115,7 +114,6 @@ class HvsrDiffuseFieldProcessingSettings(HvsrProcessingSettings):
         super().__iter__()
         attributes_with_defaults = {
             "processing_method": "diffuse_field",
-            "method_to_combine_horizontals": "geometric_mean",
         }
         self.attrs.extend([attributes_with_defaults.keys()])
         for attr, value in attributes_with_defaults.items():

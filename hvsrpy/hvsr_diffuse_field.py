@@ -1,4 +1,4 @@
-# This file is part of hvsrpy a Python package for horizontal-to-vertical
+# This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
 # Copyright (C) 2019-2021 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
@@ -15,17 +15,17 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Import modules into the hvsrpy namespace."""
+"""Class definition for HvsrDiffuseField object."""
 
 import logging
 
-from .metadata import __version__
-from .hvsr_traditional import HvsrTraditional
-from .hvsr_azimuthal import HvsrAzimuthal
-from .hvsr_diffuse_field import HvsrDiffuseField
-from .hvsr_spatial import HvsrVault, montecarlo_f0
-from .data_wrangler import read
-from .seismic_recording_3c import SeismicRecording3C
-from .timeseries import TimeSeries
+import numpy as np
 
-logging.getLogger("hvsrpy").addHandler(logging.NullHandler())
+from .metadata import __version__
+
+logger = logging.getLogger(__name__)
+
+__all__ = ["HvsrDiffuseField"]
+
+class HvsrDiffuseField():
+    pass
