@@ -34,6 +34,11 @@ class Settings():
     def attr_dict(self):
         return {name: getattr(self, name) for name in (self.attrs)}
 
+    def extend_attributes(self, attributes_with_defaults):
+        self.attrs.extend([attributes_with_defaults.keys()])
+        for attr, value in attributes_with_defaults.items():
+            setattr(self, attr, value)
+
     def save(self, fname):
         with open(fname, "w") as f:
             json.dump(self.attr_dict, f)
@@ -63,9 +68,7 @@ class HvsrPreProcessingSettings(Settings):
             "window_length_in_seconds": 60,
             "filter_corner_frequencies_in_hz": (None, None)
         }
-        self.attrs.extend([attributes_with_defaults.keys()])
-        for attr, value in attributes_with_defaults.items():
-            setattr(self, attr, value)
+        self.extend_attributes(attributes_with_defaults)
 
 
 class HvsrProcessingSettings(Settings):
@@ -75,12 +78,10 @@ class HvsrProcessingSettings(Settings):
         attributes_with_defaults = {
             "window_type_and_width": ("tukey", 0.1),
             "smoothing_type_and_bandwidth": ("konno_and_ohmachi", 40),
-            "frequency_resampling": np.geomspace(0.1, 50, 200),
-            "fft_settings":None
+            "frequency_resampling_in_hz": np.geomspace(0.1, 50, 200),
+            "fft_settings": None
         }
-        self.attrs.extend([attributes_with_defaults.keys()])
-        for attr, value in attributes_with_defaults.items():
-            setattr(self, attr, value)
+        self.extend_attributes(attributes_with_defaults)
 
 
 class HvsrTraditionalProcessingSettings(HvsrProcessingSettings):
@@ -89,12 +90,41 @@ class HvsrTraditionalProcessingSettings(HvsrProcessingSettings):
         super().__iter__()
         attributes_with_defaults = {
             "processing_method": "traditional",
-            "method_to_combine_horizontals": "geometric_mean",
-            "azimuth_if_method_single_azimuth": None
         }
-        self.attrs.extend([attributes_with_defaults.keys()])
-        for attr, value in attributes_with_defaults.items():
-            setattr(self, attr, value)
+        self.extend_attributes(attributes_with_defaults)
+
+class HvsrTraditionalFrequencyDomainProcessingSettings(HvsrTraditionalProcessingSettings):
+
+    def __init__(self):
+        super().__iter__()
+        attributes_with_defaults = {
+            "method_to_combine_horizontals": "geometric_mean",
+        }
+        self.extend_attributes(attributes_with_defaults)
+
+
+class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSettings):
+
+    def __init__(self):
+        super().__iter__()
+        attributes_with_defaults = {
+            "method_to_combine_horizontals": "single_azimuth",
+            "azimuth_in_degrees": 20
+        }
+        self.extend_attributes(attributes_with_defaults)
+
+
+class HvsrTraditionalRotDnProcessingSettings(HvsrTraditionalProcessingSettings):
+
+    def __init__(self):
+        super().__iter__()
+        attributes_with_defaults = {
+            "method_to_combine_horizontals": "rotdn",
+            "nth_percentile_for_rotd_computation":50,
+            "azimuths_in_degrees": np.arange(0, 180, 5)
+        }
+        self.extend_attributes(attributes_with_defaults)
+
 
 class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
 
@@ -102,11 +132,10 @@ class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
         super().__iter__()
         attributes_with_defaults = {
             "processing_method": "azimuthal",
-            "azimuths": np.arange(0, 180, 5)
+            "azimuths_in_degrees": np.arange(0, 180, 5)
         }
-        self.attrs.extend([attributes_with_defaults.keys()])
-        for attr, value in attributes_with_defaults.items():
-            setattr(self, attr, value)
+        self.extend_attributes(attributes_with_defaults)
+
 
 class HvsrDiffuseFieldProcessingSettings(HvsrProcessingSettings):
 
@@ -115,6 +144,4 @@ class HvsrDiffuseFieldProcessingSettings(HvsrProcessingSettings):
         attributes_with_defaults = {
             "processing_method": "diffuse_field",
         }
-        self.attrs.extend([attributes_with_defaults.keys()])
-        for attr, value in attributes_with_defaults.items():
-            setattr(self, attr, value)
+        self.extend_attributes(attributes_with_defaults)

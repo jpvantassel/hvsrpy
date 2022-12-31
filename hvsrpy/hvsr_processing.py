@@ -94,15 +94,10 @@ def maximum_horizontal_value(ns, ew, settings=None):
     return np.where(ns > ew, ns, ew)
 
 
-def _single_azimuth(ns, ew, degrees_from_north):
+def single_azimuth(ns, ew, degrees_from_north):
     """Computes the magnitude of two vectors along a specifc azimuth."""
     radians_from_north = np.radians(degrees_from_north)
     return ns*np.cos(radians_from_north) + ew*np.sin(radians_from_north)
-
-
-def single_azimuth(ns, ew, settings):
-    degrees_from_north = settings.azimuth_if_method_single_azimuth
-    return _single_azimuth(ns, ew, degrees_from_north)
 
 
 COMBINE_HORIZONTAL_REGISTER = {
@@ -111,22 +106,9 @@ COMBINE_HORIZONTAL_REGISTER = {
     "quadratic_mean": squared_average,
     "geometric_mean": geometric_mean,
     "total_horizontal_energy": total_horizontal_energy,
+    "vector_summation": total_horizontal_energy,
     "maximum_horizontal_value": maximum_horizontal_value,
-    "single_azimuth": single_azimuth,
-    "directional_energy": single_azimuth
 }
-
-# PREPARATION_METHODS = {
-#     "arithmetic_mean" : prepare_in_frequency_domain,
-#     "squared_average": prepare_in_frequency_domain,
-#     "quadratic_mean" : prepare_in_frequency_domain,
-#     "geometric_mean": prepare_in_frequency_domain,
-#     "total_horizontal_energy" : prepare_in_frequency_domain,
-#     "maximum_horizontal_value" : prepare_in_frequency_domain,
-#     "single_azimuth": prepare_in_time_domain,
-#     "multiple_azimuth": prepare_in_time_domain,
-#     "rotd50" : prepare_in_time_domain,
-# }
 
 
 def rfft(amplitude, **kwargs):
@@ -136,7 +118,71 @@ def rfft(amplitude, **kwargs):
     return fft
 
 
-def traditional_hvsr_processing(records, settings):
+def traditional_single_azimuth_hvsr_processing(records, settings):
+    hvsr_spectra = []
+    for record in records:
+        # combine horizontal components in the time domain.
+        h = single_azimuth(record.ns.amplitude,
+                           record.ew.amplitude,
+                           settings.azimuth_in_degrees)
+        h = TimeSeries(h, record.ns.dt)
+
+        # window time series to mitigate frequency-domain artifacts.
+        h.window(*settings.window_type_and_width)
+        v = record.vt
+        v.window(*settings.window_type_and_width)
+
+        # compute fourier transform.
+        if settings.fft_settings is None:
+            settings.fft_settings = dict(n=h.nsamples)
+        fft_h = np.abs(rfft(record.h.amplitude, **settings.fft_settings))
+        fft_v = np.abs(rfft(record.v.amplitude, **settings.fft_settings))
+        fft_frq = fft.rfftfrq(settings.fft_settings["n"], h.dt)
+
+        # smoothing
+        frq = settings.frequency_resampling_in_hz
+        smooth_v = konno_ohmachi(fft_frq, fft_v, frq)
+        smooth_h = konno_ohmachi(fft_frq, fft_h, frq)
+
+        # compute hvsr
+        hvsr_spectra.append(smooth_h / smooth_v)
+
+    return HvsrTraditional(hvsr_spectra, frq)
+    # TODO(jpv): Add metadata HvsrTraditional.
+
+
+def traditional_rotdn_hvsr_processing(records, settings):
+    frq = settings.frequency_resampling_in_hz
+    rotdn_hvsr_spectra = []
+    for record in records:
+        # prepare vertical component only once per record.
+        v = record.vt
+        v.window(*settings.window_type_and_width)
+        if settings.fft_settings is None:
+            settings.fft_settings = dict(n=v.nsamples)
+        fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
+        fft_frq = fft.rfftfrq(settings.fft_settings["n"], record.ns.dt)
+        smooth_v = konno_ohmachi(fft_frq, fft_v, frq)
+
+        # rotate horizontals through defined azimuths.
+        rotated_hvsr_spectra = np.emtpy((len(azimuth), len(frq)))
+        for idx, azimuth in enumerate(settings.azimuths):
+            h = single_azimuth(record.ns, record.ew, azimuth)
+            h = TimeSeries(h, dt=record.ns.dt)
+            h.window(*settings.window_type_and_width)
+            fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
+            smooth_h = konno_ohmachi(fft_frq, fft_h, frq)
+            rotated_hvsr_spectra[idx] = smooth_h
+
+        smooth_h = np.percentile(rotdn_hvsr_spectra,
+                                 settings.nth_percentile_for_rotd_computation,
+                                 axis=0)
+        rotdn_hvsr_spectra.append(smooth_h / smooth_v)
+
+    return HvsrTraditional(rotdn_hvsr_spectra, frq)
+
+
+def traditional_frequency_domain_hvsr_processing(records, settings):
     hvsr_spectra = []
     for record in records:
         # window time series to mitigate frequency-domain artifacts.
@@ -166,6 +212,26 @@ def traditional_hvsr_processing(records, settings):
     # TODO(jpv): Add metadata HvsrTraditional.
 
 
+TRADITIONAL_PROCESSING_REGISTER = {
+    "single_azimuth": traditional_single_azimuth_hvsr_processing,
+    "directional_energy": traditional_single_azimuth_hvsr_processing,
+    "rotdn": traditional_rotdn_hvsr_processing,
+    "arithmetic_mean": traditional_frequency_domain_hvsr_processing,
+    "squared_average": traditional_frequency_domain_hvsr_processing,
+    "quadratic_mean": traditional_frequency_domain_hvsr_processing,
+    "geometric_mean": traditional_frequency_domain_hvsr_processing,
+    "total_horizontal_energy": traditional_frequency_domain_hvsr_processing,
+    "vector_summation": traditional_frequency_domain_hvsr_processing,
+    "maximum_horizontal_value": traditional_frequency_domain_hvsr_processing,
+}
+
+
+def traditional_hvsr_processing(records, settings):
+    # need to handle this seperately b/c time domain technique
+    method = TRADITIONAL_PROCESSING_REGISTER[settings.method_to_combine_horizontals]
+    return method(records, settings)
+
+
 def azimuthal_hvsr_processing(records, settings):
     # allocate memory for vertical spectra.
     frq = settings.frequency_resampling
@@ -187,7 +253,7 @@ def azimuthal_hvsr_processing(records, settings):
     for azimuth in settings.azimuths:
         hvsr_spectra = np.emtpy((len(records), len(frq)))
         for idx, (smooth_v, record) in enumerate(zip(records, smooth_v)):
-            h = _single_azimuth(record.ns, record.ew, azimuth)
+            h = single_azimuth(record.ns, record.ew, azimuth)
             h = TimeSeries(h, dt=record.ns.dt)
             h.window(*settings.window_type_and_width)
             fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
@@ -210,7 +276,7 @@ def diffuse_field_hvsr_processing(records, settings):
             msg += " equal for processing under the diffuse field assumption."
             raise IndexError(msg)
 
-    nfrqs = _nsamples//2 + 1 if (_nsamples%2) == 0 else _nsamples//2
+    nfrqs = _nsamples//2 + 1 if (_nsamples % 2) == 0 else _nsamples//2
     psd_ns = np.zeros(len(nfrqs))
     psd_ew = np.zeros(len(nfrqs))
     psd_vt = np.zeros(len(nfrqs))
@@ -225,21 +291,22 @@ def diffuse_field_hvsr_processing(records, settings):
         fft_ns = np.abs(rfft(record.ns.amplitude, **settings.fft_settings))
         fft_ew = np.abs(rfft(record.ew.amplitude, **settings.fft_settings))
         fft_vt = np.abs(rfft(record.vt.amplitude, **settings.fft_settings))
-        
+
         # compute psd with appropriate normalization for completeness;
         # note normalization is not technically needed for this application.
         psd_ns += (fft_ns * fft_ns) / (2*df)
         psd_ew += (fft_ew * fft_ew) / (2*df)
         psd_vt += (fft_vt * fft_vt) / (2*df)
 
-    # compute average psd over all records (i.e., windows). 
+    # compute average psd over all records (i.e., windows).
     psd_ns /= len(records)
     psd_ew /= len(records)
     psd_vt /= len(records)
-        
+
     # compute hvsr
     fft_frq = fft.rfftfrq(settings.fft_settings["n"], record.ns.dt)
     return HvsrDiffuseField(np.sqrt((psd_ns + psd_ew)/psd_vt), fft_frq)
+
 
 PROCESSING_METHODS = {
     "traditional": traditional_hvsr_processing,
@@ -252,7 +319,7 @@ def process(records, settings):
     """Process time domain domain data.
 
     records: iterable of SeismicRecording3C
-        Time-domain data in the form of interable object containing
+        Time-domain data in the form of iterable object containing
         SeismicRecording3C objects. This is the data that will be
         processed.
     settings : HvsrProcessingSettings
