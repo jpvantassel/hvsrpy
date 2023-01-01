@@ -20,9 +20,11 @@
 import logging
 
 import numpy as np
-from pandas import DataFrame
+from scipy.signal import find_peaks
 
-from hvsrpy import Hvsr, __version__
+from .hvsr_traditional import HvsrTraditional
+from .metadata import __version__
+from .constants import DISTRIBUTION_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -30,19 +32,19 @@ __all__ = ["HvsrAzimuthal"]
 
 
 class HvsrAzimuthal():
-    """Class definition for rotated Horizontal-to-Vertical calculations.
+    """Class definition for HVSR calculations across various azimuths.
 
     Attributes
     ----------
     hvsrs : list
-        Container of `Hvsr` objects, one per azimuth.
+        Container of `HvsrTraditional` objects, one per azimuth.
     azimuths : ndarray
         Vector of rotation azimuths correpsonding to `Hvsr` objects.
 
     """
 
     def __init__(self, hvsr, azimuth, meta=None):
-        """Instantiate a `HvsrRotated` object.
+        """Instantiate a `HvsrAzimuthal` object.
 
         Parameters
         ----------
@@ -56,8 +58,8 @@ class HvsrAzimuthal():
 
         Returns
         -------
-        HvsrRotated
-            Instantiated `HvsrRotated` object.
+        HvsrAzimuthal
+            Instantiated `HvsrAzimuthal` object.
 
         """
         hvsr, azimuth = self._check_input(hvsr, azimuth)
@@ -73,18 +75,19 @@ class HvsrAzimuthal():
             3. `az` is greater than 0 and less than 180.
 
         """
-        if not isinstance(hvsr, Hvsr):
-            raise TypeError("`hvsr` must be an instance of `Hvsr`.")
+        if not isinstance(hvsr, HvsrTraditional):
+            raise TypeError("`hvsr` must be an instance of `HvsrTraditional`.")
 
         az = float(az)
 
         if (az < 0) or (az > 180):
-            raise ValueError(f"`azimuth` must be between 0 and 180, not {az}.")
+            msg = f"`azimuth` is {az}; `azimuth` must be between 0 and 180."
+            raise ValueError(msg)
 
         return (hvsr, az)
 
     def append(self, hvsr, azimuth):
-        """Append `Hvsr` object at a new azimuth.
+        """Append `HvsrTraditional` object at a new azimuth.
 
         Parameters
         ----------
@@ -106,7 +109,7 @@ class HvsrAzimuthal():
 
     @classmethod
     def from_iter(cls, hvsrs, azimuths, meta=None):
-        """Create HvsrRotated from iterable of Hvsr objects."""
+        """Create `HvsrAzimuthal` from iterable of `HvsrTraditional` objects."""
         obj = cls(hvsrs[0], azimuths[0], meta=meta)
         if len(azimuths) > 1:
             for hvsr, az in zip(hvsrs[1:], azimuths[1:]):
@@ -114,19 +117,14 @@ class HvsrAzimuthal():
         return obj
 
     @property
-    def peak_frq(self):
+    def peak_frequency(self):
         """Array of peak frequencies, one array per azimuth."""
-        return [hv.peak_frq for hv in self.hvsrs]
+        return [hvsr.peak_frequency for hvsr in self.hvsrs]
 
     @property
-    def peak_amp(self):
+    def peak_amplitude(self):
         """Array of peak amplitudes, one array per azimuth."""
-        return [hv.peak_amp for hv in self.hvsrs]
-
-    # TODO (jpv): What if all windows get rejected on an azimuth?
-    def reject_windows(self, **kwargs):
-        for hv in self.hvsrs:
-            hv.reject_windows(**kwargs)
+        return [hvsr.peak_amplitude for hvsr in self.hvsrs]
 
     @property
     def azimuth_count(self):
@@ -152,7 +150,7 @@ class HvsrAzimuthal():
 
         """
         return self._mean_factory(distribution=distribution,
-                                  values=self.peak_frq)
+                                  values=self.peak_frequency)
 
     def mean_f0_amp(self, distribution="lognormal"):
         """Mean `f0` amplitude from all valid timewindows and azimuths.
@@ -179,7 +177,7 @@ class HvsrAzimuthal():
 
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
-        distribution = Hvsr.correct_distribution(distribution)
+        distribution = DISTRIBUTION_MAP[distribution]
         if distribution == "normal":
             mean = np.mean([np.mean(x, **kwargs) for x in values], **kwargs)
             return mean
@@ -193,9 +191,9 @@ class HvsrAzimuthal():
 
     @staticmethod
     def _std_factory(distribution, values, **kwargs):
-        distribution = Hvsr.correct_distribution(distribution)
+        distribution = DISTRIBUTION_MAP[distribution]
         n = len(values)
-        mean = HvsrRotated._mean_factory(distribution, values, **kwargs)
+        mean = HvsrAzimuthal._mean_factory(distribution, values, **kwargs)
         num = 0
         wi2 = 0
 
@@ -263,12 +261,12 @@ class HvsrAzimuthal():
                                  values=self.peak_amp)
 
     @property
-    def amp(self):
-        return [hv.amp[hv.valid_window_indices] for hv in self.hvsrs]
+    def amplitude(self):
+        return [hvsr.amplitude[hvsr.valid_window_boolean_mask] for hvsr in self.hvsrs]
 
     @property
-    def frq(self):
-        return self.hvsrs[0].frq
+    def frequency(self):
+        return self.hvsrs[0].frequency
 
     def mean_curves(self, distribution='lognormal'):
         """Mean curve for each azimuth
@@ -294,8 +292,7 @@ class HvsrAzimuthal():
         """Peak from each mean curve, one per azimuth."""
         frqs, amps = np.empty(self.azimuth_count), np.empty(self.azimuth_count)
         for az_cnt, hvsr in enumerate(self.hvsrs):
-            frqs[az_cnt] = hvsr.mc_peak_frq(distribution=distribution)
-            amps[az_cnt] = hvsr.mc_peak_amp(distribution=distribution)
+            frqs[az_cnt], amps[az_cnt] = hvsr.mean_curve_peak(distribution=distribution)
         return (frqs, amps)
 
     def mean_curve(self, distribution='lognormal'):
@@ -318,7 +315,8 @@ class HvsrAzimuthal():
 
         """
         return self._mean_factory(distribution=distribution,
-                                  values=self.amp, axis=0)
+                                  values=self.amplitude,
+                                  axis=0)
 
     def std_curve(self, distribution='lognormal'):
         """Sample standard deviation associated with mean HVSR curve.
@@ -343,203 +341,58 @@ class HvsrAzimuthal():
 
         """
         return self._std_factory(distribution=distribution,
-                                 values=self.amp, axis=0)
+                                 values=self.amp,
+                                 axis=0)
 
     @staticmethod
     def _nth_std_factory(n, distribution, mean, std):
-        return Hvsr._nth_std_factory(n=n, distribution=distribution,
-                                     mean=mean, std=std)
+        return HvsrTraditional._nth_std_factory(n=n,
+                                                distribution=distribution,
+                                                mean=mean,
+                                                std=std)
 
     def nstd_curve(self, n, distribution):
-        """Nth standard deviation on mean curve from all azimuths."""
-        return self._nth_std_factory(n=n, distribution=distribution,
+        """nth standard deviation on mean curve from all azimuths."""
+        return self._nth_std_factory(n=n,
+                                     distribution=distribution,
                                      mean=self.mean_curve(distribution=distribution),
                                      std=self.std_curve(distribution=distribution))
 
     def nstd_f0_frq(self, n, distribution):
-        """Nth standard deviation on `f0` from all azimuths"""
-        return self._nth_std_factory(n=n, distribution=distribution,
+        """nth standard deviation on `f0` from all azimuths"""
+        return self._nth_std_factory(n=n,
+                                     distribution=distribution,
                                      mean=self.mean_f0_frq(distribution=distribution),
                                      std=self.std_f0_frq(distribution=distribution))
 
-    def mc_peak_amp(self, distribution='lognormal'):
-        """Amplitude of the peak of the mean HVSR curve.
-
-        Parameters
-        ----------
-        distribution : {'normal', 'lognormal'}, optional
-            Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
-
-        Returns
-        -------
-        float
-            Amplitude associated with the peak of the mean HVSR curve.
-
-        """
-        mc = self.mean_curve(distribution)
-        mc = mc.reshape((1, mc.size))
-        i_low, i_high = self.hvsrs[0].i_low, self.hvsrs[0].i_high
-        return np.max(mc[0, Hvsr.find_peaks(mc[:, i_low:i_high], starting_index=i_low)[0]])
-
-    def mc_peak_frq(self, distribution='lognormal'):
+    def mean_curve_peak(self,
+                        distribution='lognormal',
+                        search_range_in_hz=(None, None),
+                        **find_peaks_kwargs):
         """Frequency of the peak of the mean HVSR curve.
 
         Parameters
         ----------
         distribution : {'normal', 'lognormal'}, optional
-            Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
+            Assumed distribution of HVSR curve, default is 'lognormal'.
 
         Returns
         -------
-        float
-            Frequency associated with the peak of the mean HVSR curve.
+        tuple
+            Frequency and amplitude associated with the peak of the mean
+            HVSR curve of the form
+            `(mean_curve_peak_frequency, mean_curve_peak_amplitude)`.
 
         """
+        #TODO(jpv): Finish documentation.
+        f_low_idx, f_high_idx = self._search_range_to_index_range(search_range_in_hz)
         mc = self.mean_curve(distribution)
-        mc = mc.reshape((1, mc.size))
-        i_low, i_high = self.hvsrs[0].i_low, self.hvsrs[0].i_high
-        return self.frq[i_low + int(np.where(mc[0, i_low:i_high] == np.max(mc[0, Hvsr.find_peaks(mc[:, i_low:i_high], starting_index=i_low)[0]]))[0])]
-
-    def _stats(self, distribution_f0):
-        distribution_f0 = Hvsr.correct_distribution(distribution_f0)
-
-        if distribution_f0 == "lognormal":
-            columns = ["Lognormal Median", "Lognormal Standard Deviation"]
-            data = np.array([[self.mean_f0_frq(distribution_f0),
-                              self.std_f0_frq(distribution_f0)],
-                             [1/self.mean_f0_frq(distribution_f0),
-                              self.std_f0_frq(distribution_f0)]])
-
-        elif distribution_f0 == "normal":
-            columns = ["Means", "Standard Deviation"]
-            data = np.array([[self.mean_f0_frq(distribution_f0),
-                              self.std_f0_frq(distribution_f0)],
-                             [np.nan, np.nan]])
-        else:
-            msg = f"`distribution_f0` of {distribution_f0} is not implemented."
-            raise NotImplementedError(msg)
-
-        df = DataFrame(data=data, columns=columns,
-                       index=["Fundamental Site Frequency, f0,AZ",
-                              "Fundamental Site Period, T0,AZ"])
-        return df
-
-    # def print_stats(self, distribution_f0, places=2):  # pragma: no cover
-    #     """Print basic statistics of `Hvsr` instance."""
-    #     display(self._stats(distribution_f0=distribution_f0).round(places))
-
-    def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
-        """Lines for hvsrpy-style file."""
-        # Correct distribution
-        distribution_f0 = Hvsr.correct_distribution(distribution_f0)
-        distribution_mc = Hvsr.correct_distribution(distribution_mc)
-
-        # `f0` from windows
-        mean_f = self.mean_f0_frq(distribution_f0)
-        sigm_f = self.std_f0_frq(distribution_f0)
-        ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
-        ci_68_upper_f = self.nstd_f0_frq(+1, distribution_f0)
-
-        # mean curve
-        mc = self.mean_curve(distribution_mc)
-        mc_peak_frq = self.mc_peak_frq(distribution_mc)
-        mc_peak_amp = self.mc_peak_amp(distribution_mc)
-        _min = self.nstd_curve(-1, distribution_mc)
-        _max = self.nstd_curve(+1, distribution_mc)
-
-        rejection = "False" if self.meta.get('Performed Rejection') is None else "True"
-
-        nseries = self.hvsrs[0].nseries
-        n_accepted = sum([sum(hvsr.valid_window_indices) for hvsr in self.hvsrs])
-        n_rejected = self.azimuth_count*nseries - n_accepted
-        lines = [
-            f"# hvsrpy output version {__version__}",
-            f"# File Name (),{self.meta.get('File Name')}",
-            f"# Window Length (s),{self.meta.get('Window Length')}",
-            f"# Total Number of Windows per Azimuth (),{nseries}",
-            f"# Total Number of Azimuths (),{self.azimuth_count}",
-            f"# Total Number of Windows (),{nseries*self.azimuth_count}",
-            f"# Frequency Domain Window Rejection Performed (),{rejection}",
-            f"# Lower frequency limit for peaks (Hz),{self.hvsrs[0].f_low}",
-            f"# Upper frequency limit for peaks (Hz),{self.hvsrs[0].f_high}",
-            f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
-            f"# Number of Accepted Windows (),{n_accepted}",
-            f"# Number of Rejected Windows (),{n_rejected}",
-            f"# Distribution of f0 (),{distribution_f0}"]
-
-        def fclean(number, decimals=4):
-            return np.round(number, decimals=decimals)
-
-        if distribution_f0 == "lognormal":
-            mean_t = 1/mean_f
-            sigm_t = sigm_f
-            ci_68_lower_t = np.exp(np.log(mean_t) - sigm_t)
-            ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
-
-            lines += [
-                f"# Median f0 (Hz) [LMf0AZ],{fclean(mean_f)}",
-                f"# Lognormal standard deviation f0 () [SigmaLNf0AZ],{fclean(sigm_f)}",
-                f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Median T0 (s) [LMT0AZ],{fclean(mean_t)}",
-                f"# Lognormal standard deviation T0 () [SigmaLNT0AZ],{fclean(sigm_t)}",
-                f"# 68 % Confidence Interval T0 (s),{fclean(ci_68_lower_t)},to,{fclean(ci_68_upper_t)}",
-            ]
-
-        else:
-            lines += [
-                f"# Mean f0 (Hz) [f0AZ],{fclean(mean_f)}",
-                f"# Standard deviation f0 (Hz) [Sigmaf0AZ],{fclean(sigm_f)}",
-                f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                "# Mean T0 (s) [LMT0AZ],NAN",
-                "# Standard deviation T0 () [SigmaT0AZ],NAN",
-                "# 68 % Confidence Interval T0 (s),NAN",
-            ]
-
-        c_type = "Median" if distribution_mc == "lognormal" else "Mean"
-        lines += [
-            f"# {c_type} Curve Distribution (),{distribution_mc}",
-            f"# {c_type} Curve Peak Frequency (Hz) [f0mcAZ],{fclean(mc_peak_frq)}",
-            f"# {c_type} Curve Peak Amplitude (),{fclean(mc_peak_amp)}",
-            f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
-        ]
-
-        _lines = []
-        for line in lines:
-            _lines.append(line+"\n")
-
-        for f_i, mean_i, bel_i, abv_i in zip(fclean(self.frq), fclean(mc), fclean(_min), fclean(_max)):
-            _lines.append(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
-
-        return _lines
-
-    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):
-        """Save HVSR data to file.
-
-        Parameters
-        ----------
-        fname : str
-            Name of file to save the results, may be the full or a
-            relative path.
-        distribution_f0 : {'lognormal', 'normal'}, optional
-            Assumed distribution of `f0` from the time windows, the
-            default is 'lognormal'.
-        distribution_mc : {'lognormal', 'normal'}, optional
-            Assumed distribution of mean curve, the default is
-            'lognormal'.
-        data_format : {'hvsrpy'}, optional
-            Format of output data file, default is 'hvsrpy'.
-
-        Returns
-        -------
-        None
-            Writes file to disk.
-
-        """
-        if data_format not in ["hvsrpy"]:
-            raise ValueError(f"data_format {data_format} unknown.")
-
-        lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
-
-        with open(fname, "w") as f:
-            for line in lines:
-                f.write(line)
+        relative_potential_peak_idxs, _ = find_peaks(mc[f_low_idx:f_high_idx],
+                                                     **find_peaks_kwargs)
+        if len(relative_potential_peak_idxs) == 0:
+            msg = "Mean curve does not have a peak in the specified range."
+            raise ValueError(msg)
+        absolute_potential_peak_idxs = relative_potential_peak_idxs + f_low_idx
+        peak_idx_of_potential_peaks = np.argmax(absolute_potential_peak_idxs)
+        peak_idx = absolute_potential_peak_idxs[peak_idx_of_potential_peaks]
+        return (self.frequency[peak_idx], mc[peak_idx])

@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2021 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2022 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -18,33 +18,28 @@
 """Class definition for HvsrTraditional object."""
 
 import logging
-import warnings
 
 import numpy as np
-import scipy.signal as sg
-from pandas import DataFrame
-import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 
-from .plottools import single_plot
-from .interact import ginput_session
-from .metadata import __version__
+from .constants import DISTRIBUTION_MAP
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["HvsrTraditional"]
 
 class HvsrTraditional():
-    """Class for creating and manipulating HVSR objects.
+    """Class for creating and manipulating HvsrTraditional objects.
 
     Attributes
     ----------
-    amp : ndarray
+    amplitude : ndarray
         Array of HVSR amplitudes. Each row represents an individual
         curve/time window and each column a frequency.
-    frq : ndarray
+    frequency : ndarray
         Vector of frequencies corresponds to each column.
-    nseries : int
-        Number of windows in `Hvsr` object.
+    nwindows : int
+        Number of windows in `HvsrTraditional` object.
     valid_window_boolean_mask : ndarray
         Boolean array indicating valid windows.
 
@@ -61,8 +56,7 @@ class HvsrTraditional():
         Parameters
         ----------
         name : str
-            Name of `value` to be checked, used solely for meaningful
-            error messages.
+            Name of `value` to be checked, used for meaningful error messages.
         value : iterable
             Value to be checked.
 
@@ -76,14 +70,14 @@ class HvsrTraditional():
         TypeError
             If `value` is not castable to an `ndarray` of doubles.
         ValueError
-            If `value` contains nan or a value less than or equal to
-            zero.
+            If `value` contains nan or a value less than or equal to zero.
 
         """
         try:
             value = np.array(value, dtype=np.double)
         except ValueError:
-            msg = f"{name} must be castable to ndarray of doubles, not {type(value)}."
+            msg = f"{name} must be castable to 2D-array of doubles, "
+            msg += f"not {type(value)}."
             raise TypeError(msg)
 
         if np.isnan(value).any():
@@ -94,16 +88,7 @@ class HvsrTraditional():
 
         return value
 
-    @staticmethod
-    def correct_distribution(distribution):
-        if distribution == "log-normal":
-            msg = "distribution='log-normal' is deprecated use 'lognormal' instead."
-            warnings.warn(msg, DeprecationWarning)
-            distribution = "lognormal"
-        return distribution
-
-    def __init__(self, amplitude, frequency, find_peaks=True,
-                 f_low=None, f_high=None, meta=None):
+    def __init__(self, amplitude, frequency, meta=None):
         """Create `Hvsr` from iterable of amplitude and frequency.
 
         Parameters
@@ -113,13 +98,6 @@ class HvsrTraditional():
             curve/time window and each column a frequency.
         frequency : ndarray
             Vector of frequencies, corresponding to each column.
-        find_peaks : bool, optional
-            Indicates whether peaks of Hvsr will be found when created,
-            default is `True`.
-        f_low, f_high : float, optional
-            Upper and lower frequency limits to restrict peak selection,
-            default is `None` meaning search range will not be
-            restricted.
         meta : dict, optional
             Meta information about the object, default is `None`.
 
@@ -129,148 +107,100 @@ class HvsrTraditional():
             Initialized with `amplitude` and `frequency`.
 
         """
-        self.frq = self._check_input("frequency", frequency)
+        self.frequency = self._check_input("frequency", frequency)
+        self.amplitude = np.atleast_2d(
+            self._check_input("amplitude", amplitude))
 
-        self.amp = self._check_input("amplitude", amplitude)
-
-        if len(self.amp.shape) == 1:
-            self.amp = self.amp.reshape((1, self.amp.size))
-
-        if self.frq.size != self.amp.shape[1]:
-            msg = f"Size of amplitude={self.amp.size} and frequency={self.frq.size} must be compatible."
+        if len(self.frequency) != self.amplitude.shape[1]:
+            msg = f"Shape of amplitude={self.amplitude.shape} and "
+            msg += f"frequency={self.frequency.shape} must be compatible."
             raise ValueError(msg)
 
-        self.nseries = self.amp.shape[0]
-        self.valid_window_boolean_mask = np.ones(self.nseries, dtype=bool)
-        self._main_peak_frq = np.zeros(self.nseries)
-        self._main_peak_amp = np.zeros(self.nseries)
+        self.nwindows = self.amplitude.shape[0]
+        self.valid_window_boolean_mask = np.ones(self.nwindows, dtype=bool)
+        self._main_peak_frq = np.empty(self.nwindows)
+        self._main_peak_amp = np.empty(self.nwindows)
+        self.update_peaks()
 
-        self.f_low = None if f_low is None else float(f_low)
-        if self.f_low is None:
-            self.i_low = 0
-        else:
-            diff = np.abs(self.frq - self.f_low)
-            self.i_low = int(np.where(diff == np.min(diff))[0])
-
-        self.f_high = None if f_high is None else float(f_high)
-        if self.f_high is None:
-            self.i_high = len(self.frq)
-        else:
-            diff = np.abs(self.frq - self.f_high)
-            self.i_high = int(np.where(diff == np.min(diff))[0]) + 1
-
-        self._initialized_peaks = find_peaks
-        if find_peaks:
-            self.update_peaks()
-
-        self.meta = meta
+        self.meta = dict(meta) if isinstance(meta, dict) else dict()
 
     @property
-    def valid_window_indices(self):
-        """Return depricated valid_window_indices."""
-        msg = "The property `valid_window_indices` is deprecated use `valid_window_boolean_mask` instead."
-        warnings.warn(msg, DeprecationWarning)
-        return self.valid_window_boolean_mask
-
-    @property
-    def rejected_window_indices(self):
-        """Rejected window indices."""
+    def rejected_window_boolean_mask(self):
+        """Boolean array indicating invalid (i.e., rejected) windows."""
         return np.invert(self.valid_window_boolean_mask)
 
     @property
-    def peak_frq(self):
-        """Valid peak frequency vector."""
-        if not self._initialized_peaks:
-            self.update_peaks()
+    def peak_frequencies(self):
+        """Valid peak frequency vector, one per window."""
         return self._main_peak_frq[self.valid_window_boolean_mask]
 
     @property
-    def peak_amp(self):
-        """Valid peak amplitude vector."""
-        if not self._initialized_peaks:
-            self.update_peaks()
+    def peak_amplitudes(self):
+        """Valid peak amplitude vector, one per window."""
         return self._main_peak_amp[self.valid_window_boolean_mask]
 
-    @staticmethod
-    def find_peaks(amp, starting_index=0, **kwargs):
-        """Indices of all peaks in `amp`.
+    def _search_range_to_index_range(self, search_range_in_hz):
+        f_low, f_high = search_range_in_hz
 
-        Wrapper method for `scipy.signal.find_peaks` function.
+        if f_low is None:
+            f_low_idx = 0
+        else:
+            f_low_idx = np.argmin(self.frequency - f_low)
 
-        Parameters
-        ----------
-        amp : ndarray
-            2D array of amplitudes. See `amp` attribute for details.
-        **kwargs : dict
-            Refer to
-            `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            documentation.
+        if f_high is None:
+            f_high_idx = len(self.frequency)
+        else:
+            f_high_idx = np.argmin(self.frequency - f_high)
 
-        Returns
-        -------
-        Tuple
-            Of the form `(peaks, settings)`. Where `peaks` is a `list`
-            of `lists` (one per window) of peak indices, and `settings`
-            is a `dict`, refer to
-            `scipy.signal.find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            documentation for details.
+        return (f_low_idx, f_high_idx)
 
-        """
-        peaks = []
-        for c_amp in amp:
-            peak, settings = sg.find_peaks(c_amp, **kwargs)
-            peak += starting_index
-            peaks.append(peak.tolist())
-        return (peaks, settings)
-
-    def update_peaks(self, **kwargs):
+    def update_peaks(self, search_range_in_hz=(None, None), **find_peaks_kwargs):
         """Update with the lowest frequency, highest amplitude peaks.
 
         Parameters
         ----------
-        **kwargs : dict
-            Refer to :meth:`find_peaks <Hvsr.find_peaks>` documentation.
+        search_range_in_hz : tuple, optional
+            Frequency range between which frequencies will be searched.
+            Half open ranges can be specified with `None`. Default is
+            `(None, None)` indicating the full frequency range will be
+            searched.
+        **find_peaks_kwargs : dict
+            Keyword arguments for the `scipy` function
+            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
+            see `scipy` documentation for details.
 
         Returns
         -------
         None
-            Updates `peaks` attribute.
+            Updates internal peak-related attributes.
 
         """
-        if not self._initialized_peaks:
-            self._initialized_peaks = True
+        f_low_idx, f_high_idx = self._search_range_to_index_range(
+            search_range_in_hz)
 
-        peak_indices, _ = self.find_peaks(self.amp[self.valid_window_boolean_mask, self.i_low:self.i_high],
-                                          starting_index=self.i_low,
-                                          **kwargs)
-        valid_count = 0
-        for c_window, valid in enumerate(self.valid_window_boolean_mask):
-            if not valid:
+        peaks = []
+        for window_idx, _amplitude in enumerate(self.amplitude):
+            # find potential peaks, index is relative b/c curve passed in is relative.
+            potential_peaks_relative, _ = find_peaks(_amplitude[f_low_idx:f_high_idx],
+                                                     **find_peaks_kwargs)
+
+            # if no peaks are found set window as invalid.
+            if len(potential_peaks_relative) == 0:
+                self.valid_window_boolean_mask[window_idx] = False
+                logger.warning(f"No peak found in window {window_idx}.")
                 continue
 
-            c_window_peaks = peak_indices[valid_count]
-            try:
-                c_index = np.where(self.amp[c_window] == np.max(
-                    self.amp[c_window, c_window_peaks]))[0]
-                # TODO (jpv): If a Hvsr curve has two peaks of equal
-                # amplitude, arbitrarily take the first.
-                if len(c_index) > 1:
-                    c_index = c_index[0]
-                self._main_peak_amp[c_window] = self.amp[c_window, c_index]
-                self._main_peak_frq[c_window] = self.frq[c_index]
-                self.valid_window_boolean_mask[c_window] = True
-            except ValueError as e:
-                if len(c_window_peaks) == 0:
-                    # TODO (jpv): Assess breaking change of setting window to invalid.
-                    self.valid_window_boolean_mask[c_window] = False
-                    logger.warning(f"No peak found in window #{c_window}.")
-                else:
-                    raise e
-            valid_count += 1
+            # update peak_amplitude and peak_frequency information.
+            potential_peaks_absolute = potential_peaks_relative + f_low_idx
+            peak_idx_of_pot_peaks = np.argmax(_amplitude[potential_peaks_absolute])
+            peak_idx = potential_peaks_absolute[peak_idx_of_pot_peaks]
+            self._main_peak_amp[window_idx] = _amplitude[peak_idx]
+            self._main_peak_frq[window_idx] = self.frequency[peak_idx]
+            self.valid_window_boolean_mask[window_idx] = True
 
     @staticmethod
     def _mean_factory(distribution, values, **kwargs):
-        distribution = Hvsr.correct_distribution(distribution)
+        distribution = DISTRIBUTION_MAP[distribution.lower()]
         if distribution == "normal":
             return np.mean(values, **kwargs)
         elif distribution == "lognormal":
@@ -324,8 +254,7 @@ class HvsrTraditional():
 
     @staticmethod
     def _std_factory(distribution, values, **kwargs):
-        distribution = Hvsr.correct_distribution(distribution)
-
+        distribution = DISTRIBUTION_MAP[distribution.lower()]
         if distribution == "normal":
             return np.std(values, ddof=1, **kwargs)
         elif distribution == "lognormal":
@@ -353,7 +282,7 @@ class HvsrTraditional():
             If `distribution` does not match the available options.
 
         """
-        return self._std_factory(distribution, self.peak_frq)
+        return self._std_factory(distribution, self.peak_frequencies)
 
     def std_f0_amp(self, distribution='lognormal'):
         """Sample standard deviation of the amplitude of f0.
@@ -366,8 +295,8 @@ class HvsrTraditional():
         Returns
         -------
         float
-            Sample standard deviation of the amplitude of f0 considering
-            only the valid time windows.
+            Sample standard deviation of the amplitude of `f0`
+            considering only the valid time windows.
 
         Raises
         ------
@@ -375,7 +304,7 @@ class HvsrTraditional():
             If `distribution` does not match the available options.
 
         """
-        return self._std_factory(distribution, self.peak_amp)
+        return self._std_factory(distribution, self.peak_amplitudes)
 
     def mean_curve(self, distribution='lognormal'):
         """Mean HVSR curve.
@@ -396,7 +325,9 @@ class HvsrTraditional():
             If `distribution` does not match the available options.
 
         """
-        return self._mean_factory(distribution, self.amp[self.valid_window_boolean_mask], axis=0)
+        return self._mean_factory(distribution,
+                                  self.amplitude[self.valid_window_boolean_mask],
+                                  axis=0)
 
     def std_curve(self, distribution='lognormal'):
         """Sample standard deviation of the mean HVSR curve.
@@ -421,12 +352,17 @@ class HvsrTraditional():
 
         """
         if self.nseries > 1:
-            return self._std_factory(distribution, self.amp[self.valid_window_boolean_mask], axis=0)
+            return self._std_factory(distribution,
+                                     self.amplitude[self.valid_window_boolean_mask],
+                                     axis=0)
         else:
-            msg = "The standard deviation of the mean curve is not defined for a single window."
+            msg = "The standard deviation of the mean curve is "
+            msg += "not defined for a single window."
             raise ValueError(msg)
 
-    def mc_peak_frq(self, distribution='lognormal'):
+    def mean_curve_peak(self, distribution='lognormal',
+                        search_range_in_hz=(None, None),
+                        **find_peaks_kwargs):
         """Frequency of the peak of the mean HVSR curve.
 
         Parameters
@@ -436,289 +372,27 @@ class HvsrTraditional():
 
         Returns
         -------
-        float
-            Frequency associated with the peak of the mean HVSR curve.
+        tuple
+            Frequency and amplitude associated with the peak of the mean
+            HVSR curve of the form
+            `(mean_curve_peak_frequency, mean_curve_peak_amplitude)`.
 
         """
+        f_low_idx, f_high_idx = self._search_range_to_index_range(search_range_in_hz)
         mc = self.mean_curve(distribution)
-        mc = mc.reshape((1, mc.size))
-        mc = mc[:, self.i_low:self.i_high]
-        rel_index = np.where(mc[0] == np.max(mc[0, self.find_peaks(mc)[0]]))[0]
-        return float(self.frq[self.i_low + rel_index])
-
-    def mc_peak_amp(self, distribution='lognormal'):
-        """Amplitude of the peak of the mean HVSR curve.
-
-        Parameters
-        ----------
-        distribution : {'normal', 'lognormal'}, optional
-            Refer to :meth:`mean_curve <Hvsr.mean_curve>` for details.
-
-        Returns
-        -------
-        float
-            Amplitude associated with the peak of the mean HVSR curve.
-
-        """
-        mc = self.mean_curve(distribution)
-        mc = mc.reshape((1, mc.size))
-        mc = mc[:, self.i_low:self.i_high]
-        return np.max(mc[0, self.find_peaks(mc)[0]])
-
-    def reject_windows(self, n=2, max_iterations=50,
-                       distribution_f0='lognormal',
-                       distribution_mc='lognormal'):
-        """Perform rejection of spurious HVSR windows.
-
-        Parameters
-        ----------
-        n : float, optional
-            Number of standard deviations from the mean, default
-            value is 2.
-        max_iterations : int, optional
-            Maximum number of rejection iterations, default value is
-            50.
-        distribution_f0 : {'lognormal', 'normal'}, optional
-            Assumed distribution of `f0` from time windows, the
-            default is 'lognormal'.
-        distribution_mc : {'lognormal', 'normal'}, optional
-            Assumed distribution of mean curve, the default is
-            'lognormal'.
-
-        Returns
-        -------
-        int
-            Number of iterations required for convergence.
-
-        """
-        if isinstance(self.meta, dict):
-            self.meta["n"] = n
-            self.meta["Performed Rejection"] = "True"
-        else:
-            self.meta = {"n": n, "Performed Rejection": "True"}
-
-        if not self._initialized_peaks:
-            self.update_peaks()
-
-        for c_iteration in range(1, max_iterations+1):
-
-            logger.debug(f"c_iteration: {c_iteration}")
-            logger.debug(f"valid_window_boolean_mask: {self.valid_window_boolean_mask}")
-
-            mean_f0_before = self.mean_f0_frq(distribution_f0)
-            std_f0_before = self.std_f0_frq(distribution_f0)
-            mc_peak_frq_before = self.mc_peak_frq(distribution_mc)
-            d_before = abs(mean_f0_before - mc_peak_frq_before)
-
-            logger.debug(f"\tmean_f0_before: {mean_f0_before}")
-            logger.debug(f"\tstd_f0_before: {std_f0_before}")
-            logger.debug(f"\tmc_peak_frq_before: {mc_peak_frq_before}")
-            logger.debug(f"\td_before: {d_before}")
-
-            lower_bound = self.nstd_f0_frq(-n, distribution_f0)
-            upper_bound = self.nstd_f0_frq(+n, distribution_f0)
-
-            valid_indices = np.zeros(self.nseries, dtype=bool)
-            for c_window, (c_valid, c_peak) in enumerate(zip(self.valid_window_boolean_mask, self._main_peak_frq)):
-                if not c_valid:
-                    continue
-
-                if c_peak > lower_bound and c_peak < upper_bound:
-                    valid_indices[c_window] = True
-
-            self.valid_window_boolean_mask = valid_indices
-
-            mean_f0_after = self.mean_f0_frq(distribution_f0)
-            std_f0_after = self.std_f0_frq(distribution_f0)
-            mc_peak_frq_after = self.mc_peak_frq(distribution_mc)
-            d_after = abs(mean_f0_after - mc_peak_frq_after)
-
-            logger.debug(f"\tmean_f0_after: {mean_f0_after}")
-            logger.debug(f"\tstd_f0_after: {std_f0_after}")
-            logger.debug(f"\tmc_peak_frq_after: {mc_peak_frq_after}")
-            logger.debug(f"\td_after: {d_after}")
-
-            if d_before == 0 or std_f0_before == 0 or std_f0_after == 0:
-                msg = f"Performed {c_iteration} iterations, returning b/c 0 values."
-                logger.warning(msg)
-                return c_iteration
-
-            d_diff = abs(d_after - d_before)/d_before
-            s_diff = abs(std_f0_after - std_f0_before)
-
-            logger.debug(f"\td_diff: {d_diff}")
-            logger.debug(f"\ts_diff: {s_diff}")
-
-            if (d_diff < 0.01) and (s_diff < 0.01):
-                msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
-                logger.info(msg)
-                return c_iteration
-
-    def reject_windows_manual(self,
-                              distribution_mc='lognormal',
-                              find_peaks_kwargs=None,
-                              ylims=None):
-        """Rejection spurious HVSR windows manually.
-
-        Parameters
-        ----------
-        distribution_f0 : {'lognormal', 'normal'}, optional
-            Assumed distribution of `f0` from time windows, the
-            default is 'lognormal'.
-        distribution_mc : {'lognormal', 'normal'}, optional
-            Assumed distribution of mean curve, the default is
-            'lognormal'.
-
-        Returns
-        -------
-        None
-            Modifies Hvsr object's internal state.
-
-        """
-        if find_peaks_kwargs is None:
-            raise NotImplementedError
-        (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
-        
-        frqs, amps = [], []
-        for amp, col_ids in zip(self.amp, valid_idxs):
-            frqs.extend(self.frq[col_ids])
-            amps.extend(amp[col_ids])
-        peaks_valid = (frqs, amps)
-        peaks_invalid = ([], [])
-
-        fig, ax = single_plot(self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
-        ax.autoscale(enable=False)
-        fig.show()
-        pxlim = ax.get_xlim()
-        pylim = ax.get_ylim()
-
-        # continue button
-        upper_right_corner = (0.05, 0.95)
-        _xc, _yc = upper_right_corner
-        box_size = 0.1
-        scale_x = (np.log10(max(pxlim)) - np.log10(min(pxlim)))
-        scale_y = max(pylim) - min(pylim)
-        x_lower, x_upper = np.exp(_xc*scale_x + np.log10(min(pxlim))), np.exp((_xc+box_size)*scale_x + np.log10(min(pxlim)))
-        y_lower, y_upper = (_yc - box_size)*scale_y + min(pylim), _yc*scale_y + min(pylim)
-
-        def draw_continue_box(ax):
-            ax.fill([x_lower, x_upper, x_upper, x_lower],
-                    [y_upper, y_upper, y_lower, y_lower], color="lightgreen")
-            ax.text(_xc, _yc-box_size/2, "continue?", ha="left", va="center", transform=ax.transAxes)
-        draw_continue_box(ax)
-
-        while True:
-            xs, ys = ginput_session(fig, ax, initial_adjustment=False, npts=2, ask_to_confirm_point=False, ask_to_continue=False)
-
-            selected_columns = np.logical_and(self.frq > min(xs), self.frq < max(xs))
-            was_empty=True
-            for idx, (amp) in enumerate(zip(self.amp[:, selected_columns])):
-                if np.any(np.logical_and(amp>min(ys), amp<max(ys))):
-                    was_empty=False
-                    self.valid_window_boolean_mask[idx] = False
-
-            vfrqs, vamps = [], []
-            ivfrqs, ivamps = [], []
-            (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
-            for amp, col_ids, window_valid in zip(self.amp, valid_idxs, self.valid_window_boolean_mask):
-                if window_valid:
-                    vfrqs.extend(self.frq[col_ids])
-                    vamps.extend(amp[col_ids])
-                else:
-                    ivfrqs.extend(self.frq[col_ids])
-                    ivamps.extend(amp[col_ids])
-
-            peaks_valid = (vfrqs, vamps)
-            peaks_invalid = (ivfrqs, ivamps)
-
-            # Clear, set axis limits, and lock axis.
-            ax.clear()
-            ax.set_xlim(pxlim)
-            ax.set_ylim(pylim)
-            # Note: ax.clear() re-enables autoscale.
-            ax.autoscale(enable=False)
-            ax = single_plot(self, peaks_valid, peaks_invalid, distribution_mc, ax=ax, ylims=ylims)
-            draw_continue_box(ax)
-            fig.canvas.draw_idle()
-
-            if was_empty:
-                in_continue_box = False
-                for _x, _y in zip(xs, ys):
-                    if (_x < x_upper) and (_x > x_lower) and (_y > y_lower) and (_y < y_upper):
-                        in_continue_box = True
-                        break
-
-                if in_continue_box:
-                    plt.close()
-                    break
-                else:
-                    continue
-
-    def resonance_identification_manual(self,
-                                        distribution_mc='lognormal',
-                                        find_peaks_kwargs=None,
-                                        ylims=None):
-        if find_peaks_kwargs is None:
-            raise NotImplementedError
-        (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
-        
-        frqs, amps = [], []
-        for amp, col_ids in zip(self.amp, valid_idxs):
-            frqs.extend(self.frq[col_ids])
-            amps.extend(amp[col_ids])
-        peaks_valid = (frqs, amps)
-        peaks_invalid = ([], [])
-
-        fig, ax = single_plot(self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
-        ax.autoscale(enable=False)
-        fig.show()
-        pxlim = ax.get_xlim()
-        pylim = ax.get_ylim()
-
-        # continue button
-        upper_right_corner = (0.05, 0.95)
-        _xc, _yc = upper_right_corner
-        box_size = 0.1
-        scale_x = (np.log10(max(pxlim)) - np.log10(min(pxlim)))
-        scale_y = max(pylim) - min(pylim)
-        x_lower, x_upper = np.exp(_xc*scale_x + np.log10(min(pxlim))), np.exp((_xc+box_size)*scale_x + np.log10(min(pxlim)))
-        y_lower, y_upper = (_yc - box_size)*scale_y + min(pylim), _yc*scale_y + min(pylim)
-
-        def draw_continue_box(ax):
-            ax.fill([x_lower, x_upper, x_upper, x_lower],
-                    [y_upper, y_upper, y_lower, y_lower], color="lightgreen")
-            ax.text(_xc, _yc-box_size/2, "continue?", ha="left", va="center", transform=ax.transAxes)
-        draw_continue_box(ax)
-
-        f_lows, f_highs = [], []
-        while True:
-            xs, ys = ginput_session(fig, ax, initial_adjustment=False, npts=2, ask_to_confirm_point=False, ask_to_continue=False)
-            
-            in_continue_box = False
-            for _x, _y in zip(xs, ys):
-                if (_x < x_upper) and (_x > x_lower) and (_y > y_lower) and (_y < y_upper):
-                    in_continue_box = True
-                    break
-
-            if in_continue_box:
-                plt.close()
-                break
-            else:
-                f_lows.append(min(xs))
-                f_highs.append(max(xs))
-                continue
-
-        f_lows.sort()
-        f_highs.sort()
-        limits = [[fl, fh] for fl, fh in zip(f_lows, f_highs)]
-        limits = np.array(limits)
-            
-        return limits
+        relative_potential_peak_idxs, _ = find_peaks(mc[f_low_idx:f_high_idx],
+                                                     **find_peaks_kwargs)
+        if len(relative_potential_peak_idxs) == 0:
+            msg = "Mean curve does not have a peak in the specified range."
+            raise ValueError(msg)
+        absolute_potential_peak_idxs = relative_potential_peak_idxs + f_low_idx
+        peak_idx_of_potential_peaks = np.argmax(absolute_potential_peak_idxs)
+        peak_idx = absolute_potential_peak_idxs[peak_idx_of_potential_peaks]
+        return (self.frequency[peak_idx], mc[peak_idx])
 
     @staticmethod
     def _nth_std_factory(n, distribution, mean, std):
-        distribution = Hvsr.correct_distribution(distribution)
-
+        distribution = DISTRIBUTION_MAP[distribution]
         if distribution == "normal":
             return (mean + n*std)
         elif distribution == "lognormal":
@@ -744,7 +418,8 @@ class HvsrTraditional():
             Value n standard deviations from mean `f0`.
 
         """
-        return self._nth_std_factory(n, distribution,
+        return self._nth_std_factory(n,
+                                     distribution,
                                      self.mean_f0_frq(distribution),
                                      self.std_f0_frq(distribution))
 
@@ -765,7 +440,8 @@ class HvsrTraditional():
             Value n standard deviations from mean `f0` amplitude.
 
         """
-        return self._nth_std_factory(n, distribution,
+        return self._nth_std_factory(n,
+                                     distribution,
                                      self.mean_f0_amp(distribution),
                                      self.std_f0_amp(distribution))
 
@@ -777,8 +453,7 @@ class HvsrTraditional():
         n : float
             Number of standard deviations away from the mean curve.
         distribution : {'lognormal', 'normal'}, optional
-            Assumed distribution of mean curve, the default is
-            'lognormal'.
+            Assumed distribution of mean curve, default is 'lognormal'.
 
         Returns
         -------
@@ -786,191 +461,7 @@ class HvsrTraditional():
             nth standard deviation curve.
 
         """
-        return self._nth_std_factory(n, distribution,
+        return self._nth_std_factory(n,
+                                     distribution,
                                      self.mean_curve(distribution),
                                      self.std_curve(distribution))
-
-    def _stats(self, distribution_f0):
-        distribution_f0 = self.correct_distribution(distribution_f0)
-
-        if distribution_f0 == "lognormal":
-            columns = ["Lognormal Median", "Lognormal Standard Deviation"]
-            data = np.array([[self.mean_f0_frq(distribution_f0),
-                              self.std_f0_frq(distribution_f0)],
-                             [1/self.mean_f0_frq(distribution_f0),
-                              self.std_f0_frq(distribution_f0)]])
-
-        elif distribution_f0 == "normal":
-            columns = ["Mean", "Standard Deviation"]
-            data = np.array([[self.mean_f0_frq(distribution_f0),
-                              self.std_f0_frq(distribution_f0)],
-                             [np.nan, np.nan]])
-        else:
-            msg = f"`distribution_f0` of {distribution_f0} is not implemented."
-            raise NotImplementedError(msg)
-
-        df = DataFrame(data=data, columns=columns,
-                       index=["Fundamental Site Frequency, f0",
-                              "Fundamental Site Period, T0"])
-        return df
-
-    # def print_stats(self, distribution_f0, places=2):  # pragma: no cover
-    #     """Print basic statistics of `Hvsr` instance."""
-    #     display(self._stats(distribution_f0=distribution_f0).round(places))
-
-    def _geopsy_style_lines(self, distribution_f0, distribution_mc):
-        """Lines for Geopsy-style file."""
-        # f0 from windows
-        mean = self.mean_f0_frq(distribution_f0)
-        lower = self.nstd_f0_frq(-1, distribution_f0)
-        upper = self.nstd_f0_frq(+1, distribution_f0)
-
-        # mean curve
-        mc = self.mean_curve(distribution_mc)
-        mc_peak_frq = self.mc_peak_frq(distribution_mc)
-        mc_peak_amp = self.mc_peak_amp(distribution_mc)
-        _min = self.nstd_curve(-1, distribution_mc)
-        _max = self.nstd_curve(+1, distribution_mc)
-
-        def fclean(number, decimals=4):
-            return np.round(number, decimals=decimals)
-
-        lines = [
-            f"# hvsrpy output version {__version__}",
-            f"# Number of windows = {sum(self.valid_window_boolean_mask)}",
-            f"# f0 from average\t{fclean(mc_peak_frq)}",
-            f"# Number of windows for f0 = {sum(self.valid_window_boolean_mask)}",
-            f"# f0 from windows\t{fclean(mean)}\t{fclean(lower)}\t{fclean(upper)}",
-            f"# Peak amplitude\t{fclean(mc_peak_amp)}",
-            f"# Position\t{0} {0} {0}",
-            "# Category\tDefault",
-            "# Frequency\tAverage\tMin\tMax",
-        ]
-
-        _lines = []
-        for line in lines:
-            _lines.append(line+"\n")
-
-        for f_i, a_i, n_i, x_i in zip(fclean(self.frq), fclean(mc), fclean(_min), fclean(_max)):
-            _lines.append(f"{f_i}\t{a_i}\t{n_i}\t{x_i}\n")
-
-        return _lines
-
-    def _hvsrpy_style_lines(self, distribution_f0, distribution_mc):
-        """Lines for hvsrpy-style file."""
-        # Correct distribution
-        distribution_f0 = self.correct_distribution(distribution_f0)
-        distribution_mc = self.correct_distribution(distribution_mc)
-
-        # f0 from windows
-        mean_f = self.mean_f0_frq(distribution_f0)
-        sigm_f = self.std_f0_frq(distribution_f0)
-        ci_68_lower_f = self.nstd_f0_frq(-1, distribution_f0)
-        ci_68_upper_f = self.nstd_f0_frq(+1, distribution_f0)
-
-        # mean curve
-        mc = self.mean_curve(distribution_mc)
-        mc_peak_frq = self.mc_peak_frq(distribution_mc)
-        mc_peak_amp = self.mc_peak_amp(distribution_mc)
-        _min = self.nstd_curve(-1, distribution_mc)
-        _max = self.nstd_curve(+1, distribution_mc)
-
-        n_rejected = self.nseries - sum(self.valid_window_boolean_mask)
-        rejection = "False" if self.meta.get(
-            'Performed Rejection') is None else "True"
-        lines = [
-            f"# hvsrpy output version {__version__}",
-            f"# File Name (),{self.meta.get('File Name')}",
-            f"# Method (),{self.meta.get('method')}",
-            f"# Azimuth (),{self.meta.get('azimuth')}",
-            f"# Window Length (s),{self.meta.get('Window Length')}",
-            f"# Total Number of Windows (),{self.nseries}",
-            f"# Frequency Domain Window Rejection Performed (),{rejection}",
-            f"# Lower frequency limit for peaks (Hz),{self.f_low}",
-            f"# Upper frequency limit for peaks (Hz),{self.f_high}",
-            f"# Number of Standard Deviations Used for Rejection () [n],{self.meta.get('n')}",
-            f"# Number of Accepted Windows (),{self.nseries-n_rejected}",
-            f"# Number of Rejected Windows (),{n_rejected}",
-            f"# Distribution of f0 (),{distribution_f0}"]
-
-        def fclean(number, decimals=4):
-            return np.round(number, decimals=decimals)
-
-        distribution_f0 = self.correct_distribution(distribution_f0)
-        distribution_mc = self.correct_distribution(distribution_mc)
-
-        if distribution_f0 == "lognormal":
-            mean_t = 1/mean_f
-            sigm_t = sigm_f
-            ci_68_lower_t = np.exp(np.log(mean_t) - sigm_t)
-            ci_68_upper_t = np.exp(np.log(mean_t) + sigm_t)
-
-            lines += [
-                f"# Median f0 (Hz) [LMf0],{fclean(mean_f)}",
-                f"# Lognormal standard deviation f0 () [SigmaLNf0],{fclean(sigm_f)}",
-                f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                f"# Median T0 (s) [LMT0],{fclean(mean_t)}",
-                f"# Lognormal standard deviation T0 () [SigmaLNT0],{fclean(sigm_t)}",
-                f"# 68 % Confidence Interval T0 (s),{fclean(ci_68_lower_t)},to,{fclean(ci_68_upper_t)}",
-            ]
-
-        else:
-            lines += [
-                f"# Mean f0 (Hz),{fclean(mean_f)}",
-                f"# Standard deviation f0 (Hz) [Sigmaf0],{fclean(sigm_f)}",
-                f"# 68 % Confidence Interval f0 (Hz),{fclean(ci_68_lower_f)},to,{fclean(ci_68_upper_f)}",
-                "# Mean T0 (s) [LMT0],NA",
-                "# Standard deviation T0 () [SigmaT0],NA",
-                "# 68 % Confidence Interval T0 (s),NA",
-            ]
-
-        c_type = "Median" if distribution_mc == "lognormal" else "Mean"
-        lines += [
-            f"# {c_type} Curve Distribution (),{distribution_mc}",
-            f"# {c_type} Curve Peak Frequency (Hz) [f0mc],{fclean(mc_peak_frq)}",
-            f"# {c_type} Curve Peak Amplitude (),{fclean(mc_peak_amp)}",
-            f"# Frequency (Hz),{c_type} Curve,1 STD Below {c_type} Curve,1 STD Above {c_type} Curve",
-        ]
-
-        _lines = []
-        for line in lines:
-            _lines.append(line+"\n")
-
-        for f_i, mean_i, bel_i, abv_i in zip(fclean(self.frq), fclean(mc), fclean(_min), fclean(_max)):
-            _lines.append(f"{f_i},{mean_i},{bel_i},{abv_i}\n")
-
-        return _lines
-
-    def to_file(self, fname, distribution_f0, distribution_mc, data_format="hvsrpy"):
-        """Save HVSR data to summary file.
-
-        Parameters
-        ----------
-        fname : str
-            Name of file to save the results, may be a full or
-            relative path.
-        distribution_f0 : {'lognormal', 'normal'}, optional
-            Assumed distribution of `f0` from the time windows, the
-            default is 'lognormal'.
-        distribution_mc : {'lognormal', 'normal'}, optional
-            Assumed distribution of mean curve, the default is
-            'lognormal'.
-        data_format : {'hvsrpy', 'geopsy'}, optional
-            Format of output data file, default is 'hvsrpy'.
-
-        Returns
-        -------
-        None
-            Writes file to disk.
-
-        """
-        if data_format == "geopsy":
-            lines = self._geopsy_style_lines(distribution_f0, distribution_mc)
-        elif data_format == "hvsrpy":
-            lines = self._hvsrpy_style_lines(distribution_f0, distribution_mc)
-        else:
-            raise NotImplementedError(f"data_format={data_format} is unknown.")
-
-        with open(fname, "w") as f:
-            for line in lines:
-                f.write(line)
