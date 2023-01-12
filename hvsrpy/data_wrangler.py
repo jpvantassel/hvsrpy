@@ -410,3 +410,7 @@ def read(fnames, read_kwargs=None):
         seismic_recordings.append(read_single(fname, read_kwargs=read_kwargs))
 
     return seismic_recordings
+
+# TODO (jpv): Include parsing for degrees_from_north.
+# See which file formats provide this information, and parse
+# Provide the user a way to define a value if a value is not present

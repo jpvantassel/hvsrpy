@@ -113,3 +113,11 @@ class SeismicRecording3C():
         return cls(*new_components,
                    degrees_from_north=original.degrees_from_north,
                    meta=original.meta)
+
+    def __str__(self):
+        """Human-readable representation of `SeismicRecording3C` object."""
+        return f"SeismicRecording3C at {id(self)}"
+
+    def __repr__(self):
+        """Unambiguous representation of `SeismicRecording3C` object."""
+        return f"SeismicRecording3C(ns={self.ns}, ew={self.ew}, vt={self.vt}, meta={self.meta})"

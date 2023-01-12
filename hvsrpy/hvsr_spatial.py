@@ -24,7 +24,7 @@ from numpy.random import default_rng, PCG64, MT19937, BitGenerator
 from scipy.spatial import Voronoi
 from shapely.geometry import MultiPoint, Point, Polygon
 
-logger = logging.getLogger("swprocess.hvsr_rotated")
+logger = logging.getLogger(__name__)
 
 __all__ = ["montecarlo_f0", "HvsrVault"]
 
