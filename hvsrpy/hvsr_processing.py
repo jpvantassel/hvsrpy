@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2022 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -45,18 +45,20 @@ def preprocess(records, settings):
     """
     preprocessed_records = []
 
-    for timeseries in records:
+    for srecord3c in records:
 
-        # TODO(jpv): Add orient to north functionality.
+        # orient receiver to north.
+        if settings.orient_to_degrees_from_north is not None:
+            srecord3c.orient_to(settings.orient_to_degrees_from_north)
 
         # bandpass filter raw signal.
-        timeseries.butterworth_filter(settings.filter_corner_frequencies_in_hz)
+        srecord3c.butterworth_filter(settings.filter_corner_frequencies_in_hz)
 
-        # divide raw signal into time windows
+        # divide raw signal into time windows.
         if settings.window_length_in_seconds is not None:
-            windows = timeseries.split(settings.window_length_in_seconds)
+            windows = srecord3c.split(settings.window_length_in_seconds)
         else:
-            windows = [timeseries]
+            windows = [srecord3c]
 
         for window in windows:
 
@@ -90,7 +92,7 @@ def total_horizontal_energy(ns, ew, settings=None):
 
 
 def maximum_horizontal_value(ns, ew, settings=None):
-    """Computes the entry-by-entry maximum of the vecotrs provided."""
+    """Computes the entry-by-entry maximum of the vectors provided."""
     return np.where(ns > ew, ns, ew)
 
 

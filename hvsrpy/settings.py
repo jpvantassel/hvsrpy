@@ -1,6 +1,6 @@
 # This file is part of hvsrpy a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2022 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,10 @@ class Settings():
     def load(self, fname):
         with open(fname, "r") as f:
             attr_dict = json.load(f)
-        for attr, value in attr_dict.items():
+        self.custom_initialization(attr_dict)
+
+    def custom_initialization(self, **kwargs):
+        for attr, value in kwargs.items():
             setattr(self, attr, value)
 
     def __str__(self):
@@ -63,8 +66,7 @@ class HvsrPreProcessingSettings(Settings):
         super().__iter__()
         attributes_with_defaults = {
             "detrend": "linear",
-            # TODO(jpv): Add orient to north functionality.
-            # "orient_to_north": False,
+            "orient_to_degrees_from_north": 0.,
             "window_length_in_seconds": 60,
             "filter_corner_frequencies_in_hz": (None, None)
         }

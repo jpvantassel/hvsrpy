@@ -17,6 +17,8 @@
 
 """Class definition of SeismicRecording3C, a 3-component seismic record."""
 
+import numpy as np
+
 
 class SeismicRecording3C():
     """Class for creating and manipulating 3-component seismic records.
@@ -62,8 +64,6 @@ class SeismicRecording3C():
             tseries.append(ns.from_timeseries(component))
         self.ns, self.ew, self.vt = tseries
 
-        # TODO (jpv): Add degrees from north and associated rotation ability
-        # throughout hvsrpy workflow.
         self.degrees_from_north = float(degrees_from_north)
 
         meta = {} if meta is None else meta
@@ -101,6 +101,37 @@ class SeismicRecording3C():
 
     # TODO(jpv): Include full docstrings for SeismicRecording3C methods.
     # Can likely adopt these straight from TimeSeries.
+
+    def orient_sensor_to(self, degrees_from_north):
+        """Orient sensor's horizontal components.
+
+        Parameters
+        ----------
+        degrees_from_north : float
+            New sensor orientation in degrees from north
+            (clockwise positive). The sensor's north component will be
+            oriented such that it is aligned with the defined
+            orientation.
+
+        Returns
+        -------
+        None
+            Modifies the objects internal state.
+
+        """
+        angle_diff_degrees = degrees_from_north - self.degrees_from_north
+        angle_diff_radians = np.radians(angle_diff_degrees)
+        c = np.cos(angle_diff_radians)
+        s = np.cos(angle_diff_radians)
+
+        ew = self.ew.amplitude
+        ns = self.ns.amplitude
+
+        self.ns.amplitude = ew*c + ns*s
+        self.ew.amplitude = ns*c - ew*s
+
+        self.degrees_from_north = degrees_from_north
+        self.meta["Current Degrees from North (deg)"] = degrees_from_north
 
     @classmethod
     def from_seismic_recording_3c(cls, seismic_recording_3c):
