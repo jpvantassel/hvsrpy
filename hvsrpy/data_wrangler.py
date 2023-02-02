@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2022 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import itertools
 import obspy
 import numpy as np
 
-from .regex import saf_npts_exec, saf_fs_exec, saf_row_exec
+from .regex import saf_npts_exec, saf_fs_exec, saf_row_exec, saf_v_ch_exec, saf_n_ch_exec, saf_e_ch_exec, saf_north_rot_exec
 from .regex import mshark_npts_exec, mshark_fs_exec, mshark_gain_exec, mshark_conversion_exec, mshark_row_exec
 from .regex import peer_direction_exec, peer_npts_exec, peer_dt_exec, peer_sample_exec
 
@@ -70,7 +70,7 @@ def _quiet_obspy_read(*args, **kwargs):
     return results
 
 
-def read_mseed(fnames, read_kwargs=None):
+def read_mseed(fnames, read_kwargs=None, rotation_from_north=None):
     """Read ambient noise data from file(s) in miniSEED format.
 
     Parameters
@@ -88,6 +88,11 @@ def read_mseed(fnames, read_kwargs=None):
         For passing arguments to the `obspy.read` function to
         customize its behavior, default is `None`indicating
         not keyword arguments will be passed.
+    rotation_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positve. Default is 0.0
+        indicating the sensor's north component is aligned with
+        magnetic north.
     (TODO) JPV: Check formatting of text above.
 
     Returns
@@ -125,16 +130,20 @@ def read_mseed(fnames, read_kwargs=None):
 
     ns, ew, vt = _arrange_traces(traces)
 
-    meta = {"File Name(s)": fnames}
+    if rotation_from_north is None:
+        rotation_from_north = 0.
+
+    meta = {"File Name(s)": fnames,
+            "Rotation from North (deg)": rotation_from_north}
     return SeismicRecording3C(ns, ew, vt, meta=meta)
 
 
-def read_saf(fnames, read_kwargs=None):
+def read_saf(fnames, read_kwargs=None, rotation_from_north=None):
     if isinstance(fnames, (list, tuple)):
         fname = fnames[0]
         msg = f"Only 1 saf file allowed; {len(fnames)} provided. "
         msg += "Only taking first."
-        warnings.warn(msg, IndexError)
+        warnings.warn(msg, UserWarning)
     else:
         fname = fnames
 
@@ -143,15 +152,35 @@ def read_saf(fnames, read_kwargs=None):
 
     npts_header = int(saf_npts_exec.search(text).groups()[0])
     dt = 1/float(saf_fs_exec.search(text).groups()[0])
+    v_ch = int(saf_v_ch_exec.search(text).groups()[0])
+    n_ch = int(saf_n_ch_exec.search(text).groups()[0])
+    e_ch = int(saf_e_ch_exec.search(text).groups()[0])
+    if rotation_from_north is None:
+        try:
+            north_rot = float(saf_north_rot_exec.search(text).groups()[0])
+        except:
+            msg = f"The provided saf file {fname} does not include the "
+            msg += "NORTH_ROT keyword, assuming equal to zero."
+            warnings.warn(msg, UserWarning)
+            rotation_from_north = 0.
+        else:
+            if n_ch == 1:
+                rotation_from_north = north_rot
+            elif e_ch == 1:
+                rotation_from_north = north_rot + 90.
+            else:
+                msg = f"The provided saf file {fname} is not properly "
+                msg += "formatted. CH1 must be veritcal; CH2 & CH3 the horizontals"
+                raise ValueError(msg)
 
     data = np.empty((npts_header, 3), dtype=np.float32)
 
     idx = 0
     for group in saf_row_exec.finditer(text):
-        vt, ns, ew = group.groups()
-        data[idx, 0] = float(vt)
-        data[idx, 1] = float(ns)
-        data[idx, 2] = float(ew)
+        channels = group.groups()
+        data[idx, 0] = float(channels[v_ch])
+        data[idx, 1] = float(channels[n_ch])
+        data[idx, 2] = float(channels[e_ch])
         idx += 1
 
     _check_npts(npts_header, idx)
@@ -162,11 +191,12 @@ def read_saf(fnames, read_kwargs=None):
     ns = TimeSeries(ns, dt=dt)
     ew = TimeSeries(ew, dt=dt)
 
-    meta = {"File Name(s)": fname}
+    meta = {"File Name(s)": fname,
+            "Rotation from North (deg)": rotation_from_north}
     return SeismicRecording3C(ns, ew, vt, meta=meta)
 
 
-def read_minishark(fnames, read_kwargs=None):
+def read_minishark(fnames, read_kwargs=None, rotation_from_north=None):
     if isinstance(fnames, (list, tuple)):
         fname = fnames[0]
         msg = f"Only 1 minishark file allowed; {len(fnames)} provided. "
@@ -204,11 +234,15 @@ def read_minishark(fnames, read_kwargs=None):
     ns = TimeSeries(ns, dt=dt)
     ew = TimeSeries(ew, dt=dt)
 
-    meta = {"File Name(s)": fname}
+    if rotation_from_north is None:
+        rotation_from_north = 0.
+
+    meta = {"File Name(s)": fname,
+            "Rotation from North (deg)": rotation_from_north}
     return SeismicRecording3C(ns, ew, vt, meta=meta)
 
 
-def read_sac(fnames, read_kwargs=None):
+def read_sac(fnames, read_kwargs=None, rotation_from_north=None):
     if read_kwargs is None:
         read_kwargs = {"format": "SAC"}
 
@@ -242,11 +276,15 @@ def read_sac(fnames, read_kwargs=None):
 
     ns, ew, vt = _arrange_traces(traces)
 
-    meta = {"File Name(s)": fnames}
+    if rotation_from_north is None:
+        rotation_from_north = 0.
+
+    meta = {"File Name(s)": fnames,
+            "Rotation from North (deg)": rotation_from_north}
     return SeismicRecording3C(ns, ew, vt, meta=meta)
 
 
-def read_gcf(fnames, read_kwargs=None):
+def read_gcf(fnames, read_kwargs=None, rotation_from_north=None):
     if read_kwargs is None:
         read_kwargs = {"format": "GCF"}
 
@@ -268,11 +306,15 @@ def read_gcf(fnames, read_kwargs=None):
 
     ns, ew, vt = _arrange_traces(traces)
 
-    meta = {"File Name(s)": fname}
+    if rotation_from_north is None:
+        rotation_from_north = 0.
+
+    meta = {"File Name(s)": fname,
+            "Rotation from North (deg)": rotation_from_north}
     return SeismicRecording3C(ns, ew, vt, meta=meta)
 
 
-def read_peer(fnames, read_kwargs=None):
+def read_peer(fnames, read_kwargs=None, rotation_from_north=None):
     if read_kwargs is None:
         read_kwargs = {}
 
@@ -307,17 +349,23 @@ def read_peer(fnames, read_kwargs=None):
     vt_id = component_keys.index("UP")
     vt = component_list[vt_id]
     del component_list[vt_id], component_keys[vt_id]
+
     # organize components - horizontals
     component_keys_abs = np.array(component_keys, dtype=int)
     component_keys_rel = component_keys_abs.copy()
     component_keys_rel[component_keys_abs > 180] -= 360
-    ns_id = np.argmin(component_keys_rel)
+    ns_id = np.argmin(abs(component_keys_rel))
     ns = component_list[ns_id]
-    ew_id = np.argmax(component_keys_rel)
+    ew_id = np.argmax(abs(component_keys_rel))
     ew = component_list[ew_id]
     del component_list, component_keys
 
-    meta = {"File Name(s)": fname}
+    # set rotation iff rotation_from_north is not already set.
+    if rotation_from_north is None:
+        rotation_from_north = component_keys_abs[ns_id]
+
+    meta = {"File Name(s)": fname,
+            "Rotation from North (deg)": rotation_from_north}
     return SeismicRecording3C(ns, ew, vt, meta=meta)
 
 
@@ -331,7 +379,7 @@ READ_FUNCTION_DICT = {
 }
 
 
-def read_single(fnames, read_kwargs=None):
+def read_single(fnames, read_kwargs=None, rotation_from_north=None):
     """Read file(s) associated with a single recording.
 
     Parameters
@@ -346,6 +394,14 @@ def read_single(fnames, read_kwargs=None):
         Keyword arguments to be passed directly to `obspy.read`, in
         general this should not be needed, default is `None` indicating
         no custom arguments will be passed to `obspy.read`.
+    rotation_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positve. Default is `None`
+        indicating either the metadata in the file denoting the sensor's
+        orientation is correct and should be used or (if the sensor's
+        orientation is not listed in teh file) the sensor's north
+        component is aligned with magnetic north
+        (i.e., `rotation_from_north=0`).
 
     Returns
     -------
@@ -358,7 +414,8 @@ def read_single(fnames, read_kwargs=None):
     for ftype, read_function in READ_FUNCTION_DICT.items():
         try:
             srecording_3c = read_function(fnames,
-                                          read_kwargs=read_kwargs)
+                                          read_kwargs=read_kwargs,
+                                          rotation_from_north=rotation_from_north)
         except Exception as e:
             logger.info(f"Tried reading as {ftype}, got exception |  {e}")
             pass
@@ -372,12 +429,12 @@ def read_single(fnames, read_kwargs=None):
     return srecording_3c
 
 
-def read(fnames, read_kwargs=None):
+def read(fnames, read_kwargs=None, rotation_from_north=None):
     """Read file(s) presented.
 
     Parameters
     ----------
-    fnames : iterable of lists of str or interable of str
+    fnames : iterable of iterable of str or interable of str
         Collection of file name(s) to be read. All entries should be
         readable by the function `hvsrpy.read_single()`.
     read_kwargs : dict or iterable of dicts, optional
@@ -385,32 +442,41 @@ def read(fnames, read_kwargs=None):
         `hvsrpy.read_single()`. If `dict`, keyword argument will be
         repeated for all file names provided. If `iterable of dicts`
         each keyword arguments will be provided in order. Default is
-        `None` indicating read behavior will be used.
+        `None` indicating standard read behavior will be used.
+    rotation_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positve. Default is `None`
+        indicating either the metadata in the file denoting the sensor's
+        orientation is correct and should be used or (if the sensor's
+        orientation is not listed in teh file) the sensor's north
+        component is aligned with magnetic north
+        (i.e., `rotation_from_north=0`).
 
     Returns
     -------
     list
         Of initialized SeismicRecording3C objects, one for each each
         file name provided.
+    # TODO (jpv): Check this renders correctly.
 
     """
-    # scale read_kwargs as needed to match length of fnames.
+    # scale read_kwargs and rotation_from_north as needed to match fnames.
     if isinstance(read_kwargs, (dict, type(None))):
         read_kwargs_iter = itertools.repeat(read_kwargs)
+        rotation_from_north_iter = itertools.repeat(rotation_from_north)
     else:
         read_kwargs_iter = read_kwargs
+        rotation_from_north_iter = rotation_from_north
 
     seismic_recordings = []
-    for fname, read_kwargs in zip(fnames, read_kwargs_iter):
+    for fname, read_kwargs, rotation_from_north in zip(fnames, read_kwargs_iter, rotation_from_north_iter):
 
         # if entry is a list with only a single entry, remove the list.
         if len(fname) == 1:
             fname = fname[0]
 
-        seismic_recordings.append(read_single(fname, read_kwargs=read_kwargs))
+        seismic_recordings.append(read_single(fname,
+                                              read_kwargs=read_kwargs,
+                                              rotation_from_north=rotation_from_north))
 
     return seismic_recordings
-
-# TODO (jpv): Include parsing for degrees_from_north.
-# See which file formats provide this information, and parse
-# Provide the user a way to define a value if a value is not present

@@ -27,10 +27,18 @@ saf_npts_expr = f"NDAT = (\d+){NEWLINE}"
 saf_fs_expr = f"SAMP_FREQ = (\d+){NEWLINE}"
 saf_sample_expr = "-?\d+" 
 saf_row_expr = f"^({saf_sample_expr})\s({saf_sample_expr})\s({saf_sample_expr}){NEWLINE}"
+saf_v_ch_expr = f"CH(\d)_ID = V"
+saf_n_ch_expr = f"CH(\d)_ID = N"
+saf_e_ch_expr = f"CH(\d)_ID = E"
+saf_north_rot_expr = "NORTH_ROT = (\d+)"
 
 saf_npts_exec = re.compile(saf_npts_expr)
 saf_fs_exec = re.compile(saf_fs_expr)
 saf_row_exec = re.compile(saf_row_expr, flags=re.MULTILINE)
+saf_v_ch_exec = re.compile(saf_v_ch_expr)
+saf_n_ch_exec = re.compile(saf_n_ch_expr)
+saf_e_ch_exec = re.compile(saf_e_ch_expr)
+saf_north_rot_exec = re.compile(saf_north_rot_expr)
 
 
 # DataWrangler | minishark
