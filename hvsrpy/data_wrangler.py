@@ -107,6 +107,7 @@ def read_mseed(fnames, read_kwargs=None, degrees_from_north=None):
     # one miniSEED file with all three components.
     if isinstance(fnames, (str, pathlib.Path)):
         traces = _quiet_obspy_read(fnames, **read_kwargs)
+        fnames = str(fnames)
     # three miniSEED files, one per component.
     elif isinstance(fnames, (list, tuple)):
         trace_list = []
@@ -119,6 +120,7 @@ def read_mseed(fnames, read_kwargs=None, degrees_from_north=None):
             trace = stream[0]
             trace_list.append(trace)
         traces = obspy.Stream(trace_list)
+        fnames = [str(fname) for fname in fnames]
     else:
         msg = "`fnames` must be either `str` or `list`"
         msg += f"cannot be {type(fnames)}."
@@ -193,7 +195,7 @@ def read_saf(fnames, read_kwargs=None, degrees_from_north=None):
     ns = TimeSeries(ns, dt=dt)
     ew = TimeSeries(ew, dt=dt)
 
-    meta = {"File Name(s)": fname,
+    meta = {"File Name(s)": str(fname),
             "Deployed Degrees from North (deg)": degrees_from_north,
             "Current Degrees from North (deg)": degrees_from_north}
     return SeismicRecording3C(ns, ew, vt,
@@ -241,7 +243,7 @@ def read_minishark(fnames, read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": fname,
+    meta = {"File Name(s)": str(fname),
             "Deployed Degrees from North (deg)": degrees_from_north,
             "Current Degrees from North (deg)": degrees_from_north}
     return SeismicRecording3C(ns, ew, vt,
@@ -285,7 +287,7 @@ def read_sac(fnames, read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": fnames,
+    meta = {"File Name(s)": [str(fname) for fname in fnames],
             "Deployed Degrees from North (deg)": degrees_from_north,
             "Current Degrees from North (deg)": degrees_from_north}
     return SeismicRecording3C(ns, ew, vt,
@@ -317,7 +319,7 @@ def read_gcf(fnames, read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": fname,
+    meta = {"File Name(s)": str(fname),
             "Deployed Degrees from North (deg)": degrees_from_north,
             "Current Degrees from North (deg)": degrees_from_north}
     return SeismicRecording3C(ns, ew, vt,
@@ -373,8 +375,9 @@ def read_peer(fnames, read_kwargs=None, degrees_from_north=None):
     # set rotation iff degrees_from_north is not already set.
     if degrees_from_north is None:
         degrees_from_north = component_keys_abs[ns_id]
+        degrees_from_north = float(degrees_from_north - 360*(degrees_from_north // 360))
 
-    meta = {"File Name(s)": fname,
+    meta = {"File Name(s)": [str(fname) for fname in fnames],
             "Deployed Degrees from North (deg)": degrees_from_north,
             "Current Degrees from North (deg)": degrees_from_north}
     return SeismicRecording3C(ns, ew, vt,

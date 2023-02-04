@@ -67,7 +67,8 @@ class SeismicRecording3C():
             tseries.append(ns.from_timeseries(component))
         self.ns, self.ew, self.vt = tseries
 
-        self.degrees_from_north = float(degrees_from_north)
+        # ensure less than 360 degrees
+        self.degrees_from_north = float(degrees_from_north - 360*(degrees_from_north // 360))
 
         meta = {} if meta is None else meta
         self.meta = {"File Name(s)": "Was not created from file", **meta}

@@ -63,7 +63,7 @@ class Settings():
 class HvsrPreProcessingSettings(Settings):
 
     def __init__(self):
-        super().__iter__()
+        super().__init__()
         attributes_with_defaults = {
             "detrend": "linear",
             "orient_to_degrees_from_north": 0.,
@@ -76,7 +76,7 @@ class HvsrPreProcessingSettings(Settings):
 class HvsrProcessingSettings(Settings):
 
     def __init__(self):
-        super().__iter__()
+        super().__init__()
         attributes_with_defaults = {
             "window_type_and_width": ("tukey", 0.1),
             "smoothing_type_and_bandwidth": ("konno_and_ohmachi", 40),
@@ -89,7 +89,7 @@ class HvsrProcessingSettings(Settings):
 class HvsrTraditionalProcessingSettings(HvsrProcessingSettings):
 
     def __init__(self):
-        super().__iter__()
+        super().__init__()
         attributes_with_defaults = {
             "processing_method": "traditional",
         }
@@ -98,7 +98,7 @@ class HvsrTraditionalProcessingSettings(HvsrProcessingSettings):
 class HvsrTraditionalFrequencyDomainProcessingSettings(HvsrTraditionalProcessingSettings):
 
     def __init__(self):
-        super().__iter__()
+        super().__init__()
         attributes_with_defaults = {
             "method_to_combine_horizontals": "geometric_mean",
         }
@@ -108,7 +108,7 @@ class HvsrTraditionalFrequencyDomainProcessingSettings(HvsrTraditionalProcessing
 class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSettings):
 
     def __init__(self):
-        super().__iter__()
+        super().__init__()
         attributes_with_defaults = {
             "method_to_combine_horizontals": "single_azimuth",
             "azimuth_in_degrees": 20
@@ -116,13 +116,13 @@ class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSe
         self.extend_attributes(attributes_with_defaults)
 
 
-class HvsrTraditionalRotDnProcessingSettings(HvsrTraditionalProcessingSettings):
+class HvsrTraditionalRotDppProcessingSettings(HvsrTraditionalProcessingSettings):
 
     def __init__(self):
-        super().__iter__()
+        super().__init__()
         attributes_with_defaults = {
-            "method_to_combine_horizontals": "rotdn",
-            "nth_percentile_for_rotd_computation":50,
+            "method_to_combine_horizontals": "rotdpp",
+            "ppth_percentile_for_rotdpp_computation":50,
             "azimuths_in_degrees": np.arange(0, 180, 5)
         }
         self.extend_attributes(attributes_with_defaults)
@@ -131,7 +131,7 @@ class HvsrTraditionalRotDnProcessingSettings(HvsrTraditionalProcessingSettings):
 class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
 
     def __init__(self):
-        super().__iter__()
+        super().__init__()
         attributes_with_defaults = {
             "processing_method": "azimuthal",
             "azimuths_in_degrees": np.arange(0, 180, 5)
@@ -142,7 +142,7 @@ class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
 class HvsrDiffuseFieldProcessingSettings(HvsrProcessingSettings):
 
     def __init__(self):
-        super().__iter__()
+        super().__init__()
         attributes_with_defaults = {
             "processing_method": "diffuse_field",
         }
