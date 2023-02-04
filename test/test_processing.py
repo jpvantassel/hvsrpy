@@ -50,7 +50,7 @@ class TestProcessing(TestCase):
 
     def test_process_traditional(self):
         settings = hvsr_settings.HvsrPreProcessingSettings()
-        settings.window_length_in_seconds = 120
+        settings.window_length_in_seconds = 360
         preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
         settings = hvsr_settings.HvsrTraditionalProcessingSettings()
         results = hvsrpy.process(preprocessed_records, settings)
@@ -58,7 +58,7 @@ class TestProcessing(TestCase):
 
     def test_process_traditional_single_azimuth(self):
         settings = hvsr_settings.HvsrPreProcessingSettings()
-        settings.window_length_in_seconds = 120
+        settings.window_length_in_seconds = 360
         preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
         settings = hvsr_settings.HvsrTraditionalSingleAzimuthProcessingSettings()
         results = hvsrpy.process(preprocessed_records, settings)
