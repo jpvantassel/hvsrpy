@@ -20,6 +20,12 @@
 import numpy as np
 from numba import njit
 
+
+def konno_ohmachi_1d(frequencies, spectrum, fcs, bandwidth=40.):
+    spectrum = np.atleast_2d(spectrum)
+    spectrum = konno_ohmachi(frequencies, spectrum, fcs, bandwidth=bandwidth)
+    return spectrum.flatten()
+
 @njit(cache=True)
 def konno_ohmachi(frequencies, spectrum, fcs, bandwidth=40.):
     """Fast Konno and Ohmachi smoothing.

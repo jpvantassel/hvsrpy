@@ -119,7 +119,7 @@ class HvsrDiffuseField():
         self.valid_window_boolean_mask = np.ones(self.nwindows, dtype=bool)
         self._main_peak_frq = np.empty(self.nwindows)
         self._main_peak_amp = np.empty(self.nwindows)
-        self.update_peaks()
+        # self.update_peaks()
 
         self.meta = dict(meta) if isinstance(meta, dict) else dict()
 

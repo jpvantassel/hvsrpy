@@ -86,7 +86,7 @@ class HvsrProcessingSettings(Settings):
         self.extend_attributes(attributes_with_defaults)
 
 
-class HvsrTraditionalProcessingSettings(HvsrProcessingSettings):
+class HvsrTraditionalProcessingSettingsBase(HvsrProcessingSettings):
 
     def __init__(self):
         super().__init__()
@@ -95,7 +95,8 @@ class HvsrTraditionalProcessingSettings(HvsrProcessingSettings):
         }
         self.extend_attributes(attributes_with_defaults)
 
-class HvsrTraditionalFrequencyDomainProcessingSettings(HvsrTraditionalProcessingSettings):
+
+class HvsrTraditionalProcessingSettings(HvsrTraditionalProcessingSettingsBase):
 
     def __init__(self):
         super().__init__()
@@ -105,7 +106,7 @@ class HvsrTraditionalFrequencyDomainProcessingSettings(HvsrTraditionalProcessing
         self.extend_attributes(attributes_with_defaults)
 
 
-class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSettings):
+class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSettingsBase):
 
     def __init__(self):
         super().__init__()
@@ -116,13 +117,13 @@ class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSe
         self.extend_attributes(attributes_with_defaults)
 
 
-class HvsrTraditionalRotDppProcessingSettings(HvsrTraditionalProcessingSettings):
+class HvsrTraditionalRotDppProcessingSettings(HvsrTraditionalProcessingSettingsBase):
 
     def __init__(self):
         super().__init__()
         attributes_with_defaults = {
             "method_to_combine_horizontals": "rotdpp",
-            "ppth_percentile_for_rotdpp_computation":50,
+            "ppth_percentile_for_rotdpp_computation": 50,
             "azimuths_in_degrees": np.arange(0, 180, 5)
         }
         self.extend_attributes(attributes_with_defaults)

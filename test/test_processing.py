@@ -48,6 +48,45 @@ class TestProcessing(TestCase):
         preprocessed_records = hvsrpy.preprocess(self.earthquake_records, settings)
         self.assertTrue(len(preprocessed_records) == 2)
 
+    def test_process_traditional(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 120
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrTraditionalProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
+
+    def test_process_traditional_single_azimuth(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 120
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrTraditionalSingleAzimuthProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
+
+    def test_process_traditional_rotdpp(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 120
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrTraditionalRotDppProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
+
+    def test_process_azimuthal(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 120
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrAzimuthalProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrAzimuthal))
+
+    def test_process_diffuse_field(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 120
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrDiffuseFieldProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrDiffuseField))
 
 
 if __name__ == "__main__":

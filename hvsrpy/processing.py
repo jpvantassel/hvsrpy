@@ -16,9 +16,8 @@
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
 import numpy as np
-from scipy import fft
 
-from .smoothing import konno_ohmachi
+from .smoothing import konno_ohmachi_1d
 from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
 from .hvsr_diffuse_field import HvsrDiffuseField
@@ -115,9 +114,9 @@ COMBINE_HORIZONTAL_REGISTER = {
 
 def rfft(amplitude, **kwargs):
     n = kwargs.get("n", len(amplitude))
-    fft = fft.rfft(amplitude, **kwargs)
-    fft *= 2/min(len(amplitude), n)
-    return fft
+    rfft = np.fft.rfft(amplitude, **kwargs)
+    rfft *= 2/min(len(amplitude), n)
+    return rfft
 
 
 def traditional_single_azimuth_hvsr_processing(records, settings):
@@ -137,14 +136,14 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
         # compute fourier transform.
         if settings.fft_settings is None:
             settings.fft_settings = dict(n=h.nsamples)
-        fft_h = np.abs(rfft(record.h.amplitude, **settings.fft_settings))
-        fft_v = np.abs(rfft(record.v.amplitude, **settings.fft_settings))
-        fft_frq = fft.rfftfrq(settings.fft_settings["n"], h.dt)
+        fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
+        fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
+        fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], h.dt)
 
         # smoothing
         frq = settings.frequency_resampling_in_hz
-        smooth_v = konno_ohmachi(fft_frq, fft_v, frq)
-        smooth_h = konno_ohmachi(fft_frq, fft_h, frq)
+        smooth_v = konno_ohmachi_1d(fft_frq, fft_v, frq)
+        smooth_h = konno_ohmachi_1d(fft_frq, fft_h, frq)
 
         # compute hvsr
         hvsr_spectra.append(smooth_h / smooth_v)
@@ -163,28 +162,30 @@ def traditional_rotdpp_hvsr_processing(records, settings):
         if settings.fft_settings is None:
             settings.fft_settings = dict(n=v.nsamples)
         fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
-        fft_frq = fft.rfftfrq(settings.fft_settings["n"], record.ns.dt)
-        smooth_v = konno_ohmachi(fft_frq, fft_v, frq)
+        fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], record.ns.dt)
+        smooth_v = konno_ohmachi_1d(fft_frq, fft_v, frq)
 
         # rotate horizontals through defined azimuths.
-        rotated_hvsr_spectra = np.emtpy((len(azimuth), len(frq)))
-        for idx, azimuth in enumerate(settings.azimuths):
-            h = single_azimuth(record.ns, record.ew, azimuth)
+        rotated_hvsr_spectra = np.empty((len(settings.azimuths_in_degrees), len(frq)))
+        for idx, azimuth in enumerate(settings.azimuths_in_degrees):
+            h = single_azimuth(record.ns.amplitude,
+                               record.ew.amplitude,
+                               azimuth)
             h = TimeSeries(h, dt=record.ns.dt)
             h.window(*settings.window_type_and_width)
             fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
-            smooth_h = konno_ohmachi(fft_frq, fft_h, frq)
+            smooth_h = konno_ohmachi_1d(fft_frq, fft_h, frq)
             rotated_hvsr_spectra[idx] = smooth_h
 
-        smooth_h = np.percentile(rotdn_hvsr_spectra,
-                                 settings.nth_percentile_for_rotd_computation,
+        smooth_h = np.percentile(rotated_hvsr_spectra,
+                                 settings.ppth_percentile_for_rotdpp_computation,
                                  axis=0)
         rotdn_hvsr_spectra.append(smooth_h / smooth_v)
 
     return HvsrTraditional(rotdn_hvsr_spectra, frq)
 
 
-def traditional_frequency_domain_hvsr_processing(records, settings):
+def traditional_hvsr_processing(records, settings):
     hvsr_spectra = []
     for record in records:
         # window time series to mitigate frequency-domain artifacts.
@@ -192,20 +193,20 @@ def traditional_frequency_domain_hvsr_processing(records, settings):
 
         # compute fourier transform.
         if settings.fft_settings is None:
-            settings.fft_settings = dict(n=records.ns.nsamples)
+            settings.fft_settings = dict(n=record.ns.nsamples)
         fft_ns = np.abs(rfft(record.ns.amplitude, **settings.fft_settings))
         fft_ew = np.abs(rfft(record.ew.amplitude, **settings.fft_settings))
         fft_vt = np.abs(rfft(record.vt.amplitude, **settings.fft_settings))
-        fft_frq = fft.rfftfrq(settings.fft_settings["n"], record.ns.dt)
+        fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], record.ns.dt)
 
         # combine horizontals
         method = COMBINE_HORIZONTAL_REGISTER[settings.method_to_combine_horizontals]
         h = method(fft_ns, fft_ew, settings)
 
         # smoothing
-        frq = settings.frequency_resampling
-        smooth_v = konno_ohmachi(fft_frq, fft_vt, frq)
-        smooth_h = konno_ohmachi(fft_frq, h, frq)
+        frq = settings.frequency_resampling_in_hz
+        smooth_v = konno_ohmachi_1d(fft_frq, fft_vt, frq)
+        smooth_h = konno_ohmachi_1d(fft_frq, h, frq)
 
         # compute hvsr
         hvsr_spectra.append(smooth_h / smooth_v)
@@ -217,18 +218,18 @@ def traditional_frequency_domain_hvsr_processing(records, settings):
 TRADITIONAL_PROCESSING_REGISTER = {
     "single_azimuth": traditional_single_azimuth_hvsr_processing,
     "directional_energy": traditional_single_azimuth_hvsr_processing,
-    "rotdnpp": traditional_rotdpp_hvsr_processing,
-    "arithmetic_mean": traditional_frequency_domain_hvsr_processing,
-    "squared_average": traditional_frequency_domain_hvsr_processing,
-    "quadratic_mean": traditional_frequency_domain_hvsr_processing,
-    "geometric_mean": traditional_frequency_domain_hvsr_processing,
-    "total_horizontal_energy": traditional_frequency_domain_hvsr_processing,
-    "vector_summation": traditional_frequency_domain_hvsr_processing,
-    "maximum_horizontal_value": traditional_frequency_domain_hvsr_processing,
+    "rotdpp": traditional_rotdpp_hvsr_processing,
+    "arithmetic_mean": traditional_hvsr_processing,
+    "squared_average": traditional_hvsr_processing,
+    "quadratic_mean": traditional_hvsr_processing,
+    "geometric_mean": traditional_hvsr_processing,
+    "total_horizontal_energy": traditional_hvsr_processing,
+    "vector_summation": traditional_hvsr_processing,
+    "maximum_horizontal_value": traditional_hvsr_processing,
 }
 
 
-def traditional_hvsr_processing(records, settings):
+def traditional_hvsr_processing_base(records, settings):
     # need to handle this seperately b/c time domain technique
     method = TRADITIONAL_PROCESSING_REGISTER[settings.method_to_combine_horizontals]
     return method(records, settings)
@@ -236,7 +237,7 @@ def traditional_hvsr_processing(records, settings):
 
 def azimuthal_hvsr_processing(records, settings):
     # allocate memory for vertical spectra.
-    frq = settings.frequency_resampling
+    frq = settings.frequency_resampling_in_hz
     v_spectra = np.empty((len(records), len(frq)))
 
     # prepare verticals once at start.
@@ -244,26 +245,28 @@ def azimuthal_hvsr_processing(records, settings):
         v = record.vt
         v.window(*settings.window_type_and_width)
         if settings.fft_settings is None:
-            settings.fft_settings = dict(n=records.ns.nsamples)
+            settings.fft_settings = dict(n=record.ns.nsamples)
         fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
-        fft_frq = fft.rfftfrq(settings.fft_settings["n"], record.ns.dt)
-        smooth_v = konno_ohmachi(fft_frq, fft_v, frq)
+        fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], record.ns.dt)
+        smooth_v = konno_ohmachi_1d(fft_frq, fft_v, frq)
         v_spectra[idx] = smooth_v
 
     # rotate horizontals through defined azimuths.
     hvsr_per_azimuth = []
-    for azimuth in settings.azimuths:
-        hvsr_spectra = np.emtpy((len(records), len(frq)))
-        for idx, (smooth_v, record) in enumerate(zip(records, smooth_v)):
-            h = single_azimuth(record.ns, record.ew, azimuth)
+    for azimuth in settings.azimuths_in_degrees:
+        hvsr_spectra = np.empty((len(records), len(frq)))
+        for idx, (record, smooth_v) in enumerate(zip(records, v_spectra)):
+            h = single_azimuth(record.ns.amplitude,
+                               record.ew.amplitude,
+                               azimuth)
             h = TimeSeries(h, dt=record.ns.dt)
             h.window(*settings.window_type_and_width)
             fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
-            smooth_h = konno_ohmachi(fft_frq, fft_h, frq)
+            smooth_h = konno_ohmachi_1d(fft_frq, fft_h, frq)
             hvsr_spectra[idx] = smooth_h / smooth_v
         hvsr_per_azimuth.append(HvsrTraditional(hvsr_spectra, frq))
 
-    return HvsrAzimuthal.from_iter(hvsr_per_azimuth, settings.azimuths)
+    return HvsrAzimuthal.from_iter(hvsr_per_azimuth, settings.azimuths_in_degrees)
     # TODO(jpv): Add metadata HvsrAzimuthal and associated HvsrTraditional.
 
 
@@ -278,10 +281,10 @@ def diffuse_field_hvsr_processing(records, settings):
             msg += " equal for processing under the diffuse field assumption."
             raise IndexError(msg)
 
-    nfrqs = _nsamples//2 + 1 if (_nsamples % 2) == 0 else _nsamples//2
-    psd_ns = np.zeros(len(nfrqs))
-    psd_ew = np.zeros(len(nfrqs))
-    psd_vt = np.zeros(len(nfrqs))
+    nfrqs = _nsamples//2 if (_nsamples % 2) == 0 else _nsamples//2 + 1
+    psd_ns = np.zeros(nfrqs)
+    psd_ew = np.zeros(nfrqs)
+    psd_vt = np.zeros(nfrqs)
     df = (1/records[0].ns.dt) / _nsamples
     for record in records:
         # window time series to mitigate frequency-domain artifacts.
@@ -289,7 +292,7 @@ def diffuse_field_hvsr_processing(records, settings):
 
         # compute fourier transform.
         if settings.fft_settings is None:
-            settings.fft_settings = dict(n=records.ns.nsamples)
+            settings.fft_settings = dict(n=record.ns.nsamples)
         fft_ns = np.abs(rfft(record.ns.amplitude, **settings.fft_settings))
         fft_ew = np.abs(rfft(record.ew.amplitude, **settings.fft_settings))
         fft_vt = np.abs(rfft(record.vt.amplitude, **settings.fft_settings))
@@ -306,12 +309,12 @@ def diffuse_field_hvsr_processing(records, settings):
     psd_vt /= len(records)
 
     # compute hvsr
-    fft_frq = fft.rfftfrq(settings.fft_settings["n"], record.ns.dt)
+    fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], record.ns.dt)
     return HvsrDiffuseField(np.sqrt((psd_ns + psd_ew)/psd_vt), fft_frq)
 
 
 PROCESSING_METHODS = {
-    "traditional": traditional_hvsr_processing,
+    "traditional": traditional_hvsr_processing_base,
     "azimuthal": azimuthal_hvsr_processing,
     "diffuse_field": diffuse_field_hvsr_processing
 }
