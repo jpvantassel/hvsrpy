@@ -47,7 +47,7 @@ setup(
     packages=find_packages(),
     python_requires='>=3.8',
     install_requires=['numpy>=1.22', 'scipy', 'obspy',
-                      'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0'],
+                      'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0', 'numba'],
     extras_require={
         'dev': ['coverage', 'sphinx-click'],
     },

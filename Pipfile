@@ -9,6 +9,7 @@ tox = "*"
 jupyterlab = "*"
 matplotlib = "*"
 autopep8 = "*"
+numba = "*"
 
 [dev-packages]
 

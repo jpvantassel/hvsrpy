@@ -8,3 +8,4 @@ matplotlib
 click>8.0.0
 coverage
 sphinx-click
+numba
