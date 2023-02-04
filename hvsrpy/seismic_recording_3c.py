@@ -17,8 +17,11 @@
 
 """Class definition of SeismicRecording3C, a 3-component seismic record."""
 
+import json
+
 import numpy as np
 
+from .timeseries import TimeSeries
 
 class SeismicRecording3C():
     """Class for creating and manipulating 3-component seismic records.
@@ -133,6 +136,26 @@ class SeismicRecording3C():
         self.degrees_from_north = degrees_from_north
         self.meta["Current Degrees from North (deg)"] = degrees_from_north
 
+    def save(self, fname):
+        with open(fname, "w") as f:
+            json.dump(dict(dt=self.ns.dt,
+                     ns_amplitude=self.ns.amplitude.tolist(), 
+                     ew_amplitude=self.ew.amplitude.tolist(),
+                     vt_amplitude=self.vt.amplitude.tolist(),
+                     degrees_from_north=self.degrees_from_north,
+                     meta = self.meta), f)
+
+    @classmethod
+    def load(cls, fname):
+        with open(fname, "r") as f:
+            data = json.load(f)
+        ns = TimeSeries(data["ns_amplitude"], data["dt"])
+        ew = TimeSeries(data["ew_amplitude"], data["dt"])
+        vt = TimeSeries(data["vt_amplitude"], data["dt"])
+        degrees_from_north = data["degrees_from_north"]
+        meta = data["meta"]
+        return cls(ns, ew, vt, degrees_from_north=degrees_from_north, meta=meta)
+
     @classmethod
     def from_seismic_recording_3c(cls, seismic_recording_3c):
         # TODO(jpv): Add docstring.
@@ -144,6 +167,28 @@ class SeismicRecording3C():
         return cls(*new_components,
                    degrees_from_north=original.degrees_from_north,
                    meta=original.meta)
+
+    def is_similar(self, other):
+        """Check if `other` is similar to `self`."""
+        if not isinstance(other, SeismicRecording3C):
+            return False
+        
+        return True
+
+    def __eq__(self, other):
+        """Check if `other` is equal to `self`."""
+        if not self.is_similar(other):
+            return False
+
+        for attr in ["ns", "ew", "vt", "meta"]:
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        for attr, tol in [("degrees_from_north", 0.1)]:
+            if abs(getattr(self, attr) - getattr(other, attr)) > tol:
+                return False
+        
+        return True
 
     def __str__(self):
         """Human-readable representation of `SeismicRecording3C` object."""

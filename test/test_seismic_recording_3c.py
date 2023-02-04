@@ -18,6 +18,8 @@
 """Test functionionality of SeismicRecording3C."""
 
 import logging
+import os
+import pathlib
 
 import numpy as np
 
@@ -32,6 +34,7 @@ class TestSeismicRecording3C(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.full_path = get_full_path(__file__, result_as_string=False)
         cls.dt = 0.001
         cls.time = np.arange(0, 10, cls.dt)
         cls.ex_tseries_cosine = hvsrpy.TimeSeries(np.cos(2*np.pi*10*cls.time),
@@ -39,6 +42,11 @@ class TestSeismicRecording3C(TestCase):
         cls.ex_srecord3c_cosine = hvsrpy.SeismicRecording3C(cls.ex_tseries_cosine,
                                                             cls.ex_tseries_cosine,
                                                             cls.ex_tseries_cosine)
+        cls.ex_tseries_sine = hvsrpy.TimeSeries(np.sin(2*np.pi*10*cls.time),
+                                                cls.dt)
+        cls.ex_srecord3c_sine = hvsrpy.SeismicRecording3C(cls.ex_tseries_sine,
+                                                          cls.ex_tseries_sine,
+                                                          cls.ex_tseries_sine)
 
     def test_srecord3c_split_to_one_second_srecord3c(self):
         ex = self.ex_srecord3c_cosine
@@ -46,6 +54,37 @@ class TestSeismicRecording3C(TestCase):
         windows = srecord3c.split(1.0)
         self.assertTrue(len(windows) == 10)
         self.assertTrue(isinstance(windows[0], hvsrpy.SeismicRecording3C))
+
+    def test_srecord3c_save(self):
+        ex = self.ex_srecord3c_cosine
+        fname = self.full_path / "data/temp/ex_record3c_cosine_save.json"
+        ex.save(fname)
+        self.assertTrue(fname.exists())
+        os.remove(fname)
+
+    def test_srecord3c_load(self):
+        org_ex = self.ex_srecord3c_cosine
+        fname = self.full_path / "data/temp/ex_reocord3c_cosine_load.json"
+        org_ex.save(fname)
+        new_ex = hvsrpy.SeismicRecording3C.load(fname)
+        self.assertTrue(org_ex == new_ex)
+        os.remove(fname)
+
+    def test_srecord_isimilar(self):
+        a = self.ex_srecord3c_cosine
+        b = self.ex_srecord3c_sine
+        c = self.ex_tseries_sine
+
+        self.assertTrue(b.is_similar(a))
+        self.assertFalse(b.is_similar(c))
+
+    def test_srecord_equal(self):
+        a = self.ex_srecord3c_cosine
+        b = hvsrpy.SeismicRecording3C.from_seismic_recording_3c(a)
+        c = self.ex_srecord3c_sine
+        
+        self.assertTrue(a == b)
+        self.assertTrue(a != c)
 
     # TODO (jpv): Add degrees from north and associated rotation ability
     # throughout hvsrpy workflow.
