@@ -19,7 +19,7 @@
 
 from termcolor import colored
 
-from hvsrpy import Hvsr
+from hvsrpy import HvsrTraditional
 import numpy as np
 
 
@@ -38,14 +38,14 @@ def is_isnot(value):
 def peak_index(curve):
     """Find index to the peak of the provided curve."""
     curve = curve.reshape((1, curve.size))
-    pot_peak_indices, _ = Hvsr.find_peaks(curve)
+    pot_peak_indices, _ = HvsrTraditional.find_peaks(curve)
     pot_peak_indices = pot_peak_indices[0]
     pot_peak_amp = curve[0, pot_peak_indices]
     pot_peak_index = np.argwhere(pot_peak_amp == np.max(pot_peak_amp))[0][0]
     return pot_peak_indices[pot_peak_index]
 
 
-def sesame_reliability(windowlength, passing_window_count,
+def reliability(windowlength, passing_window_count,
                        frequency, mean_curve, std_curve,
                        search_limits=(None, None), verbose=1):
     """Check SESAME (2004) reliability criteria.
@@ -183,7 +183,7 @@ def trim_curve(search_limits, frequency, mean_curve, std_curve, verbose=0):
     return (frequency, mean_curve, std_curve)
 
 
-def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
+def clarity(frequency, mean_curve, std_curve, f0_std,
                    search_limits=(None, None), verbose=1):
     """Check SESAME (2004) clarity criteria.
 
@@ -356,185 +356,3 @@ def sesame_clarity(frequency, mean_curve, std_curve, f0_std,
             f"  The chosen peak {overall} the peak clarity criteria, with {int(np.sum(criteria))} of 6.")
 
     return criteria
-
-
-def parse_hvsrpy_output(fname):
-    """Parse an hvsrpy output file for revalent information.
-
-    Parameters
-    ----------
-    fname : str
-        Name of file to be parsed may include a relative or full path.
-
-    Returns
-    -------
-    dict
-        With revalent information as key value pairs.
-
-    """
-    data = {}
-    frqs, meds, lows, higs = [], [], [], []
-
-    lookup = {"# Window Length (s)": ("windowlength", float),
-              "# Total Number of Windows ()": ("total_windows", int),
-              "# Frequency Domain Window Rejection Performed ()": ("rejection_bool", bool),
-              "# Lower frequency limit for peaks (Hz)": ("f_low", lambda x: None if x == "None" else float(x)),
-              "# Upper frequency limit for peaks (Hz)": ("f_high", lambda x: None if x == "None" else float(x)),
-              "# Number of Standard Deviations Used for Rejection () [n]": ("n_for_rejection", float),
-              "# Number of Accepted Windows ()": ("accepted_windows", int),
-              "# Distribution of f0 ()": ("distribution_f0", lambda x: x),
-              "# Mean f0 (Hz)": ("mean_f0", float),
-              "# Standard deviation f0 (Hz) [Sigmaf0]": ("std_f0", float),
-              "# Median Curve Distribution ()": ("distribution_mc", lambda x: x),
-              "# Median Curve Peak Frequency (Hz) [f0mc]": ("f0_mc", float),
-              "# Median Curve Peak Amplitude ()": ("amplitude_f0_mc", float)
-              }
-
-    with open(fname, "r") as f:
-        for line in f:
-            if line.startswith("#"):
-                try:
-                    key, value = line.split(",")
-                except ValueError:
-                    continue
-
-                try:
-                    subkey, operation = lookup[key]
-                    data[subkey] = operation(value.rstrip())
-                except KeyError:
-                    continue
-            else:
-                frq, med, low, hig = line.split(",")
-
-                frqs.append(frq)
-                meds.append(med)
-                lows.append(low)
-                higs.append(hig)
-
-    data["frequency"] = np.array(frqs, dtype=np.double)
-    data["curve"] = np.array(meds, dtype=np.double)
-    data["lower"] = np.array(lows, dtype=np.double)
-    data["upper"] = np.array(higs, dtype=np.double)
-
-    return data
-
-# """This file contains the class Hvsr for organizing data
-# related to the horizontal-to-vertical spectral ratio method."""
-
-# import os
-# import glob
-# import re
-# import logging
-# logger = logging.getLogger(__name__)
-
-
-# class Hvsr():
-#     def __init__(self, frequency, amplitude, identifier):
-#         self.frq = [frequency]
-#         self.amp = [amplitude]
-#         self.idn = identifier
-
-#     def append(self, frequency, amplitude):
-#         for cfreq, nfreq in zip(self.frq[0], frequency):
-#             if cfreq!=nfreq:
-#                 raise ValueError(f"appended f {cfreq} != existing f{nfreq}")
-#         self.frq.append(frequency)
-#         self.amp.append(amplitude)
-
-#     @classmethod
-#     def from_geopsy_folder(cls, dirname, identifier):
-#         logging.info(f"Reading .hv files from {dirname}")
-#         fnames = glob.glob(dirname+"/*.hv")
-#         logging.debug(f"File names to load are {fnames}")
-#         logging.info(f"Starting file {fnames[0]}")
-#         obj = cls.from_geopsy_file(fnames[0], identifier)
-#         for fname in fnames[1:]:
-#             logging.info(f"Starting file {fname}")
-#             tmp_obj = cls.from_geopsy_file(fname, "temp")
-#             obj.append(tmp_obj.frq[0], tmp_obj.amp[0])
-#         return obj
-
-#     @classmethod
-#     def from_geopsy_file(cls, fname, identifier):
-#         with open(fname, "r") as f:
-#             lines = f.read().splitlines()
-
-#         for num, line in enumerate(lines):
-#             if line.startswith("# Frequency"):
-#                 start_line = num + 1
-#                 break
-
-#         frq, amp = [], []
-#         for line in lines[start_line:]:
-#             fr, am = re.findall(r"^(\d+.?\d*)\t(\d+.?\d*)\t\d+.?\d*\t\d+.?\d*$", line)[0]
-#             frq.append(float(fr))
-#             amp.append(float(am))
-
-#         return cls(frq, amp, identifier)
-
- 
-# def resonance_identification_manual(self,
-#                                     distribution_mc='lognormal',
-#                                     find_peaks_kwargs=None,
-#                                     ylims=None):
-#     if find_peaks_kwargs is None:
-#         raise NotImplementedError
-#     (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
-
-#     frqs, amps = [], []
-#     for amp, col_ids in zip(self.amp, valid_idxs):
-#         frqs.extend(self.frq[col_ids])
-#         amps.extend(amp[col_ids])
-#     peaks_valid = (frqs, amps)
-#     peaks_invalid = ([], [])
-
-#     fig, ax = single_plot(
-#         self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
-#     ax.autoscale(enable=False)
-#     fig.show()
-#     pxlim = ax.get_xlim()
-#     pylim = ax.get_ylim()
-
-#     # continue button
-#     upper_right_corner = (0.05, 0.95)
-#     _xc, _yc = upper_right_corner
-#     box_size = 0.1
-#     scale_x = (np.log10(max(pxlim)) - np.log10(min(pxlim)))
-#     scale_y = max(pylim) - min(pylim)
-#     x_lower, x_upper = np.exp(_xc*scale_x + np.log10(min(pxlim))
-#                                 ), np.exp((_xc+box_size)*scale_x + np.log10(min(pxlim)))
-#     y_lower, y_upper = (_yc - box_size)*scale_y + \
-#         min(pylim), _yc*scale_y + min(pylim)
-
-#     def draw_continue_box(ax):
-#         ax.fill([x_lower, x_upper, x_upper, x_lower],
-#                 [y_upper, y_upper, y_lower, y_lower], color="lightgreen")
-#         ax.text(_xc, _yc-box_size/2, "continue?", ha="left",
-#                 va="center", transform=ax.transAxes)
-#     draw_continue_box(ax)
-
-#     f_lows, f_highs = [], []
-#     while True:
-#         xs, ys = ginput_session(fig, ax, initial_adjustment=False,
-#                                 npts=2, ask_to_confirm_point=False, ask_to_continue=False)
-
-#         in_continue_box = False
-#         for _x, _y in zip(xs, ys):
-#             if (_x < x_upper) and (_x > x_lower) and (_y > y_lower) and (_y < y_upper):
-#                 in_continue_box = True
-#                 break
-
-#         if in_continue_box:
-#             plt.close()
-#             break
-#         else:
-#             f_lows.append(min(xs))
-#             f_highs.append(max(xs))
-#             continue
-
-#     f_lows.sort()
-#     f_highs.sort()
-#     limits = [[fl, fh] for fl, fh in zip(f_lows, f_highs)]
-#     limits = np.array(limits)
-
-#     return limits

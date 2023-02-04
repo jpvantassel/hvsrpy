@@ -36,6 +36,7 @@ class TestDataWrangler(TestCase):
     def test_read_single_on_mseed_combined(self):
         fname = self.input_path / "mseed_combined/ut.stn11.a2_c50.mseed"
         data = hvsrpy.data_wrangler.read_single(fname)
+        # data.save(self.input_path / "srecord3c/ut.stn11.a2_c50.json")
         self.assertTrue(isinstance(data, hvsrpy.SeismicRecording3C))
 
     def test_read_single_on_mseed_individual(self):
@@ -86,6 +87,7 @@ class TestDataWrangler(TestCase):
             fname = self.input_path / f"peer/rsn942_northr_alh{component}.vt2"
             fnames.append(fname)
         data = hvsrpy.data_wrangler.read_single(fnames)
+        # data.save(self.input_path / "srecord3c/rsn942_northr.json")
         self.assertTrue(isinstance(data, hvsrpy.SeismicRecording3C))
 
     def test_read_on_many_miniseed(self):
