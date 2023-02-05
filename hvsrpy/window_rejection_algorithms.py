@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2022 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -17,20 +17,24 @@
 
 """Collection of functions for window rejection."""
 
+import logging
+
 import numpy as np
 
+logger = logging.getLogger(__name__)
 
-def sta_lta_window_rejection(records,
-                             sta_seconds,
-                             lta_seconds,
-                             min_sta_lta_ratio,
-                             max_sta_lta_ratio,
-                             components=("ns", "ew", "vt")
-                             ):
-    """Perform window rejection using STA - LTA ratio.
+
+def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
+                             min_sta_lta_ratio, max_sta_lta_ratio,
+                             components=("ns", "ew", "vt")):
+    """Performs window rejection using STA - LTA ratio.
 
     Paramters
     ---------
+    records: iterable of SeismicRecording3C
+        Time-domain data in the form of an interable object containing
+        SeismicRecording3C objects. This data is assumed to have already
+        been preprocessed using `hvsrpy.preprocess`.
     sta_seconds : float
         Length of time used to determine the short term average (STA)
         in seconds.
@@ -44,8 +48,8 @@ def sta_lta_window_rejection(records,
         Maximum allowable ratio of STA/LTA for a window; windows with
         an STA/LTA above this value will be rejected.
     components : iterable, optional
-        Components on which the STA/LTA filter will be performed,
-        default is all components `("ns", "ew", "vt")`.
+        Components on which the STA/LTA filter will be evaluated,
+        default is all components, that is, `("ns", "ew", "vt")`.
 
     Returns
     -------
@@ -88,202 +92,252 @@ def sta_lta_window_rejection(records,
 
     return passing_records
 
-# TODO(jpv): Reject windows based on maximum value in timeseries.
 
-
-# TODO(jpv): Review the frequency domain window rejection algorithm
-
-
-def frequency_domain_window_rejection(self, n=2, max_iterations=50,
-                                      distribution_f0='lognormal',
-                                      distribution_mc='lognormal',
-                                      search_range_in_hz=(None, None)):
-    """Frequency-domain window rejection by Cox et al., (2020).
+def maximum_value_window_rejection(records, maximum_value_threshold,
+                                   normalized=True, components=("ns", "ew", "vt")):
+    """Performs window rejection based on maximum value of time series.
 
     Parameters
     ----------
-    n : float, optional
-        Number of standard deviations from the mean, default
-        value is 2.
-    max_iterations : int, optional
-        Maximum number of rejection iterations, default value is
-        50.
-    distribution_f0 : {'lognormal', 'normal'}, optional
-        Assumed distribution of `f0` from time windows, the
-        default is 'lognormal'.
-    distribution_mc : {'lognormal', 'normal'}, optional
-        Assumed distribution of mean curve, the default is
-        'lognormal'.
+    records: iterable of SeismicRecording3C
+        Time-domain data in the form of an interable object containing
+        `SeismicRecording3C` objects. This data is assumed to have
+        already been preprocessed using `hvsrpy.preprocess`.
+    maximum_value_threshold : float
+        Absolute value of timeseries, that if exceeded, the record will
+        be rejected. Can be relative or absolute, see parameter
+        `normalized`.
+    normalized : bool, optional
+        Defines whether the `maximum_value_threshold` is absolute or
+        relative to the maximum value observed across all records and
+        all components, default is `True` indicating the
+        `maximum_value_threshold` is relative to the maximum value
+        observed.
+    components : iterable, optional
+        Components on which the maximum value filter will be evaluated,
+        default is all components, that is, `("ns", "ew", "vt")`.
 
     Returns
     -------
-    int
-        Number of iterations required for convergence.
+    list of SeismicRecordings3C
+        List of `SeismicRecording3C` objects with those that exceed the
+        maximum value threshold removed.
 
-    """
-    # TODO(jpv): Review documentation here.
+    """    
+    # determine the maximum value for each record, across all components.
+    maximum_values = np.empty(len(records))
+    for idx, record in enumerate(records):
+        maximum_value = 0
+        for component in components:
+            timeseries = getattr(record, component)
+            component_max = np.max(np.abs(timeseries.amplitude))
+            if component_max > maximum_value:
+                maximum_value = component_max
+        maximum_values[idx] = maximum_value
 
-    self.meta["n"] = n
-    self.meta["Performed Rejection"] = True
+    # normalize maximums, if applicable.
+    if normalized:
+        maximum_values /= np.max(maximum_values)
 
-    for c_iteration in range(1, max_iterations+1):
+    # remove records that exceed threshold.
+    passing_records = []
+    for record, maximum_value in zip(records, maximum_values):
+        if maximum_value < maximum_value_threshold:
+            passing_records.append(record)            
 
-        logger.debug(f"c_iteration: {c_iteration}")
-        logger.debug(f"valid_window_boolean_mask: {self.valid_window_boolean_mask}")
+    return passing_records
 
-        mean_f0_before = self.mean_f0_frq(distribution_f0)
-        std_f0_before = self.std_f0_frq(distribution_f0)
-        mc_peak_frq_before, _ = self.mean_curve_peak(distribution_mc)
-        d_before = abs(mean_f0_before - mc_peak_frq_before)
+# def frequency_domain_window_rejection(self, hvsr, n=2, max_iterations=50,
+#                                       distribution_f0='lognormal',
+#                                       distribution_mc='lognormal',
+#                                       search_range_in_hz=(None, None)):
+#     """Frequency-domain window rejection by Cox et al., (2020).
 
-        logger.debug(f"\tmean_f0_before: {mean_f0_before}")
-        logger.debug(f"\tstd_f0_before: {std_f0_before}")
-        logger.debug(f"\tmc_peak_frq_before: {mc_peak_frq_before}")
-        logger.debug(f"\td_before: {d_before}")
+#     Parameters
+#     ----------
+#     n : float, optional
+#         Number of standard deviations from the mean, default
+#         value is 2.
+#     max_iterations : int, optional
+#         Maximum number of rejection iterations, default value is
+#         50.
+#     distribution_f0 : {'lognormal', 'normal'}, optional
+#         Assumed distribution of `f0` from time windows, the
+#         default is 'lognormal'.
+#     distribution_mc : {'lognormal', 'normal'}, optional
+#         Assumed distribution of mean curve, the default is
+#         'lognormal'.
 
-        lower_bound = self.nstd_f0_frq(-n, distribution_f0)
-        upper_bound = self.nstd_f0_frq(+n, distribution_f0)
+#     Returns
+#     -------
+#     int
+#         Number of iterations required for convergence.
 
-        valid_indices = np.zeros(self.nseries, dtype=bool)
-        for c_window, (c_valid, c_peak) in enumerate(zip(self.valid_window_boolean_mask, self._main_peak_frq)):
-            if not c_valid:
-                continue
+#     """
+#     # TODO(jpv): Review documentation here.
+#     # TODO(jpv): Review the frequency domain window rejection algorithm
 
-            if c_peak > lower_bound and c_peak < upper_bound:
-                valid_indices[c_window] = True
+#     self.meta["n"] = n
+#     self.meta["Performed Rejection"] = True
 
-        self.valid_window_boolean_mask = valid_indices
+#     for c_iteration in range(1, max_iterations+1):
 
-        mean_f0_after = self.mean_f0_frq(distribution_f0)
-        std_f0_after = self.std_f0_frq(distribution_f0)
-        mc_peak_frq_after, _ = self.mean_curve_peak(distribution_mc)
-        d_after = abs(mean_f0_after - mc_peak_frq_after)
+#         logger.debug(f"c_iteration: {c_iteration}")
+#         logger.debug(f"valid_window_boolean_mask: {self.valid_window_boolean_mask}")
 
-        logger.debug(f"\tmean_f0_after: {mean_f0_after}")
-        logger.debug(f"\tstd_f0_after: {std_f0_after}")
-        logger.debug(f"\tmc_peak_frq_after: {mc_peak_frq_after}")
-        logger.debug(f"\td_after: {d_after}")
+#         mean_f0_before = self.mean_f0_frq(distribution_f0)
+#         std_f0_before = self.std_f0_frq(distribution_f0)
+#         mc_peak_frq_before, _ = self.mean_curve_peak(distribution_mc)
+#         d_before = abs(mean_f0_before - mc_peak_frq_before)
 
-        if d_before == 0 or std_f0_before == 0 or std_f0_after == 0:
-            msg = f"Performed {c_iteration} iterations, returning b/c 0 values."
-            logger.warning(msg)
-            return c_iteration
+#         logger.debug(f"\tmean_f0_before: {mean_f0_before}")
+#         logger.debug(f"\tstd_f0_before: {std_f0_before}")
+#         logger.debug(f"\tmc_peak_frq_before: {mc_peak_frq_before}")
+#         logger.debug(f"\td_before: {d_before}")
 
-        d_diff = abs(d_after - d_before)/d_before
-        s_diff = abs(std_f0_after - std_f0_before)
+#         lower_bound = self.nstd_f0_frq(-n, distribution_f0)
+#         upper_bound = self.nstd_f0_frq(+n, distribution_f0)
 
-        logger.debug(f"\td_diff: {d_diff}")
-        logger.debug(f"\ts_diff: {s_diff}")
+#         valid_indices = np.zeros(self.nseries, dtype=bool)
+#         for c_window, (c_valid, c_peak) in enumerate(zip(self.valid_window_boolean_mask, self._main_peak_frq)):
+#             if not c_valid:
+#                 continue
 
-        if (d_diff < 0.01) and (s_diff < 0.01):
-            msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
-            logger.info(msg)
-            return c_iteration
+#             if c_peak > lower_bound and c_peak < upper_bound:
+#                 valid_indices[c_window] = True
+
+#         self.valid_window_boolean_mask = valid_indices
+
+#         mean_f0_after = self.mean_f0_frq(distribution_f0)
+#         std_f0_after = self.std_f0_frq(distribution_f0)
+#         mc_peak_frq_after, _ = self.mean_curve_peak(distribution_mc)
+#         d_after = abs(mean_f0_after - mc_peak_frq_after)
+
+#         logger.debug(f"\tmean_f0_after: {mean_f0_after}")
+#         logger.debug(f"\tstd_f0_after: {std_f0_after}")
+#         logger.debug(f"\tmc_peak_frq_after: {mc_peak_frq_after}")
+#         logger.debug(f"\td_after: {d_after}")
+
+#         if d_before == 0 or std_f0_before == 0 or std_f0_after == 0:
+#             msg = f"Performed {c_iteration} iterations, returning b/c 0 values."
+#             logger.warning(msg)
+#             return c_iteration
+
+#         d_diff = abs(d_after - d_before)/d_before
+#         s_diff = abs(std_f0_after - std_f0_before)
+
+#         logger.debug(f"\td_diff: {d_diff}")
+#         logger.debug(f"\ts_diff: {s_diff}")
+
+#         if (d_diff < 0.01) and (s_diff < 0.01):
+#             msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
+#             logger.info(msg)
+#             return c_iteration
 
 
-def reject_windows_manual(self,
-                          distribution_mc='lognormal',
-                          find_peaks_kwargs=None,
-                          ylims=None):
-    """Rejection spurious HVSR windows manually.
+# def reject_windows_manual(self,
+#                           distribution_mc='lognormal',
+#                           find_peaks_kwargs=None,
+#                           ylims=None):
+#     """Rejection spurious HVSR windows manually.
 
-    Parameters
-    ----------
-    distribution_f0 : {'lognormal', 'normal'}, optional
-        Assumed distribution of `f0` from time windows, the
-        default is 'lognormal'.
-    distribution_mc : {'lognormal', 'normal'}, optional
-        Assumed distribution of mean curve, the default is
-        'lognormal'.
+#     Parameters
+#     ----------
+#     distribution_f0 : {'lognormal', 'normal'}, optional
+#         Assumed distribution of `f0` from time windows, the
+#         default is 'lognormal'.
+#     distribution_mc : {'lognormal', 'normal'}, optional
+#         Assumed distribution of mean curve, the default is
+#         'lognormal'.
 
-    Returns
-    -------
-    None
-        Modifies Hvsr object's internal state.
+#     Returns
+#     -------
+#     None
+#         Modifies Hvsr object's internal state.
 
-    """
-    if find_peaks_kwargs is None:
-        raise NotImplementedError
-    (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
+#     """
+#     if find_peaks_kwargs is None:
+#         raise NotImplementedError
+#     (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
 
-    frqs, amps = [], []
-    for amp, col_ids in zip(self.amp, valid_idxs):
-        frqs.extend(self.frq[col_ids])
-        amps.extend(amp[col_ids])
-    peaks_valid = (frqs, amps)
-    peaks_invalid = ([], [])
+#     frqs, amps = [], []
+#     for amp, col_ids in zip(self.amp, valid_idxs):
+#         frqs.extend(self.frq[col_ids])
+#         amps.extend(amp[col_ids])
+#     peaks_valid = (frqs, amps)
+#     peaks_invalid = ([], [])
 
-    fig, ax = single_plot(
-        self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
-    ax.autoscale(enable=False)
-    fig.show()
-    pxlim = ax.get_xlim()
-    pylim = ax.get_ylim()
+#     fig, ax = single_plot(
+#         self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
+#     ax.autoscale(enable=False)
+#     fig.show()
+#     pxlim = ax.get_xlim()
+#     pylim = ax.get_ylim()
 
-    # continue button
-    upper_right_corner = (0.05, 0.95)
-    _xc, _yc = upper_right_corner
-    box_size = 0.1
-    scale_x = (np.log10(max(pxlim)) - np.log10(min(pxlim)))
-    scale_y = max(pylim) - min(pylim)
-    x_lower, x_upper = np.exp(_xc*scale_x + np.log10(min(pxlim))
-                              ), np.exp((_xc+box_size)*scale_x + np.log10(min(pxlim)))
-    y_lower, y_upper = (_yc - box_size)*scale_y + \
-        min(pylim), _yc*scale_y + min(pylim)
+#     # continue button
+#     upper_right_corner = (0.05, 0.95)
+#     _xc, _yc = upper_right_corner
+#     box_size = 0.1
+#     scale_x = (np.log10(max(pxlim)) - np.log10(min(pxlim)))
+#     scale_y = max(pylim) - min(pylim)
+#     x_lower, x_upper = np.exp(_xc*scale_x + np.log10(min(pxlim))
+#                               ), np.exp((_xc+box_size)*scale_x + np.log10(min(pxlim)))
+#     y_lower, y_upper = (_yc - box_size)*scale_y + \
+#         min(pylim), _yc*scale_y + min(pylim)
 
-    def draw_continue_box(ax):
-        ax.fill([x_lower, x_upper, x_upper, x_lower],
-                [y_upper, y_upper, y_lower, y_lower], color="lightgreen")
-        ax.text(_xc, _yc-box_size/2, "continue?", ha="left",
-                va="center", transform=ax.transAxes)
-    draw_continue_box(ax)
+#     def draw_continue_box(ax):
+#         ax.fill([x_lower, x_upper, x_upper, x_lower],
+#                 [y_upper, y_upper, y_lower, y_lower], color="lightgreen")
+#         ax.text(_xc, _yc-box_size/2, "continue?", ha="left",
+#                 va="center", transform=ax.transAxes)
+#     draw_continue_box(ax)
 
-    while True:
-        xs, ys = ginput_session(fig, ax, initial_adjustment=False,
-                                npts=2, ask_to_confirm_point=False, ask_to_continue=False)
+#     while True:
+#         xs, ys = ginput_session(fig, ax, initial_adjustment=False,
+#                                 npts=2, ask_to_confirm_point=False, ask_to_continue=False)
 
-        selected_columns = np.logical_and(
-            self.frq > min(xs), self.frq < max(xs))
-        was_empty = True
-        for idx, (amp) in enumerate(zip(self.amp[:, selected_columns])):
-            if np.any(np.logical_and(amp > min(ys), amp < max(ys))):
-                was_empty = False
-                self.valid_window_boolean_mask[idx] = False
+#         selected_columns = np.logical_and(
+#             self.frq > min(xs), self.frq < max(xs))
+#         was_empty = True
+#         for idx, (amp) in enumerate(zip(self.amp[:, selected_columns])):
+#             if np.any(np.logical_and(amp > min(ys), amp < max(ys))):
+#                 was_empty = False
+#                 self.valid_window_boolean_mask[idx] = False
 
-        vfrqs, vamps = [], []
-        ivfrqs, ivamps = [], []
-        (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
-        for amp, col_ids, window_valid in zip(self.amp, valid_idxs, self.valid_window_boolean_mask):
-            if window_valid:
-                vfrqs.extend(self.frq[col_ids])
-                vamps.extend(amp[col_ids])
-            else:
-                ivfrqs.extend(self.frq[col_ids])
-                ivamps.extend(amp[col_ids])
+#         vfrqs, vamps = [], []
+#         ivfrqs, ivamps = [], []
+#         (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
+#         for amp, col_ids, window_valid in zip(self.amp, valid_idxs, self.valid_window_boolean_mask):
+#             if window_valid:
+#                 vfrqs.extend(self.frq[col_ids])
+#                 vamps.extend(amp[col_ids])
+#             else:
+#                 ivfrqs.extend(self.frq[col_ids])
+#                 ivamps.extend(amp[col_ids])
 
-        peaks_valid = (vfrqs, vamps)
-        peaks_invalid = (ivfrqs, ivamps)
+#         peaks_valid = (vfrqs, vamps)
+#         peaks_invalid = (ivfrqs, ivamps)
 
-        # Clear, set axis limits, and lock axis.
-        ax.clear()
-        ax.set_xlim(pxlim)
-        ax.set_ylim(pylim)
-        # Note: ax.clear() re-enables autoscale.
-        ax.autoscale(enable=False)
-        ax = single_plot(self, peaks_valid, peaks_invalid,
-                         distribution_mc, ax=ax, ylims=ylims)
-        draw_continue_box(ax)
-        fig.canvas.draw_idle()
+#         # Clear, set axis limits, and lock axis.
+#         ax.clear()
+#         ax.set_xlim(pxlim)
+#         ax.set_ylim(pylim)
+#         # Note: ax.clear() re-enables autoscale.
+#         ax.autoscale(enable=False)
+#         ax = single_plot(self, peaks_valid, peaks_invalid,
+#                          distribution_mc, ax=ax, ylims=ylims)
+#         draw_continue_box(ax)
+#         fig.canvas.draw_idle()
 
-        if was_empty:
-            in_continue_box = False
-            for _x, _y in zip(xs, ys):
-                if (_x < x_upper) and (_x > x_lower) and (_y > y_lower) and (_y < y_upper):
-                    in_continue_box = True
-                    break
+#         if was_empty:
+#             in_continue_box = False
+#             for _x, _y in zip(xs, ys):
+#                 if (_x < x_upper) and (_x > x_lower) and (_y > y_lower) and (_y < y_upper):
+#                     in_continue_box = True
+#                     break
 
-            if in_continue_box:
-                plt.close()
-                break
-            else:
-                continue
+#             if in_continue_box:
+#                 plt.close()
+#                 break
+#             else:
+#                 continue
