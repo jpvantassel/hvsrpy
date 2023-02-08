@@ -17,7 +17,7 @@
 
 import numpy as np
 
-from .smoothing import konno_ohmachi
+from .smoothing import SMOOTHING_OPERATORS
 from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
 from .hvsr_diffuse_field import HvsrDiffuseField
@@ -179,9 +179,10 @@ def traditional_hvsr_processing(records, settings):
         h_idx += 1
         v_idx += 1
 
-    # smooth all at once to boost performance.
+    # smooth.
+    smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
     frq = settings.frequency_resampling_in_hz
-    smooth_spectra = konno_ohmachi(fft_frq, spectra, frq)
+    smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra, frq, bandwidth)
 
     # compute hvsr
     hvsr_spectra = smooth_spectra[:len(records)] / smooth_spectra[len(records):]
@@ -218,8 +219,9 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
         v_idx += 1
 
     # smooth all at once to boost performance.
+    smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
     frq = settings.frequency_resampling_in_hz
-    smooth_spectra = konno_ohmachi(fft_frq, spectra, frq)
+    smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra, frq, bandwidth)
 
     # compute hvsr
     hvsr_spectra = smooth_spectra[:len(records)] / smooth_spectra[len(records):]
@@ -253,7 +255,9 @@ def traditional_rotdpp_hvsr_processing(records, settings):
             spectra_per_record[idx] = fft_h
 
         # smooth.
-        smooth_spectra = konno_ohmachi(fft_frq, spectra_per_record, frq)
+        smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
+        frq = settings.frequency_resampling_in_hz
+        smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra_per_record, frq, bandwidth)
 
         smooth_h = np.percentile(smooth_spectra[:-1],
                                  settings.ppth_percentile_for_rotdpp_computation,

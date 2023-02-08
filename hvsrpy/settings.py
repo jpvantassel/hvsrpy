@@ -79,7 +79,7 @@ class HvsrProcessingSettings(Settings):
         super().__init__()
         attributes_with_defaults = {
             "window_type_and_width": ("tukey", 0.1),
-            "smoothing_type_and_bandwidth": ("konno_and_ohmachi", 40),
+            "smoothing_operator_and_bandwidth": ("konno_and_ohmachi", 40),
             "frequency_resampling_in_hz": np.geomspace(0.1, 50, 200),
             "fft_settings": None
         }
