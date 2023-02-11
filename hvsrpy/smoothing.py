@@ -250,8 +250,153 @@ def _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_factor):
 
     return smoothed_spectrum
 
+@njit(cache=True)
+def linear_rectangular(frequencies, spectrum, fcs, bandwidth=0.5):
+    nspectra, _ = spectrum.shape
+    nfcs = fcs.size
+    smoothed_spectrum = np.empty((nspectra, nfcs))
+
+    for fc_index, fc in enumerate(fcs):
+
+        if fc < 1E-6:
+            smoothed_spectrum[:, fc_index] = 0
+            continue
+
+        sumproduct = np.zeros(nspectra)
+        sumwindow = 0
+
+        for f_index, f in enumerate(frequencies):
+            f_minus_fc = f - fc
+
+            if (f < 1E-6) or (np.abs(f_minus_fc) > bandwidth/2):
+                continue
+            else:
+                window = 1.
+
+            sumproduct += window*spectrum[:, f_index]
+            sumwindow += window
+
+        if sumwindow > 0:
+            smoothed_spectrum[:, fc_index] = sumproduct / sumwindow
+        else:
+            smoothed_spectrum[:, fc_index] = 0
+
+    return smoothed_spectrum
+
+@njit(cache=True)
+def log_rectangular(frequencies, spectrum, fcs, bandwidth=0.05):
+    lower_limit = np.power(10, -bandwidth/2)
+    upper_limit = np.power(10, +bandwidth/2)
+
+    nspectra, _ = spectrum.shape
+    nfcs = fcs.size
+    smoothed_spectrum = np.empty((nspectra, nfcs))
+
+    for fc_index, fc in enumerate(fcs):
+
+        if fc < 1E-6:
+            smoothed_spectrum[:, fc_index] = 0
+            continue
+
+        sumproduct = np.zeros(nspectra)
+        sumwindow = 0
+
+        for f_index, f in enumerate(frequencies):
+            f_on_fc = f / fc
+
+            if (f < 1E-6) or (f_on_fc < lower_limit) or (f_on_fc > upper_limit):
+                continue
+            else:
+                window = 1.
+
+            sumproduct += window*spectrum[:, f_index]
+            sumwindow += window
+
+        if sumwindow > 0:
+            smoothed_spectrum[:, fc_index] = sumproduct / sumwindow
+        else:
+            smoothed_spectrum[:, fc_index] = 0
+
+    return smoothed_spectrum
+
+@njit(cache=True)
+def linear_triangular(frequencies, spectrum, fcs, bandwidth=0.5):
+    nspectra, _ = spectrum.shape
+    nfcs = fcs.size
+    smoothed_spectrum = np.empty((nspectra, nfcs))
+
+    for fc_index, fc in enumerate(fcs):
+
+        if fc < 1E-6:
+            smoothed_spectrum[:, fc_index] = 0
+            continue
+
+        sumproduct = np.zeros(nspectra)
+        sumwindow = 0
+
+        for f_index, f in enumerate(frequencies):
+            f_minus_fc = f - fc
+
+            if (f < 1E-6) or (np.abs(f_minus_fc) > bandwidth/2):
+                continue
+            else:
+                window = 1. - np.abs(f_minus_fc)*(-2/bandwidth)
+
+            sumproduct += window*spectrum[:, f_index]
+            sumwindow += window
+
+        if sumwindow > 0:
+            smoothed_spectrum[:, fc_index] = sumproduct / sumwindow
+        else:
+            smoothed_spectrum[:, fc_index] = 0
+
+    return smoothed_spectrum
+
+@njit(cache=True)
+def log_triangular(frequencies, spectrum, fcs, bandwidth=0.05):
+    lower_limit = np.power(10, -bandwidth/2)
+    upper_limit = np.power(10, +bandwidth/2)
+
+    nspectra, _ = spectrum.shape
+    nfcs = fcs.size
+    smoothed_spectrum = np.empty((nspectra, nfcs))
+
+    for fc_index, fc in enumerate(fcs):
+
+        if fc < 1E-6:
+            smoothed_spectrum[:, fc_index] = 0
+            continue
+
+        sumproduct = np.zeros(nspectra)
+        sumwindow = 0
+
+        for f_index, f in enumerate(frequencies):
+            f_on_fc = f/fc
+
+            if (f < 1E-6) or (f_on_fc < lower_limit) or (f_on_fc > upper_limit):
+                continue
+            elif f_on_fc < 1:
+                window = (f_on_fc - lower_limit) / (1. - lower_limit)
+            else:
+                window = 1 - (f_on_fc - 1.) / (upper_limit - 1)
+
+            sumproduct += window*spectrum[:, f_index]
+            sumwindow += window
+
+        if sumwindow > 0:
+            smoothed_spectrum[:, fc_index] = sumproduct / sumwindow
+        else:
+            smoothed_spectrum[:, fc_index] = 0
+
+    return smoothed_spectrum
+
+
 SMOOTHING_OPERATORS = {
     "konno_and_ohmachi" : konno_ohmachi,
     "parzen" : parzen,
-    "savitzky_and_golay" : savitzky_and_golay
+    "savitzky_and_golay" : savitzky_and_golay,
+    "linear_rectangular" : linear_rectangular,
+    "log_rectangular" : log_rectangular,
+    "linear_triangular" : linear_triangular,
+    "log_rectangular" : log_rectangular,
 }
