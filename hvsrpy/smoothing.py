@@ -154,32 +154,6 @@ def parzen(frequencies, spectrum, fcs, bandwidth=0.5):
     return smoothed_spectrum
 
 
-SAVITZKY_AND_GOLAY = {
-    5: {"coeff": np.array([-3, 12, 17], dtype=np.float),
-        "norm": 35},
-    7: {"coeff": np.array([-2, 3, 6, 7], dtype=np.float),
-        "norm": 21},
-    9: {"coeff": np.array([-21, 14, 39, 54, 59], dtype=np.float),
-        "norm": 231},
-    11: {"coeff": np.array([-36, 9, 44, 69, 84, 89], dtype=np.float),
-         "norm": 429},
-    13: {"coeff": np.array([-11, 0, 9, 16, 21, 24, 25], dtype=np.float),
-         "norm": 143},
-    15: {"coeff": np.array([-78, -13, 42, 87, 122, 147, 162, 167], dtype=np.float),
-         "norm": 1105},
-    17: {"coeff": np.array([-21, -6, 7, 18, 27, 34, 39, 42, 43], dtype=np.float),
-         "norm": 323},
-    19: {"coeff": np.array([-136, -51, 24, 89, 144, 189, 224, 249, 264, 269], dtype=np.float),
-         "norm": 2261},
-    21: {"coeff": np.array([-171, -76, 9, 84, 149, 204, 249, 284, 309, 324, 329], dtype=np.float),
-         "norm": 3059},
-    23: {"coeff": np.array([-42, -21, -2, 15, 30, 43, 54, 63, 70, 75, 78, 79], dtype=np.float),
-         "norm": 8059},
-    25: {"coeff": np.array([-253, -138, -33, 62, 147, 222, 287, 322, 387, 422, 447, 462, 467], dtype=np.float),
-         "norm": 5175},
-}
-
-
 def savitzky_and_golay(frequencies, spectrum, fcs, bandwidth=9):
     """Fast Savitzky and Golay (1964) smoothing.
 
@@ -204,13 +178,15 @@ def savitzky_and_golay(frequencies, spectrum, fcs, bandwidth=9):
 
     """
     # TODO(jpv): Add reference.
-    try:
-        coeff_dict = SAVITZKY_AND_GOLAY[bandwidth]
-    except KeyError as e:
-        msg = f"savitzky_and_golay smoothing with bandwidth={bandwidth}, "
-        msg += "has not been implemented, available bandwidths "
-        msg += f"are {list(SAVITZKY_AND_GOLAY.keys())}"
-        raise NotImplementedError(msg)
+    m = int(bandwidth)
+    if m % 2 != 1:
+        raise ValueError("bandwidth for savitzky_and_golay must be an odd integer.")
+
+    nterms = ((m - 1) // 2) + 1
+    coefficients = np.empty((nterms))
+    for idx, i in enumerate(range(-(nterms-1), 1)):
+        coefficients[idx] = ((3*m*m - 7 - 20*abs(i*i))/4)
+    normalization_coefficient = (m*(m*m - 4)/3)
 
     diff = np.diff(frequencies)
     if np.abs(np.min(diff) - np.max(diff)) > 1E-6:
@@ -218,16 +194,14 @@ def savitzky_and_golay(frequencies, spectrum, fcs, bandwidth=9):
         msg += "linearly spaces."
         raise ValueError(msg)
 
-    coefficients, normalization_factor = coeff_dict["coeff"], coeff_dict["norm"]
-
     df = diff[0]
     nfcs = np.round(fcs / df).astype(np.int)
 
-    return _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_factor)
+    return _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_coefficient)
 
 
 @njit(cache=True)
-def _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_factor):
+def _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_coefficient):
 
     nrows, nfreqs = spectrum.shape
     ncols = nfcs.size
@@ -245,12 +219,11 @@ def _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_factor):
         for rel_idx, coefficient in enumerate(coefficients[:-1][::-1]):
             summation += coefficient * (spectrum[:, spectrum_idx + rel_idx] +
                                         spectrum[:, spectrum_idx - rel_idx])
-
-        smoothed_spectrum[:, nfc_idx] = summation / normalization_factor
+        smoothed_spectrum[:, nfc_idx] = summation / normalization_coefficient
 
     return smoothed_spectrum
 
-@njit(cache=True)
+@njit(cache=True)   
 def linear_rectangular(frequencies, spectrum, fcs, bandwidth=0.5):
     nspectra, _ = spectrum.shape
     nfcs = fcs.size
@@ -313,7 +286,7 @@ def log_rectangular(frequencies, spectrum, fcs, bandwidth=0.05):
             sumwindow += window
 
         if sumwindow > 0:
-            smoothed_spectrum[:, fc_index] = sumproduct / sumwindow
+            smoothed_spectrum[:, fc_index] = sumproduct/sumwindow
         else:
             smoothed_spectrum[:, fc_index] = 0
 
@@ -340,13 +313,13 @@ def linear_triangular(frequencies, spectrum, fcs, bandwidth=0.5):
             if (f < 1E-6) or (np.abs(f_minus_fc) > bandwidth/2):
                 continue
             else:
-                window = 1. - np.abs(f_minus_fc)*(-2/bandwidth)
+                window = 1. - np.abs(f_minus_fc)*(2/bandwidth)
 
             sumproduct += window*spectrum[:, f_index]
             sumwindow += window
 
         if sumwindow > 0:
-            smoothed_spectrum[:, fc_index] = sumproduct / sumwindow
+            smoothed_spectrum[:, fc_index] = sumproduct/sumwindow
         else:
             smoothed_spectrum[:, fc_index] = 0
 
@@ -384,7 +357,7 @@ def log_triangular(frequencies, spectrum, fcs, bandwidth=0.05):
             sumwindow += window
 
         if sumwindow > 0:
-            smoothed_spectrum[:, fc_index] = sumproduct / sumwindow
+            smoothed_spectrum[:, fc_index] = sumproduct/sumwindow
         else:
             smoothed_spectrum[:, fc_index] = 0
 
@@ -398,5 +371,5 @@ SMOOTHING_OPERATORS = {
     "linear_rectangular" : linear_rectangular,
     "log_rectangular" : log_rectangular,
     "linear_triangular" : linear_triangular,
-    "log_rectangular" : log_rectangular,
+    "log_triangular" : log_triangular,
 }
