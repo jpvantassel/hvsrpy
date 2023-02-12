@@ -10,5 +10,7 @@ numba
 tox
 jupyterlab
 coverage
+sphinx
+sphinx_rtd_theme
 sphinx-click
 autopep8

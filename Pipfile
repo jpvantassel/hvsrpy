@@ -21,6 +21,7 @@ coverage = "*"
 sphinx-click = "*"
 hvsrpy = {editable = true, path = "."}
 autopep8 = "*"
+sphinx-rtd-theme = "*"
 
 [requires]
 python_version = ">=3.8"
