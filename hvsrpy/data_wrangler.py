@@ -36,7 +36,7 @@ logger = logging.getLogger('hvsrpy')
 
 
 def _arrange_traces(traces):
-    """Sort `list` of 3 `Trace` objects according to direction."""
+    """Sort ``list`` of 3 ``Trace`` objects according to direction."""
     found_ew, found_ns, found_vt = False, False, False
     for trace in traces:
         if trace.meta.channel.endswith("E") and not found_ew:
@@ -76,17 +76,17 @@ def read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     Parameters
     ----------
     fnames : {str, list}
-        If `str` then `fnames` is the name of the miniSEED file,
+        If ``str`` then ``fnames`` is the name of the miniSEED file,
         full path may be used if desired. The file should contain
         three traces with the appropriate channel names. Refer to
-        the `SEED` Manual
+        the SEED Manual
         `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
         for specifics.
-        If `list` then `fnames` is a list of length three with the
+        If ``list`` then ``fnames`` is a list of length three with the
         names of miniSEED files for each component.
     obspy_read_kwargs : dict, optional
-        For passing arguments to the `obspy.read` function to
-        customize its behavior, default is `None`indicating
+        For passing arguments to the ``obspy.read`` function to
+        customize its behavior, default is ``None`` indicating
         not keyword arguments will be passed.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
@@ -302,8 +302,8 @@ def read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         names. See SAC manual
         `here <https://ds.iris.edu/files/sac-manual/sac_manual.pdf>`_.
     obspy_read_kwargs : dict, optional
-        For passing arguments to the `obspy.read` function to
-        customize its behavior, default is `None` indicating
+        For passing arguments to the ``obspy.read`` function to
+        customize its behavior, default is ``None`` indicating
         no keyword arguments will be passed.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
@@ -368,8 +368,8 @@ def read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         path may be used if desired. The file should contain three
         traces with the appropriate channel names.
     obspy_read_kwargs : dict, optional
-        For passing arguments to the `obspy.read` function to
-        customize its behavior, default is `None` indicating
+        For passing arguments to the ``obspy.read`` function to
+        customize its behavior, default is ``None`` indicating
         no keyword arguments will be passed.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
@@ -506,23 +506,26 @@ def read_single(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     Parameters
     ----------
     fnames: {list, str}
-        If `str`, name of file to be read, may include a relative or the
+        File name(s) to be read.
+
+        If ``str``, name of file to be read, may include a relative or the
         full path. The file should contain all three components
         (2 horizontal and 1 vertical).
-        If `list`, names of files to be read, each may be a relative or
+        
+        If ``list``, names of files to be read, each may be a relative or
         the full path. Each file should contain only one component.
     obspy_read_kwargs : dict, optional
-        Keyword arguments to be passed directly to `obspy.read`, in
-        general this should not be needed, default is `None` indicating
-        no custom arguments will be passed to `obspy.read`.
+        Keyword arguments to be passed directly to ``obspy.read``, in
+        general this should not be needed, default is ``None`` indicating
+        no custom arguments will be passed to ``obspy.read``.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is `None`
+        magnetic north; clock wise positve. Default is ``None``
         indicating either the metadata in the file denoting the sensor's
         orientation is correct and should be used or (if the sensor's
         orientation is not listed in the file) the sensor's north
         component is aligned with magnetic north
-        (i.e., `degrees_from_north=0`).
+        (i.e., ``degrees_from_north=0``).
 
     Returns
     -------
@@ -556,27 +559,32 @@ def read(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     ----------
     fnames : iterable of iterable of str or interable of str
         Collection of file name(s) to be read. All entries should be
-        readable by the function `hvsrpy.read_single()`.
+        readable by the function ``hvsrpy.read_single()``.
     obspy_read_kwargs : dict or iterable of dicts, optional
         Keyword arguments to be passed directly to
-        `hvsrpy.read_single()`. If `dict`, keyword argument will be
-        repeated for all file names provided. If `iterable of dicts`
-        each keyword arguments will be provided in order. Default is
-        `None` indicating standard read behavior will be used.
+        ``hvsrpy.read_single()``.
+        
+        If ``dict``, keyword argument will be repeated for all file
+        names provided.
+        
+        If ``iterable of dicts`` each keyword arguments will be provided
+        in order.
+        
+        Default is ``None`` indicating standard read behavior will be used.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is `None`
+        magnetic north; clock wise positve. Default is ``None``
         indicating either the metadata in the file denoting the sensor's
         orientation is correct and should be used or (if the sensor's
         orientation is not listed in the file) the sensor's north
         component is aligned with magnetic north
-        (i.e., `degrees_from_north=0`).
+        (i.e., ``degrees_from_north=0``).
 
     Returns
     -------
     list
-        Of initialized SeismicRecording3C objects, one for each each
-        file name provided.
+        Of initialized ``SeismicRecording3C`` objects, one for each each
+        file names provided.
 
     """
     # scale obspy_read_kwargs and degrees_from_north as needed to match fnames.

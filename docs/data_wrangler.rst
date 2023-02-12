@@ -1,7 +1,9 @@
 .. _data_wrangler:
 
-Data Wrangler
-=============
+Read Data from File
+===================
+
+Module for reading seismic data from file.
 
 Public API
 ----------
