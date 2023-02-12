@@ -6,6 +6,9 @@ shapely
 termcolor
 matplotlib
 click>8.0.0
+numba
+tox
+jupyterlab
 coverage
 sphinx-click
-numba
+autopep8

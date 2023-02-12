@@ -49,7 +49,7 @@ setup(
     install_requires=['numpy>=1.22', 'scipy', 'obspy',
                       'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0', 'numba'],
     extras_require={
-        'dev': ['coverage', 'sphinx-click'],
+        'dev': ['tox', 'jupyterlab', 'coverage', 'sphinx-click', 'autopep8'],
     },
     package_data={
     },

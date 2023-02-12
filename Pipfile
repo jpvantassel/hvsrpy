@@ -4,14 +4,23 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-hvsrpy = {editable = true, path = "."}
-tox = "*"
-jupyterlab = "*"
 matplotlib = "*"
-autopep8 = "*"
 numba = "*"
+numpy = ">=1.22"
+scipy = "*"
+obspy = "*"
+pandas = "*"
+shapely = "*"
+termcolor = "*"
+click = ">8.0.0"
 
 [dev-packages]
+tox = "*"
+jupyterlab = "*"
+coverage = "*"
+sphinx-click = "*"
+hvsrpy = {editable = true, path = "."}
+autopep8 = "*"
 
 [requires]
-python_version = "3.8"
+python_version = ">=3.8"
