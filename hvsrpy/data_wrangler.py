@@ -70,20 +70,20 @@ def _quiet_obspy_read(*args, **kwargs):
     return results
 
 
-def read_mseed(fnames, read_kwargs=None, degrees_from_north=None):
-    """Read ambient noise data from file(s) in miniSEED format.
+def read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+    """Read seismic data from file(s) in miniSEED format.
 
     Parameters
     ----------
     fnames : {str, list}
-        If `str` then `fnames` is the name of the miniseed file,
+        If `str` then `fnames` is the name of the miniSEED file,
         full path may be used if desired. The file should contain
         three traces with the appropriate channel names. Refer to
         the `SEED` Manual
         `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
         for specifics.
         If `list` then `fnames` is a list of length three with the
-        names of miniseed files for each component.
+        names of miniSEED files for each component.
     obspy_read_kwargs : dict, optional
         For passing arguments to the `obspy.read` function to
         customize its behavior, default is `None`indicating
@@ -93,7 +93,6 @@ def read_mseed(fnames, read_kwargs=None, degrees_from_north=None):
         magnetic north; clock wise positve. Default is 0.0
         indicating the sensor's north component is aligned with
         magnetic north.
-    (TODO) JPV: Check formatting of text above.
 
     Returns
     -------
@@ -101,18 +100,18 @@ def read_mseed(fnames, read_kwargs=None, degrees_from_north=None):
         Initialized 3-component seismic recording object.
 
     """
-    if read_kwargs is None:
-        read_kwargs = {"format": "MSEED"}
+    if obspy_read_kwargs is None:
+        obspy_read_kwargs = {"format": "MSEED"}
 
     # one miniSEED file with all three components.
     if isinstance(fnames, (str, pathlib.Path)):
-        traces = _quiet_obspy_read(fnames, **read_kwargs)
+        traces = _quiet_obspy_read(fnames, **obspy_read_kwargs)
         fnames = str(fnames)
-    # three miniSEED files, one per component.
+    # three miniSEED files; one per component.
     elif isinstance(fnames, (list, tuple)):
         trace_list = []
         for fname in fnames:
-            stream = _quiet_obspy_read(fname, **read_kwargs)
+            stream = _quiet_obspy_read(fname, **obspy_read_kwargs)
             if len(stream) != 1:
                 msg = f"File {fname} contained {len(stream)}"
                 msg += "traces, rather than 1 as was expected."
@@ -135,14 +134,36 @@ def read_mseed(fnames, read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": fnames,
-            "Deployed Degrees from North (deg)": degrees_from_north,
-            "Current Degrees from North (deg)": degrees_from_north}
+    meta = {"File Name(s)": fnames}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_saf(fnames, read_kwargs=None, degrees_from_north=None):
+def read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+    """Read seismic data from file(s) in SESAME ASCII format (SAF).
+
+    Parameters
+    ----------
+    fnames : str
+        Name of the SESAME ASCII format file, full path may be used if
+        desired. The file should contain three traces with the
+        appropriate channel names. See SESAME standard 
+        `here <http://sesame.geopsy.org/Delivrables/D09-03_Texte.pdf>`_.
+    obspy_read_kwargs : dict, optional
+        Ignored, kept only to maintain consistency with other read
+        functions.
+    degrees_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positve. Default is 0.0
+        indicating the sensor's north component is aligned with
+        magnetic north.
+
+    Returns
+    -------
+    SeismicRecording3C
+        Initialized 3-component seismic recording object.
+
+    """
     if isinstance(fnames, (list, tuple)):
         fname = fnames[0]
         msg = f"Only 1 saf file allowed; {len(fnames)} provided. "
@@ -173,8 +194,8 @@ def read_saf(fnames, read_kwargs=None, degrees_from_north=None):
             elif e_ch == 1:
                 degrees_from_north = north_rot + 90.
             else:
-                msg = f"The provided saf file {fname} is not properly "
-                msg += "formatted. CH1 must be veritcal; CH2 & CH3 the horizontals"
+                msg = f"The provided saf file {fname} is not properly formatted."
+                msg += " CH1 must be vertical; CH2 & CH3 the horizontals."
                 raise ValueError(msg)
 
     data = np.empty((npts_header, 3), dtype=np.float32)
@@ -195,14 +216,35 @@ def read_saf(fnames, read_kwargs=None, degrees_from_north=None):
     ns = TimeSeries(ns, dt=dt)
     ew = TimeSeries(ew, dt=dt)
 
-    meta = {"File Name(s)": str(fname),
-            "Deployed Degrees from North (deg)": degrees_from_north,
-            "Current Degrees from North (deg)": degrees_from_north}
+    meta = {"File Name(s)": str(fname)}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_minishark(fnames, read_kwargs=None, degrees_from_north=None):
+def read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+    """Read seismic data from file(s) in MiniShark format.
+
+    Parameters
+    ----------
+    fnames : str
+        Name of the MiniShark format file, full path may be used if
+        desired. The file should contain three traces with the
+        appropriate channel names.
+    obspy_read_kwargs : dict, optional
+        Ignored, kept only to maintain consistency with other read
+        functions.
+    degrees_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positve. Default is 0.0
+        indicating the sensor's north component is aligned with
+        magnetic north.
+
+    Returns
+    -------
+    SeismicRecording3C
+        Initialized 3-component seismic recording object.
+
+    """
     if isinstance(fnames, (list, tuple)):
         fname = fnames[0]
         msg = f"Only 1 minishark file allowed; {len(fnames)} provided. "
@@ -243,16 +285,40 @@ def read_minishark(fnames, read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": str(fname),
-            "Deployed Degrees from North (deg)": degrees_from_north,
-            "Current Degrees from North (deg)": degrees_from_north}
+    meta = {"File Name(s)": str(fname)}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_sac(fnames, read_kwargs=None, degrees_from_north=None):
-    if read_kwargs is None:
-        read_kwargs = {"format": "SAC"}
+def read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+    """Read seismic data from file(s) in Seismic Analysis Code format.
+
+    Parameters
+    ----------
+    fnames : list
+        List of length three with the names of the Seismic Analysis
+        Code (SAC) format files; one per component. Files can be little
+        endian or big endian. Each file should the appropriate channel
+        names. See SAC manual
+        `here <https://ds.iris.edu/files/sac-manual/sac_manual.pdf>`_.
+    obspy_read_kwargs : dict, optional
+        For passing arguments to the `obspy.read` function to
+        customize its behavior, default is `None` indicating
+        no keyword arguments will be passed.
+    degrees_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positve. Default is 0.0
+        indicating the sensor's north component is aligned with
+        magnetic north.
+
+    Returns
+    -------
+    SeismicRecording3C
+        Initialized 3-component seismic recording object.
+
+    """
+    if obspy_read_kwargs is None:
+        obspy_read_kwargs = {"format": "SAC"}
 
     if not isinstance(fnames, (list, tuple)):
         msg = "Must provide 3 sac files (one per trace); only one provided."
@@ -261,9 +327,9 @@ def read_sac(fnames, read_kwargs=None, degrees_from_north=None):
     trace_list = []
     for fname in fnames:
         for byteorder in ["little", "big"]:
-            read_kwargs["byteorder"] = byteorder
+            obspy_read_kwargs["byteorder"] = byteorder
             try:
-                stream = _quiet_obspy_read(fname, **read_kwargs)
+                stream = _quiet_obspy_read(fname, **obspy_read_kwargs)
             except Exception as e:
                 msg = f"Tried reading as sac {byteorder} endian, "
                 msg += f"got exception |  {e}"
@@ -287,16 +353,38 @@ def read_sac(fnames, read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": [str(fname) for fname in fnames],
-            "Deployed Degrees from North (deg)": degrees_from_north,
-            "Current Degrees from North (deg)": degrees_from_north}
+    meta = {"File Name(s)": [str(fname) for fname in fnames]}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_gcf(fnames, read_kwargs=None, degrees_from_north=None):
-    if read_kwargs is None:
-        read_kwargs = {"format": "GCF"}
+def read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+    """Read seismic data from file(s) in Guralp Compressed Format (GCF).
+
+    Parameters
+    ----------
+    fnames : str
+        Name of the MiniShark Guralp Compressed Format (GCF) file, full
+        path may be used if desired. The file should contain three
+        traces with the appropriate channel names.
+    obspy_read_kwargs : dict, optional
+        For passing arguments to the `obspy.read` function to
+        customize its behavior, default is `None` indicating
+        no keyword arguments will be passed.
+    degrees_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positve. Default is 0.0
+        indicating the sensor's north component is aligned with
+        magnetic north.
+
+    Returns
+    -------
+    SeismicRecording3C
+        Initialized 3-component seismic recording object.
+
+    """
+    if obspy_read_kwargs is None:
+        obspy_read_kwargs = {"format": "GCF"}
 
     if isinstance(fnames, (list, tuple)):
         fname = fnames[0]
@@ -308,7 +396,7 @@ def read_gcf(fnames, read_kwargs=None, degrees_from_north=None):
 
     # one gcf file with all three components.
     if isinstance(fname, (str, pathlib.Path)):
-        traces = _quiet_obspy_read(fname, **read_kwargs)
+        traces = _quiet_obspy_read(fname, **obspy_read_kwargs)
 
     if len(traces) != 3:
         msg = f"Provided {len(traces)} traces, but must only provide 3."
@@ -319,17 +407,37 @@ def read_gcf(fnames, read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": str(fname),
-            "Deployed Degrees from North (deg)": degrees_from_north,
-            "Current Degrees from North (deg)": degrees_from_north}
+    meta = {"File Name(s)": str(fname)}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_peer(fnames, read_kwargs=None, degrees_from_north=None):
-    if read_kwargs is None:
-        read_kwargs = {}
+def read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+    """Read seismic data from file(s) in PEER format.
 
+    Parameters
+    ----------
+    fnames : list
+        List of length three with the names of the Pacific Earthquake
+        Engineering Research (PEER) format files; one per component.
+        Each file should have appropriate channel names. For some
+        information on PEER see
+        `here <https://strike.scec.org/scecpedia/PEER_Data_Format>`_.
+    obspy_read_kwargs : dict, optional
+        Ignored, kept only to maintain consistency with other read
+        functions.
+    degrees_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positve. Default is 0.0
+        indicating the sensor's north component is aligned with
+        magnetic north.
+
+    Returns
+    -------
+    SeismicRecording3C
+        Initialized 3-component seismic recording object.
+
+    """
     if not isinstance(fnames, (list, tuple)):
         msg = "Must provide 3 peer files (one per trace) as list or tuple, "
         msg += f"not {type(fnames)}."
@@ -377,9 +485,7 @@ def read_peer(fnames, read_kwargs=None, degrees_from_north=None):
         degrees_from_north = component_keys_abs[ns_id]
         degrees_from_north = float(degrees_from_north - 360*(degrees_from_north // 360))
 
-    meta = {"File Name(s)": [str(fname) for fname in fnames],
-            "Deployed Degrees from North (deg)": degrees_from_north,
-            "Current Degrees from North (deg)": degrees_from_north}
+    meta = {"File Name(s)": [str(fname) for fname in fnames]}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
@@ -394,7 +500,7 @@ READ_FUNCTION_DICT = {
 }
 
 
-def read_single(fnames, read_kwargs=None, degrees_from_north=None):
+def read_single(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     """Read file(s) associated with a single recording.
 
     Parameters
@@ -405,7 +511,7 @@ def read_single(fnames, read_kwargs=None, degrees_from_north=None):
         (2 horizontal and 1 vertical).
         If `list`, names of files to be read, each may be a relative or
         the full path. Each file should contain only one component.
-    read_kwargs : dict, optional
+    obspy_read_kwargs : dict, optional
         Keyword arguments to be passed directly to `obspy.read`, in
         general this should not be needed, default is `None` indicating
         no custom arguments will be passed to `obspy.read`.
@@ -414,7 +520,7 @@ def read_single(fnames, read_kwargs=None, degrees_from_north=None):
         magnetic north; clock wise positve. Default is `None`
         indicating either the metadata in the file denoting the sensor's
         orientation is correct and should be used or (if the sensor's
-        orientation is not listed in teh file) the sensor's north
+        orientation is not listed in the file) the sensor's north
         component is aligned with magnetic north
         (i.e., `degrees_from_north=0`).
 
@@ -422,14 +528,13 @@ def read_single(fnames, read_kwargs=None, degrees_from_north=None):
     -------
     SeismicRecording3C
         Initialized three-component seismic recording object.
-    # TODO (jpv): Check this renders correctly.
 
     """
     logger.info(f"Attempting to read {fnames}")
     for ftype, read_function in READ_FUNCTION_DICT.items():
         try:
             srecording_3c = read_function(fnames,
-                                          read_kwargs=read_kwargs,
+                                          obspy_read_kwargs=obspy_read_kwargs,
                                           degrees_from_north=degrees_from_north)
         except Exception as e:
             logger.info(f"Tried reading as {ftype}, got exception |  {e}")
@@ -444,15 +549,15 @@ def read_single(fnames, read_kwargs=None, degrees_from_north=None):
     return srecording_3c
 
 
-def read(fnames, read_kwargs=None, degrees_from_north=None):
-    """Read file(s) presented.
+def read(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+    """Read seismic data file(s).
 
     Parameters
     ----------
     fnames : iterable of iterable of str or interable of str
         Collection of file name(s) to be read. All entries should be
         readable by the function `hvsrpy.read_single()`.
-    read_kwargs : dict or iterable of dicts, optional
+    obspy_read_kwargs : dict or iterable of dicts, optional
         Keyword arguments to be passed directly to
         `hvsrpy.read_single()`. If `dict`, keyword argument will be
         repeated for all file names provided. If `iterable of dicts`
@@ -463,7 +568,7 @@ def read(fnames, read_kwargs=None, degrees_from_north=None):
         magnetic north; clock wise positve. Default is `None`
         indicating either the metadata in the file denoting the sensor's
         orientation is correct and should be used or (if the sensor's
-        orientation is not listed in teh file) the sensor's north
+        orientation is not listed in the file) the sensor's north
         component is aligned with magnetic north
         (i.e., `degrees_from_north=0`).
 
@@ -472,15 +577,14 @@ def read(fnames, read_kwargs=None, degrees_from_north=None):
     list
         Of initialized SeismicRecording3C objects, one for each each
         file name provided.
-    # TODO (jpv): Check this renders correctly.
 
     """
-    # scale read_kwargs and degrees_from_north as needed to match fnames.
-    if isinstance(read_kwargs, (dict, type(None))):
-        read_kwargs_iter = itertools.repeat(read_kwargs)
+    # scale obspy_read_kwargs and degrees_from_north as needed to match fnames.
+    if isinstance(obspy_read_kwargs, (dict, type(None))):
+        read_kwargs_iter = itertools.repeat(obspy_read_kwargs)
         degrees_from_north_iter = itertools.repeat(degrees_from_north)
     else:
-        read_kwargs_iter = read_kwargs
+        read_kwargs_iter = obspy_read_kwargs
         degrees_from_north_iter = degrees_from_north
 
     seismic_recordings = []
@@ -491,7 +595,7 @@ def read(fnames, read_kwargs=None, degrees_from_north=None):
             fname = fname[0]
 
         seismic_recordings.append(read_single(fname,
-                                              read_kwargs=read_kwargs,
+                                              obspy_read_kwargs=read_kwargs,
                                               degrees_from_north=degrees_from_north))
 
     return seismic_recordings

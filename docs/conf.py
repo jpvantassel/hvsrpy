@@ -21,13 +21,13 @@ def parse_meta(path_to_meta):
     return meta
 
 
-meta = parse_meta("../hvsrpy/meta.py")
+meta = parse_meta("../hvsrpy/metadata.py")
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'hvsrpy'
-copyright = '2019-2021, Joseph P. Vantassel'
+copyright = '2019-2023, Joseph P. Vantassel'
 author = 'Joseph P. Vantassel'
 
 # The full version, including alpha/beta/rc tags

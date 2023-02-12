@@ -6,7 +6,7 @@ API Reference
 .. toctree::
    :maxdepth: 2
 
-   sensor3c
+   data_wrangler
    hvsr
    hvsr_rotated
    hvsr_spatial
