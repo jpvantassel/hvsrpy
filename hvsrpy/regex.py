@@ -31,6 +31,7 @@ saf_v_ch_expr = f"CH(\d)_ID = V"
 saf_n_ch_expr = f"CH(\d)_ID = N"
 saf_e_ch_expr = f"CH(\d)_ID = E"
 saf_north_rot_expr = "NORTH_ROT = (\d+)"
+saf_version_expr = "SESAME ASCII data format \(saf\) v. (\d)"
 
 saf_npts_exec = re.compile(saf_npts_expr)
 saf_fs_exec = re.compile(saf_fs_expr)
@@ -39,6 +40,7 @@ saf_v_ch_exec = re.compile(saf_v_ch_expr)
 saf_n_ch_exec = re.compile(saf_n_ch_expr)
 saf_e_ch_exec = re.compile(saf_e_ch_expr)
 saf_north_rot_exec = re.compile(saf_north_rot_expr)
+saf_version_exec = re.compile(saf_version_expr)
 
 
 # DataWrangler | minishark

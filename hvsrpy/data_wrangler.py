@@ -25,7 +25,7 @@ import itertools
 import obspy
 import numpy as np
 
-from .regex import saf_npts_exec, saf_fs_exec, saf_row_exec, saf_v_ch_exec, saf_n_ch_exec, saf_e_ch_exec, saf_north_rot_exec
+from .regex import saf_npts_exec, saf_fs_exec, saf_row_exec, saf_v_ch_exec, saf_n_ch_exec, saf_e_ch_exec, saf_north_rot_exec, saf_version_exec
 from .regex import mshark_npts_exec, mshark_fs_exec, mshark_gain_exec, mshark_conversion_exec, mshark_row_exec
 from .regex import peer_direction_exec, peer_npts_exec, peer_dt_exec, peer_sample_exec
 
@@ -165,15 +165,16 @@ def read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
     """
     if isinstance(fnames, (list, tuple)):
-        fname = fnames[0]
         msg = f"Only 1 saf file allowed; {len(fnames)} provided. "
-        msg += "Only taking first."
-        warnings.warn(msg, UserWarning)
+        raise ValueError(msg)
     else:
         fname = fnames
 
     with open(fname, "r") as f:
         text = f.read()
+
+    # ensure the file is saf format.
+    _ = saf_version_exec.search(text).groups()[0]
 
     npts_header = int(saf_npts_exec.search(text).groups()[0])
     dt = 1/float(saf_fs_exec.search(text).groups()[0])
@@ -246,10 +247,8 @@ def read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
     """
     if isinstance(fnames, (list, tuple)):
-        fname = fnames[0]
         msg = f"Only 1 minishark file allowed; {len(fnames)} provided. "
-        msg += "Only taking first."
-        warnings.warn(msg, IndexError)
+        raise ValueError(msg)
     else:
         fname = fnames
 
@@ -387,10 +386,8 @@ def read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         obspy_read_kwargs = {"format": "GCF"}
 
     if isinstance(fnames, (list, tuple)):
-        fname = fnames[0]
         msg = f"Only 1 gcf file allowed; {len(fnames)} provided. "
-        msg += "Only taking first."
-        warnings.warn(msg, IndexError)
+        raise ValueError(msg)
     else:
         fname = fnames
 
@@ -485,6 +482,13 @@ def read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         degrees_from_north = component_keys_abs[ns_id]
         degrees_from_north = float(degrees_from_north - 360*(degrees_from_north // 360))
 
+    # peer does not require all components to be the same length.
+    # therefore trim all records to the shortest time length.
+    npts = [component.nsamples for component in [ns, ew,vt]]
+    ns.amplitude = ns.amplitude[:min(npts)] 
+    ew.amplitude = ew.amplitude[:min(npts)] 
+    vt.amplitude = vt.amplitude[:min(npts)] 
+
     meta = {"File Name(s)": [str(fname) for fname in fnames]}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
@@ -508,12 +512,12 @@ def read_single(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     fnames: {list, str}
         File name(s) to be read.
 
-        If ``str``, name of file to be read, may include a relative or the
-        full path. The file should contain all three components
+        If ``str``, name of file to be read, may include a relative or
+        the full path. The file should contain all three components
         (2 horizontal and 1 vertical).
-        
-        If ``list``, names of files to be read, each may be a relative or
-        the full path. Each file should contain only one component.
+
+        If ``list``, names of files to be read, each may be a relative
+        or the full path. Each file should contain only one component.
     obspy_read_kwargs : dict, optional
         Keyword arguments to be passed directly to ``obspy.read``, in
         general this should not be needed, default is ``None`` indicating
@@ -563,14 +567,15 @@ def read(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     obspy_read_kwargs : dict or iterable of dicts, optional
         Keyword arguments to be passed directly to
         ``hvsrpy.read_single()``.
-        
+
         If ``dict``, keyword argument will be repeated for all file
         names provided.
-        
+
         If ``iterable of dicts`` each keyword arguments will be provided
         in order.
-        
-        Default is ``None`` indicating standard read behavior will be used.
+
+        Default is ``None`` indicating standard read behavior will be
+        used.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
         magnetic north; clock wise positve. Default is ``None``

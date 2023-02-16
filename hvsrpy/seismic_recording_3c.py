@@ -71,7 +71,10 @@ class SeismicRecording3C():
         self.degrees_from_north = float(degrees_from_north - 360*(degrees_from_north // 360))
 
         meta = {} if meta is None else meta
-        self.meta = {"File Name(s)": "Was not created from file", **meta}
+        self.meta = {"File Name(s)": "Was not created from file",
+                     "Deployed Degrees from North (deg)": self.degrees_from_north,
+                     "Current Degrees from North (deg)": self.degrees_from_north,
+                     **meta}
 
     def trim(self, start_time, end_time):
         """Trim component `TimeSeries`."""

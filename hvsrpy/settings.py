@@ -32,10 +32,10 @@ class Settings():
 
     @property
     def attr_dict(self):
-        return {name: getattr(self, name) for name in (self.attrs)}
+        return {name: getattr(self, name) for name in self.attrs}
 
     def extend_attributes(self, attributes_with_defaults):
-        self.attrs.extend([attributes_with_defaults.keys()])
+        self.attrs.extend(list(attributes_with_defaults.keys()))
         for attr, value in attributes_with_defaults.items():
             setattr(self, attr, value)
 
