@@ -15,6 +15,8 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
+import warnings
+
 import numpy as np
 
 from .smoothing import SMOOTHING_OPERATORS
@@ -51,7 +53,8 @@ def preprocess(records, settings):
         # check all records have some dt; required later for fft.
         if np.abs(srecord3c.vt.dt - ex_dt) > 10E-6:
             msg = f"The dt of all records must be equal, dt of record {idx} "
-            msg += f"is {ex_dt} which does not match dt of record 0 of {ex_dt}."
+            msg += f"is {srecord3c.vt.dt} which does not match dt of record 0 "
+            msg += f"of {ex_dt}."
             raise ValueError(msg)
 
         # orient receiver to north.
@@ -59,7 +62,9 @@ def preprocess(records, settings):
             srecord3c.orient_sensor_to(settings.orient_to_degrees_from_north)
 
         # bandpass filter raw signal.
-        srecord3c.butterworth_filter(settings.filter_corner_frequencies_in_hz)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            srecord3c.butterworth_filter(settings.filter_corner_frequencies_in_hz)
 
         # divide raw signal into time windows.
         if settings.window_length_in_seconds is not None:

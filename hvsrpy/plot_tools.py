@@ -1,6 +1,6 @@
 # This file is part of hvsrpy a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2021 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -26,72 +26,65 @@ import numpy as np
 __all__ = ["single_plot", "simple_plot", "azimuthal_plot", "voronoi_plot"]
 
 
-def single_plot(hvsr, peaks_valid, peaks_invalid, distribution_mc,
-ax=None,
-    individual_width = 0.3,
-    median_width = 1.3,
-    ylims=None
-):
-    """Creates plot of Hvsr object."""
+def plot_single_panel_hvsr(hvsr,
+                           distribution_mc="lognormal",
+                           ax=None,
+                           individual_hvsr_width=0.3,
+                           accepted_color='#888888',
+                           rejcted_color='#00ffff',
+                           median_hvsr_width=1.3,
+                           ylims=None
+                           ):
+    """Plot Accepted """
     ax_was_none = False
     if ax is None:
         ax_was_none = True
-        fig, ax = plt.subplots(figsize=(9, 6), dpi=150)
+        fig, ax = plt.subplots(figsize=(4, 3), dpi=150)
 
     # Rejected Windows
     label = "Rejected"
-    for amp in hvsr.amp[hvsr.rejected_window_indices]:
-        ax.plot(hvsr.frq, amp, color='#00ffff',
-                linewidth=individual_width, zorder=2, label=label)
+    for amplitude in hvsr.amplitude[hvsr.rejected_window_boolean_mask]:
+        ax.plot(hvsr.frequency, amplitude,
+                color=rejcted_color,
+                linewidth=individual_hvsr_width,
+                zorder=2,
+                label=label)
         label = None
 
     # Accepted Windows
     label = "Accepted"
-    for amp in hvsr.amp[hvsr.valid_window_indices]:
-        ax.plot(hvsr.frq, amp, color='#888888', linewidth=individual_width,
+    for amplitude in hvsr.amplitude[~hvsr.rejected_window_boolean_mask]:
+        ax.plot(hvsr.frequency, amplitude,
+                color=accepted_color,
+                linewidth=individual_hvsr_width,
                 label=label)
         label = None
 
-    # Window Peaks - Valid
-    if peaks_valid is not None:
-        pfs, pas = peaks_valid
-        label = r"$f_{0,i}$"
-        for pf, pa in zip(pfs, pas):
-            ax.plot(pf, pa, linestyle="", zorder=2,
-                    marker='o', markersize=3, markerfacecolor="lightgreen", markeredgewidth=0.5, markeredgecolor='k',
-                    label=label)
-            label = None
-
-    # Window Peaks - Invalid
-    if peaks_invalid is not None:
-        pfs, pas = peaks_invalid
-        label = None
-        for pf, pa in zip(pfs, pas):
-            ax.plot(pf, pa, linestyle="", zorder=2,
-                    marker='s', markersize=2.5, markerfacecolor="red", markeredgewidth=0.5, markeredgecolor='k',
-                    label=label)
-            label = None
-
-    # # Peak Mean Curve
-    # ax.plot(hvsr.mc_peak_frq(distribution_mc), hvsr.mc_peak_amp(distribution_mc), linestyle="", zorder=4,
-    #         marker='D', markersize=4, markerfacecolor='#66ff33', markeredgewidth=1, markeredgecolor='k',
-    #         label=r"$f_{0,mc}$")
-
     # Mean Curve
-    if sum(hvsr.valid_window_indices) > 0:
+    if np.sum(~hvsr.rejected_window_boolean_mask) > 0:
         label = r"$LM_{curve}$" if distribution_mc == "lognormal" else "Mean"
-        ax.plot(hvsr.frq, hvsr.mean_curve(distribution_mc), color='k', linewidth=median_width,
+        ax.plot(hvsr.frequency,
+                hvsr.mean_curve(distribution_mc),
+                color="black",
+                linewidth=median_hvsr_width,
                 label=label)
 
     # Mean +/- Curve
-    if sum(hvsr.valid_window_indices) > 1:
+    if np.sum(~hvsr.rejected_window_boolean_mask) > 1:
         label = r"$LM_{curve}$" + \
             " ± 1 STD" if distribution_mc == "lognormal" else "Mean ± 1 STD"
-        ax.plot(hvsr.frq, hvsr.nstd_curve(-1, distribution_mc),
-                color='k', linestyle='--', linewidth=median_width, zorder=3,
-                label=label)
-        ax.plot(hvsr.frq, hvsr.nstd_curve(+1, distribution_mc),
-                color='k', linestyle='--', linewidth=median_width, zorder=3)
+        ax.plot(hvsr.frequency, hvsr.nstd_curve(-1, distribution_mc),
+                color="black",
+                linewidth=median_hvsr_width,
+                linestyle='--',
+                label=label,
+                zorder=3)
+
+        ax.plot(hvsr.frequency, hvsr.nstd_curve(+1, distribution_mc),
+                color="black",
+                linewidth=median_hvsr_width,
+                linestyle='--',
+                zorder=3)
 
     ax.set_xscale("log")
     ax.set_xlabel("Frequency (Hz)")
@@ -105,6 +98,38 @@ ax=None,
         return (fig, ax)
     else:
         return ax
+
+
+def plot_seismic_recording_3c(srecord3c, axs=None, ylims=None):
+    """Plot SeismicRecording3C object."""
+    axs_was_none = False
+    if axs is None:
+        axs_was_none = True
+        fig, axs = plt.subplots(nrows=3, figsize=(6, 3), dpi=150, sharex=True)
+
+    for ax, component in zip(axs, ["ns", "ew", "vt"]):
+        tseries = getattr(srecord3c, component)
+        ax.plot(tseries.time(), tseries.amplitude, label=component, color="k", linewidth=0.5)
+        ax.legend(loc="upper right")
+        ax.set_ylabel("Amplitude")
+
+    axs[-1].set_xlabel("Time (s)")
+
+    if ylims is None:
+        ymin, ymax = 0, 0
+        for ax in axs:
+            _ymin, _ymax = ax.get_ylim()
+            ymin = min(_ymin, ymin)
+            ymax = max(_ymax, ymax)
+        ylims = (ymin, ymax)
+
+    for ax in axs:
+        ax.set_ylim(ylims)
+
+    if axs_was_none:
+        return (fig, axs)
+    else:
+        return axs
 
 
 def simple_plot(sensor, hv, windowlength, distribution_f0, distribution_mc,

@@ -351,7 +351,7 @@ class HvsrTraditional():
             If `distribution` does not match the available options.
 
         """
-        if self.nseries > 1:
+        if self.nwindows > 1:
             return self._std_factory(distribution,
                                      self.amplitude[self.valid_window_boolean_mask],
                                      axis=0)
