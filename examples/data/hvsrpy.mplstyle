@@ -1,0 +1,21 @@
+# axes
+axes.titlesize:8
+
+lines.linewidth : 0.75
+xtick.labelsize : 8
+ytick.labelsize : 8
+
+# font
+font.family : serif
+font.size : 8
+
+# legend
+legend.handlelength : 0.7
+legend.columnspacing : 0.5
+legend.labelspacing : 0.1
+legend.handletextpad : 0.2
+legend.framealpha : 1
+
+# savefig
+savefig.dpi : 300
+savefig.bbox : tight
