@@ -132,13 +132,12 @@ def rfft(amplitude, **kwargs):
     return rfft
 
 
-def nextpow2(n, minimum_power_of_two=4096):
+def nextpow2(n, minimum_power_of_two=2**15): # 2**15 = 32768
     power_of_two = minimum_power_of_two
     while True:
         if power_of_two > n:
             return power_of_two
         power_of_two *= 2
-
 
 def prepare_fft_setttings(records, settings):
     # To accelerate smoothing, need consistent value of n.
@@ -335,8 +334,17 @@ def diffuse_field_hvsr_processing(records, settings):
     psd_ew /= len(records)
     psd_vt /= len(records)
 
+    # smooth.
+    smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
+    frq = settings.frequency_resampling_in_hz
+
+    spectra = np.array([psd_ns + psd_ew, psd_vt])
+    smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra, frq, bandwidth)
+    hor = smooth_spectra[0]
+    ver = smooth_spectra[1]
+
     # compute hvsr
-    return HvsrDiffuseField(np.sqrt((psd_ns + psd_ew)/psd_vt), fft_frq)
+    return HvsrDiffuseField(np.sqrt((hor)/ver), frq)
 
 
 PROCESSING_METHODS = {
