@@ -26,16 +26,15 @@ import numpy as np
 __all__ = ["single_plot", "simple_plot", "azimuthal_plot", "voronoi_plot"]
 
 
-def plot_single_panel_hvsr(hvsr,
-                           distribution_mc="lognormal",
-                           ax=None,
-                           individual_hvsr_width=0.3,
-                           accepted_color='#888888',
-                           rejcted_color='#00ffff',
-                           median_hvsr_width=1.3,
-                           ylims=None
-                           ):
-    """Plot Accepted """
+def plot_single_panel_hvsr_curves(hvsr,
+                                  distribution_mc="lognormal",
+                                  ax=None,
+                                  individual_hvsr_width=0.3,
+                                  accepted_color='#888888',
+                                  rejcted_color='#00ffff',
+                                  median_hvsr_width=1.3,
+                                  ylims=None
+                                  ):
     ax_was_none = False
     if ax is None:
         ax_was_none = True
@@ -59,6 +58,30 @@ def plot_single_panel_hvsr(hvsr,
                 linewidth=individual_hvsr_width,
                 label=label)
         label = None
+
+    ax.set_xscale("log")
+    ax.set_xlabel("Frequency (Hz)")
+    ax.set_ylabel("HVSR Amplitude")
+    ax.legend(loc="upper right")
+
+    if ylims is not None:
+        ax.set_ylim(ylims)
+
+    if ax_was_none:
+        return (fig, ax)
+    else:
+        return ax
+
+def plot_single_panel_hvsr_median(hvsr,
+                                  distribution_mc="lognormal",
+                                  ax=None,
+                                  median_hvsr_width=1.3,
+                                  ylims=None
+                                  ):
+    ax_was_none = False
+    if ax is None:
+        ax_was_none = True
+        fig, ax = plt.subplots(figsize=(4, 3), dpi=150)
 
     # Mean Curve
     if np.sum(~hvsr.rejected_window_boolean_mask) > 0:
@@ -85,6 +108,50 @@ def plot_single_panel_hvsr(hvsr,
                 linewidth=median_hvsr_width,
                 linestyle='--',
                 zorder=3)
+    
+    ax.set_xscale("log")
+    ax.set_xlabel("Frequency (Hz)")
+    ax.set_ylabel("HVSR Amplitude")
+    ax.legend(loc="upper right")
+
+    if ylims is not None:
+        ax.set_ylim(ylims)
+
+    if ax_was_none:
+        return (fig, ax)
+    else:
+        return ax
+
+
+def plot_single_panel_hvsr(hvsr,
+                           distribution_mc="lognormal",
+                           ax=None,
+                           individual_hvsr_width=0.3,
+                           accepted_color='#888888',
+                           rejcted_color='#00ffff',
+                           median_hvsr_width=1.3,
+                           ylims=None
+                           ):
+    """Plot Accepted """
+    ax_was_none = False
+    if ax is None:
+        ax_was_none = True
+        fig, ax = plt.subplots(figsize=(4, 3), dpi=150)
+
+    plot_single_panel_hvsr_curves(hvsr=hvsr,
+                                  ax=ax,
+                                  individual_hvsr_width=individual_hvsr_width,
+                                  accepted_color=accepted_color,
+                                  rejcted_color=rejcted_color,
+                                  ylims=ylims
+                                  )
+
+    plot_single_panel_hvsr_median(hvsr,
+                                  distribution_mc=distribution_mc,
+                                  ax=ax,
+                                  median_hvsr_width=median_hvsr_width,
+                                  ylims=ylims
+                                  )
 
     ax.set_xscale("log")
     ax.set_xlabel("Frequency (Hz)")

@@ -592,6 +592,13 @@ def read(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         file names provided.
 
     """
+    # if only string provided put it in a list and warn user.
+    if isinstance(fnames, str):
+        msg = "fnames should be iterable of str or iterable of "
+        msg += "iterable of str; not str."
+        warnings.warn(msg)
+        fnames = [fnames]
+
     # scale obspy_read_kwargs and degrees_from_north as needed to match fnames.
     if isinstance(obspy_read_kwargs, (dict, type(None))):
         read_kwargs_iter = itertools.repeat(obspy_read_kwargs)
