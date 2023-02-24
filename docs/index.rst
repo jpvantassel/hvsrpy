@@ -1,5 +1,8 @@
+Introduction to `hvsrpy`
+=======================
+
 About `hvsrpy`
-==============
+--------------
 
 `hvsrpy` is an open-source Python package for performing
 horizontal-to-vertical spectral ratio (HVSR) processing of microtremor
@@ -11,7 +14,7 @@ be developed and maintained by `Joseph P. Vantassel and his research
 group at Virginia Tech <https://geoimaging-research.org/>`_.
 
 Citation
-========
+--------
 
 If you use `hvsrpy` in your research or consulting, we ask you please
 cite the following:
@@ -61,7 +64,7 @@ cite the following:
 .. Fundamental Site Period, T0,XY 	1.74 	0.15
 
 References
-==========
+----------
 
 The references below provide background on the calculations performed
 by `hvsrpy`. We ask you please cite them appropriately.
@@ -88,13 +91,11 @@ by `hvsrpy`. We ask you please cite them appropriately.
     General Directorate, 62, European Commission - Research General
     Directorate.
 
-Contents
-========
-
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
+   license
    install
    api
    cli
-   license
