@@ -20,6 +20,7 @@
 import logging
 
 from .metadata import __version__
+from .hvsr_curve import HvsrCurve
 from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
 from .hvsr_diffuse_field import HvsrDiffuseField
