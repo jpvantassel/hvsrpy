@@ -78,7 +78,7 @@ class HvsrCurve():
         try:
             value = np.array(value, dtype=np.double)
         except ValueError:
-            msg = f"{name} must be castable to 2D-array of doubles, "
+            msg = f"{name} must be castable to array of doubles, "
             msg += f"not {type(value)}."
             raise TypeError(msg)
 
@@ -91,18 +91,64 @@ class HvsrCurve():
         return value
 
     @staticmethod
-    def _find_peak(frequency, amplitude):
+    def _find_peak_unbounded(frequency, amplitude, find_peak_kwargs=None):
         """Finds frequency and amplitude associated with highest peak.
 
         .. warning:: 
             Private methods are subject to change without warning.
 
         """
-        potential_peak_indices, _ = find_peaks(amplitude)
+        if find_peak_kwargs is None:
+            find_peak_kwargs = {}
+        potential_peak_indices, _ = find_peaks(amplitude, **find_peak_kwargs)
+
+        # If no peaks found, then indices array will be empty.
+        if len(potential_peak_indices) == 0:
+            return (None, None)
+
         potential_peak_amplitudes = amplitude[potential_peak_indices]
         sub_idx = np.argmax(potential_peak_amplitudes)
         return (frequency[potential_peak_indices[sub_idx]],
                 amplitude[potential_peak_indices[sub_idx]])
+
+    @staticmethod
+    def _search_range_to_index_range(frequency, search_range_in_hz):
+        """Convert search range values in Hz to index range values.
+
+        .. warning:: 
+            Private methods are subject to change without warning.
+
+        """
+        f_low, f_high = search_range_in_hz
+
+        # low frequency limit.
+        if f_low is None:
+            f_low_idx = 0
+        else:
+            f_low_idx = np.argmin(np.abs(frequency - f_low))
+
+        # high frequency limit.
+        if f_high is None:
+            f_high_idx = len(frequency)
+        else:
+            f_high_idx = np.argmin(np.abs(frequency - f_high))
+
+        return (f_low_idx, f_high_idx)
+
+    @staticmethod
+    def _find_peak_bounded(frequency, amplitude, search_range_in_hz=(None, None), find_peak_kwargs=None):
+        """Finds frequency and amplitude associated with highest peak over a bounded range.
+
+        .. warning:: 
+            Private methods are subject to change without warning.
+
+        """
+        f_low_idx, f_high_idx = HvsrCurve._search_range_to_index_range(frequency,
+                                                                       search_range_in_hz)
+        (frequency, amplitude) = HvsrCurve._find_peak_unbounded(frequency,
+                                                                amplitude[f_low_idx:f_high_idx],
+                                                                find_peak_kwargs=find_peak_kwargs)
+        return (frequency, amplitude)
 
     def __init__(self, frequency, amplitude, meta=None):
         """Create ``HvsrCurve`` from iterables of frequency and amplitude.
@@ -134,3 +180,16 @@ class HvsrCurve():
 
         self.peak_frequency, self.peak_amplitude = self._find_peaks(self.amplitude,
                                                                     self.frequency)
+
+    def is_similar(self, other, atol=1E-9, rtol=0.):
+        """Check if ``other`` is similar to ``self``."""
+        if not isinstance(other, HvsrCurve):
+            return False
+
+        if len(self.frequency) != len(other.frequency):
+            return False
+
+        if not np.allclose(self.frequency, other.frequency, atol=atol, rtol=rtol):
+            return False
+
+        return True

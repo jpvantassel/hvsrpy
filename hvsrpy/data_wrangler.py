@@ -32,7 +32,7 @@ from .regex import peer_direction_exec, peer_npts_exec, peer_dt_exec, peer_sampl
 from .timeseries import TimeSeries
 from .seismic_recording_3c import SeismicRecording3C
 
-logger = logging.getLogger('hvsrpy')
+logger = logging.getLogger(__name__)
 
 
 def _arrange_traces(traces):
@@ -589,7 +589,7 @@ def read(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     -------
     list
         Of initialized ``SeismicRecording3C`` objects, one for each each
-        file names provided.
+        interable entry provided.
 
     """
     # if only string provided put it in a list and warn user.
