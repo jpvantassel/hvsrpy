@@ -21,6 +21,7 @@ import numpy as np
 
 from .constants import DISTRIBUTION_MAP
 
+
 def mean_factory(distribution, values, mean_kwargs=None):
     """Calculates mean of ``values`` consistent with distribution.
 
@@ -39,6 +40,7 @@ def mean_factory(distribution, values, mean_kwargs=None):
     else:
         msg = f"distribution type {distribution} not recognized."
         raise NotImplementedError(msg)
+
 
 def std_factory(distribution, values, std_kwargs=None):
     """Calculates standard deviation consistent with distribution.
@@ -59,6 +61,7 @@ def std_factory(distribution, values, std_kwargs=None):
         msg = f"distribution type {distribution} not recognized."
         raise NotImplementedError(msg)
 
+
 def nth_std_factory(n, distribution, mean, std):
     """Calculates nth standard deviation consistent with distribution.
 
@@ -74,3 +77,16 @@ def nth_std_factory(n, distribution, mean, std):
     else:
         msg = f"distribution type {distribution} not recognized."
         raise NotImplementedError(msg)
+
+
+def flatten_list(unflattened_list):
+    """Flattens ``list`` of lists to single flattened ``list``.
+
+    .. warning:: 
+        Private methods are subject to change without warning.
+
+    """
+    flattened_list = []
+    for _list in unflattened_list:
+        flattened_list.extend(_list)
+    return flattened_list
