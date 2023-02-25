@@ -31,11 +31,11 @@ def preprocess(records, settings):
     """Preprocess time domain data before performing HVSR calculations.
 
     records: iterable of SeismicRecording3C
-        Time-domain data in the form of an interable object containing
-        SeismicRecording3C objects. This is the data that will be
+        Time-domain data in the form of an iterable object containing
+        ``SeismicRecording3C`` objects. This is the data that will be
         preprocessed.
     settings : HvsrPreProcessingSettings
-        HvsrPreProcessingSettings object that controls how the
+        ``HvsrPreProcessingSettings`` object that controls how the
         time-domain data will be preprocessed.
 
     Returns

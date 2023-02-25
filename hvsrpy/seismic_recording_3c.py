@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2022 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@ import numpy as np
 
 from .timeseries import TimeSeries
 
+__all__ = ["SeismicRecording3C"]
+
+
 class SeismicRecording3C():
     """Class for creating and manipulating 3-component seismic records.
 
@@ -43,14 +46,14 @@ class SeismicRecording3C():
         Parameters
         ----------
         ns, ew, vt : TimeSeries
-            `TimeSeries` object for each component.
+            ``TimeSeries`` object for each component.
         degrees_from_north : float, optional
-            Orientation of the `ns` component (i.e., station north)
+            Orientation of the ``ns`` component (i.e., station north)
             relative to magnetic north measured in decimal degrees
-            (clockwise positive). The default value is `0.` indicating
+            (clockwise positive). The default value is ``0``. indicating
             station north and magnetic north are aligned.
         meta : dict, optional
-            Meta information for object, default is `None`.
+            Meta information for object, default is ``None``.
 
         Returns
         -------
@@ -64,7 +67,7 @@ class SeismicRecording3C():
                 msg = f"Component {name} is not similar to component ns; "
                 msg += "all components must be similar."
                 raise ValueError(msg)
-            tseries.append(ns.from_timeseries(component))
+            tseries.append(TimeSeries.from_timeseries(component))
         self.ns, self.ew, self.vt = tseries
 
         # ensure less than 360 degrees
@@ -77,18 +80,74 @@ class SeismicRecording3C():
                      **meta}
 
     def trim(self, start_time, end_time):
-        """Trim component `TimeSeries`."""
+        """Trim component ``TimeSeries``.
+
+        Parameters
+        ----------
+        start_time : float
+            New time zero in seconds.
+        end_time : float
+            New end time in seconds.
+
+        Returns
+        -------
+        None
+            Updates the attributes ``amplitude`` and ``n_samples``.
+
+        Raises
+        ------
+        IndexError
+            If the ``start_time`` and/or ``end_time`` is illogical. Checks
+            include ``start_time`` is less than zero, ``start_time`` is
+            after ``end_time``, or ``end_time`` is after the end of the
+            record.
+
+        """
         for component in ["ns", "ew", "vt"]:
             getattr(self, component).trim(start_time=start_time,
                                           end_time=end_time)
 
     def detrend(self, type="linear"):
-        """Remove trend from component `TimeSeries`."""
+        """Remove trend from component ``TimeSeries``.
+
+        Parameters
+        ----------
+        type = {"constant", "linear"}, optional
+            Type of detrending. If ``type == "linear"`` (default), the
+            result of a linear least-squares fit to data is subtracted
+            from data. If ``type == "constant"``, only the mean of data
+            is subtracted.
+
+        Returns
+        -------
+        None
+            Performs inplace detrend on the ``amplitude`` attribute.
+
+        """
         for component in ["ns", "ew", "vt"]:
             getattr(self, component).detrend(type=type)
 
     def split(self, window_length_in_seconds):
-        """Split component `TimeSeries`."""
+        """Split component ``TimeSeries`` into time windows.
+
+        Parameters
+        ----------
+        window_length_in_seconds : float
+            Duration of each split in seconds.
+
+        Returns
+        -------
+        list
+            List of ``TimeSeries`` objects, one per split.
+
+        Notes
+        -----
+            The last sample of each window is repeated as the first
+            sample of the following time window to ensure an intuitive
+            number of windows. Without this, for example, a 10-minute
+            record could not be broken into 10, 1-minute records.
+
+        """
         split_recordings = []
         for (_ns, _ew, _vt) in zip(self.ns.split(window_length_in_seconds),
                                    self.ew.split(window_length_in_seconds),
@@ -97,17 +156,48 @@ class SeismicRecording3C():
         return split_recordings
 
     def window(self, type="tukey", width=0.1):
-        """Window component `TimeSeries`."""
+        """Window component ``TimeSeries``.
+
+        Parameters
+        ----------
+        width : {0.-1.}
+            Fraction of the time series to be windowed.
+        type : {"tukey"}, optional
+            If ``type="tukey"``, a width of ``0`` is a rectangular window
+            and ``1`` is a Hann window, default is ``0.1`` indicating
+            a 5% taper off of both ends of the time series.
+
+        Returns
+        -------
+        None
+            Applies window to the ``amplitude`` attribute in-place.
+
+        """
         for component in ["ns", "ew", "vt"]:
             getattr(self, component).window(type=type, width=width)
 
-    def butterworth_filter(self, fcs, order=5):
-        """Butterworth filter component `TimeSeries`."""
-        for component in ["ns", "ew", "vt"]:
-            getattr(self, component).butterworth_filter(fcs=fcs, order=order)
+    def butterworth_filter(self, fcs_in_hz, order=5):
+        """Butterworth filter component ``TimeSeries``.
 
-    # TODO(jpv): Include full docstrings for SeismicRecording3C methods.
-    # Can likely adopt these straight from TimeSeries.
+        Parameters
+        ----------
+        fcs_in_hz : tuple
+            Butterworth filter's corner frequencies in Hz. ``None`` can
+            be used to specify a one-sided filter. For example a high
+            pass filter at 3 Hz would be specified as
+            ``fcs_in_hz=(3, None)``.
+        order : int, optional
+            Butterworth filter order, default is ``5``.
+
+        Returns
+        -------
+        None
+            Filters ``amplitude`` attribute in-place.
+
+        """
+        for component in ["ns", "ew", "vt"]:
+            getattr(self, component).butterworth_filter(fcs_in_hz=fcs_in_hz,
+                                                        order=order)
 
     def orient_sensor_to(self, degrees_from_north):
         """Orient sensor's horizontal components.
@@ -142,45 +232,56 @@ class SeismicRecording3C():
 
     def save(self, fname):
         with open(fname, "w") as f:
-            json.dump(dict(dt=self.ns.dt,
-                     ns_amplitude=self.ns.amplitude.tolist(), 
-                     ew_amplitude=self.ew.amplitude.tolist(),
-                     vt_amplitude=self.vt.amplitude.tolist(),
-                     degrees_from_north=self.degrees_from_north,
-                     meta = self.meta), f)
+            json.dump(dict(dt_in_seconds=self.ns.dt_in_seconds,
+                           ns_amplitude=self.ns.amplitude.tolist(),
+                           ew_amplitude=self.ew.amplitude.tolist(),
+                           vt_amplitude=self.vt.amplitude.tolist(),
+                           degrees_from_north=self.degrees_from_north,
+                           meta=self.meta), f)
 
     @classmethod
     def load(cls, fname):
         with open(fname, "r") as f:
             data = json.load(f)
-        ns = TimeSeries(data["ns_amplitude"], data["dt"])
-        ew = TimeSeries(data["ew_amplitude"], data["dt"])
-        vt = TimeSeries(data["vt_amplitude"], data["dt"])
+        ns = TimeSeries(data["ns_amplitude"], data["dt_in_seconds"])
+        ew = TimeSeries(data["ew_amplitude"], data["dt_in_seconds"])
+        vt = TimeSeries(data["vt_amplitude"], data["dt_in_seconds"])
         degrees_from_north = data["degrees_from_north"]
         meta = data["meta"]
         return cls(ns, ew, vt, degrees_from_north=degrees_from_north, meta=meta)
 
     @classmethod
     def from_seismic_recording_3c(cls, seismic_recording_3c):
-        # TODO(jpv): Add docstring.
-        original = seismic_recording_3c
+        """Copy constructor for ``SeismicRecording3C`` object.
+
+        Parameters
+        ----------
+        seismic_recording_3c : SeismicRecording3C
+            ``SeismicRecording3C`` to be copied.
+
+        Returns
+        -------
+        SeismicRecording3C
+            Copy of the provided ``SeismicRecording3C`` object.
+
+        """
         new_components = []
         for component in ["ns", "ew", "vt"]:
-            tseries = getattr(original, component)
+            tseries = getattr(seismic_recording_3c, component)
             new_components.append(tseries.from_timeseries(tseries))
         return cls(*new_components,
-                   degrees_from_north=original.degrees_from_north,
-                   meta=original.meta)
+                   degrees_from_north=seismic_recording_3c.degrees_from_north,
+                   meta=seismic_recording_3c.meta)
 
     def is_similar(self, other):
-        """Check if `other` is similar to `self`."""
+        """Check if ``other`` is similar to ``self``."""
         if not isinstance(other, SeismicRecording3C):
             return False
-        
+
         return True
 
     def __eq__(self, other):
-        """Check if `other` is equal to `self`."""
+        """Check if ``other`` is equal to ``self``."""
         if not self.is_similar(other):
             return False
 
@@ -191,13 +292,13 @@ class SeismicRecording3C():
         for attr, tol in [("degrees_from_north", 0.1)]:
             if abs(getattr(self, attr) - getattr(other, attr)) > tol:
                 return False
-        
+
         return True
 
     def __str__(self):
-        """Human-readable representation of `SeismicRecording3C` object."""
+        """Human-readable representation of ``SeismicRecording3C`` object."""
         return f"SeismicRecording3C at {id(self)}"
 
     def __repr__(self):
-        """Unambiguous representation of `SeismicRecording3C` object."""
+        """Unambiguous representation of ``SeismicRecording3C`` object."""
         return f"SeismicRecording3C(ns={self.ns}, ew={self.ew}, vt={self.vt}, meta={self.meta})"
