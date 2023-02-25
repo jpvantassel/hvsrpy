@@ -12,3 +12,4 @@ Provides details regarding the behavior of the various components of
    data_wrangler
    hvsr_objects
    window_rejection
+   statistics

@@ -20,7 +20,6 @@
 import logging
 
 import numpy as np
-from scipy.signal import find_peaks
 
 from .hvsr_curve import HvsrCurve
 from .hvsr_traditional import HvsrTraditional
@@ -236,7 +235,7 @@ class HvsrAzimuthal():
 
         return np.sqrt(num/(1-wi2))
 
-    def std_fn_frequency(self, distribution='lognormal'):
+    def std_fn_frequency(self, distribution="lognormal"):
         """Sample standard deviation frequency of ``fn`` across all valid HVSR curves and azimuths.
 
         Parameters
@@ -397,7 +396,7 @@ class HvsrAzimuthal():
                                  values=self.amplitude,
                                  sum_kwargs=dict(axis=0))
 
-    def nth_std_curve(self, n, distribution):
+    def nth_std_curve(self, n, distribution="lognormal"):
         """nth standard deviation on mean curve considering all valid
         windows across all azimuths."""
         return nth_std_factory(n=n,
@@ -405,7 +404,7 @@ class HvsrAzimuthal():
                                mean=self.mean_curve(distribution=distribution),
                                std=self.std_curve(distribution=distribution))
 
-    def nth_std_fn_frequency(self, n, distribution):
+    def nth_std_fn_frequency(self, n, distribution="lognormal"):
         """nth standard deviation on frequency of ``fn`` considering all
         valid windows across all azimuths."""
         return nth_std_factory(n=n,
@@ -413,7 +412,7 @@ class HvsrAzimuthal():
                                mean=self.mean_fn_frequency(distribution=distribution),
                                std=self.std_fn_frequency(distribution=distribution))
 
-    def nth_std_fn_amplitude(self, n, distribution):
+    def nth_std_fn_amplitude(self, n, distribution="lognormal"):
         """nth standard deviation on amplitude of ``fn`` considering all
         valid windows across all azimuths."""
         return nth_std_factory(n=n,

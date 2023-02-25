@@ -366,7 +366,7 @@ class HvsrTraditional():
 
         return (f_peak, a_peak)
 
-    def nth_std_fn_frequency(self, n, distribution):
+    def nth_std_fn_frequency(self, n, distribution="lognormal"):
         """Value n standard deviations from mean ``fn`` frequency.
 
         Parameters
@@ -388,7 +388,7 @@ class HvsrTraditional():
                                self.mean_f0_frq(distribution),
                                self.std_f0_frq(distribution))
 
-    def nth_std_fn_amplitude(self, n, distribution):
+    def nth_std_fn_amplitude(self, n, distribution="lognormal"):
         """Value n standard deviations from mean ``fn`` amplitude.
 
         Parameters
