@@ -26,7 +26,7 @@ from matplotlib.widgets import Cursor
 def ginput_session(fig, ax,
                    initial_adjustment=True,
                    initial_adjustment_message=None,
-                   npts=1,
+                   n_points=1,
                    ask_to_confirm_point=True,
                    ask_to_continue=True,
                    ask_to_continue_message=None):
@@ -40,31 +40,32 @@ def ginput_session(fig, ax,
         Axes on which points are to be selected.
     initial_adjustment : bool, optional
         Allow user to pan and zoom prior to the selection of the
-        first point, default is `True`.
+        first point, default is ``True``.
     initial_adjustment_message : str, optional
-        Message to print and display during `initial_adjustment` stage,
-        default is `None` so predefined message is displayed.
-    npts : int, optional
+        Message to print and display during ``initial_adjustment``
+         stage, default is ``None`` so a predefined message is
+         displayed.
+    n_points : int, optional
         Predefine the number of points the user is allowed to
-        select, the default is `1`.
+        select, the default is ``1``.
     ask_to_continue : bool, optional
         Pause the selection process after each point. This allows
         the user to pan and zoom the figure as well as select when
-        to continue, default is `True`.
+        to continue, default is ``True``.
     ask_to_continue_message : str, optional
         Message to print and display prior to select stage,
-        default is `None` so predefined message is displayed.
+        default is ``None`` so a predefined message is displayed.
 
     Returns
     -------
     tuple
-        Of the form `(xs, ys)` where `xs` is a `list` of x
-        coordinates and `ys` is a `list` of y coordinates in the
+        Of the form ``(xs, ys)`` where ``xs`` is a ``list`` of x
+        coordinates and ``ys`` is a ``list`` of y coordinates in the
         order in which they were picked.
 
     """
     # Enable cursor to make precise selection easier.
-    Cursor(ax, useblit=True, color='k', linewidth=1)
+    Cursor(ax, useblit=True, color="k", linewidth=1)
 
     # Permit initial adjustment with blocking call to figure.
     if initial_adjustment:
@@ -77,9 +78,9 @@ def ginput_session(fig, ax,
                 text.set_visible(False)
                 break
 
-    # Begin selection of npts.
+    # Begin selection of n_points.
     npt, xs, ys = 0, [], []
-    while npt < npts:
+    while npt < n_points:
         if ask_to_confirm_point:
             selection_message = "Left click to add,\nright click to remove,\nenter to accept."
             text = ax.text(0.95, 0.95, selection_message,

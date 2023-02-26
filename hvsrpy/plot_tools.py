@@ -23,7 +23,117 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
+from .hvsr_traditional import HvsrTraditional
+from .hvsr_azimuthal import HvsrAzimuthal
+
 __all__ = ["single_plot", "simple_plot", "azimuthal_plot", "voronoi_plot"]
+
+DEFAULT_KWARGS = {
+    "width_of_individual_hvsr_curve": 0.3,
+    "color_of_individual_valid_hvsr_curve": "#888888",
+    "label_of_individual_valid_hvsr_curve": "Accepted HVSR Curve",
+    "color_of_individual_invalid_hvsr_curve": "#00ffff",
+    "label_of_individual_invalid_hvsr_curve": "Rejected HVSR Curve",
+    "color_of_mean_hvsr_curve": "black",
+    "width_of_mean_hvsr_curve": 1.3,
+    "label_of_mean_hvsr_curve": "Mean Curve",
+    "color_of_nth_std_mean_hvsr_curve": "black",
+    "width_of_nth_std_mean_hvsr_curve": 1.3,
+    "label_of_nth_std_mean_hvsr_curve": "Mean Curve",
+    "linestyle_of_nth_std_mean_hvsr_curve": "--",
+    "label_of_nth_std_fn_normal" : r"$\mu_{fn} \pm \sigma_{fn}",
+    "label_of_nth_std_fn_lognormal" : r"$(\mu_{ln,fn} \pm \sigma_{ln,fn})^*",
+}
+
+
+def _plot_individual_hvsr_curves(ax, hvsr, valid=True, plot_kwargs=None):
+    """Plot individual HVSR curves.
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    if isinstance(hvsr, HvsrTraditional):
+        hvsrs = [hvsr]
+    elif isinstance(hvsr, HvsrAzimuthal):
+        hvsrs = hvsr.hvsrs
+    else:
+        msg = "Can only plot valid HVSR curves from HvsrTraditional "
+        msg += "and HvsrAzimuthal objects."
+        raise NotImplementedError(msg)
+
+    if valid:
+        default_kwargs = dict(linewidth=DEFAULT_KWARGS["width_of_individual_hvsr_curve"],
+                              color=DEFAULT_KWARGS["color_of_individual_valid_hvsr_curve"],
+                              label=DEFAULT_KWARGS["label_of_individual_valid_hvsr_curve"])
+    else:
+        default_kwargs = dict(linewidth=DEFAULT_KWARGS["width_of_individual_hvsr_curve"],
+                              color=DEFAULT_KWARGS["color_of_individual_invalid_hvsr_curve"],
+                              label=DEFAULT_KWARGS["label_of_individual_invalid_hvsr_curve"])
+    plot_kwargs = default_kwargs if plot_kwargs is None else {**default_kwargs, **plot_kwargs}
+
+    for hvsr in hvsrs:
+        to_plot = hvsr.valid_window_boolean_mask if valid else ~hvsr.valid_window_boolean_mask
+        for amplitude in hvsr.amplitude[to_plot]:
+            ax.plot(hvsr.frequency, amplitude, **plot_kwargs)
+            plot_kwargs["label"] = None
+
+
+def _plot_mean_hvsr_curve(ax, hvsr, distribution="lognormal", plot_kwargs=None):
+    """Plot mean HVSR curve.
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    default_kwargs = dict(linewidth=DEFAULT_KWARGS["width_of_mean_curve"],
+                          color=DEFAULT_KWARGS["color_of_mean_curve"],
+                          label=DEFAULT_KWARGS["label_of_mean_curve"])
+    plot_kwargs = default_kwargs if plot_kwargs is None else {**default_kwargs, **plot_kwargs}
+    ax.plot(hvsr.frequency, hvsr.mean_curve(distribution=distribution), **plot_kwargs)
+
+
+def _plot_nth_std_hvsr_curve(ax, hvsr, distribution="lognormal", n=1., plot_kwargs=None):
+    """Plot nth standard deviation HVSR curve.
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    default_kwargs = dict(linewidth=DEFAULT_KWARGS["width_of_nth_std_mean_hvsr_curve"],
+                          color=DEFAULT_KWARGS["color_of_nth_std_mean_hvsr_curve"],
+                          label=DEFAULT_KWARGS["label_of_nth_std_mean_hvsr_curve"],
+                          linestyle=DEFAULT_KWARGS["linestyle_of_nth_std_mean_hvsr_curve"])
+    plot_kwargs = default_kwargs if plot_kwargs is None else {**default_kwargs, **plot_kwargs}
+    ax.plot(hvsr.frequency, hvsr.nth_std_curve(n=n, distribution=distribution), **plot_kwargs)
+
+def _plot_nth_std_frequency(ax, hvsr, distribution="lognormal", n=1., fill_kwargs=None):
+    """Plot nth standard deviation frequency.
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    default_kwargs = dict(color=DEFAULT_KWARGS["color_of_nth_std_mean_hvsr_curve"],
+                        label=DEFAULT_KWARGS["label_of_nth_std_mean_hvsr_curve"],
+                        linestyle=DEFAULT_KWARGS["linestyle_of_nth_std_mean_hvsr_curve"])
+
+    ylims = ax.get_ylim()
+    
+
+    label = r"$LM_{f0}$" + \
+        " ± 1 STD" if distribution_f0 == "lognormal" else "Mean f0 ± 1 STD"
+    _ymin, _ymax = ax.get_ylim()
+    ax.plot([hv.mean_f0_frq(distribution_f0)]*2,
+            [_ymin, _ymax], linestyle="-.", color="#000000")
+    ax.fill([hv.nstd_f0_frq(-1, distribution_f0)]*2 + [hv.nstd_f0_frq(+1, distribution_f0)]*2, [_ymin, _ymax, _ymax, _ymin],
+            color="#ff8080",
+            label="" if title == "Before Rejection" and rejection_bool else label)
+    ax.set_ylim((_ymin, _ymax))
+
+def _plot_nth_std_amplitude
+
+def _plot_
 
 
 def plot_single_panel_hvsr_curves(hvsr,
@@ -40,24 +150,18 @@ def plot_single_panel_hvsr_curves(hvsr,
         ax_was_none = True
         fig, ax = plt.subplots(figsize=(4, 3), dpi=150)
 
-    # Rejected Windows
-    label = "Rejected"
-    for amplitude in hvsr.amplitude[hvsr.rejected_window_boolean_mask]:
-        ax.plot(hvsr.frequency, amplitude,
-                color=rejcted_color,
-                linewidth=individual_hvsr_width,
-                zorder=2,
-                label=label)
-        label = None
+    # individual hvsr curves - valid
+    _plot_individual_hvsr_curves(ax=ax, hvsr=hvsr, valid=True)
 
-    # Accepted Windows
-    label = "Accepted"
-    for amplitude in hvsr.amplitude[~hvsr.rejected_window_boolean_mask]:
-        ax.plot(hvsr.frequency, amplitude,
-                color=accepted_color,
-                linewidth=individual_hvsr_width,
-                label=label)
-        label = None
+    # individual hvsr curves - invalid
+    _plot_individual_hvsr_curves(ax=ax, hvsr=hvsr, valid=False)
+
+    # mean hvsr curve
+    _plot_mean_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc)
+
+    # +/- 1 std hvsr curve
+    _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=+1)
+    _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=-1)
 
     ax.set_xscale("log")
     ax.set_xlabel("Frequency (Hz)")
@@ -71,6 +175,7 @@ def plot_single_panel_hvsr_curves(hvsr,
         return (fig, ax)
     else:
         return ax
+
 
 def plot_single_panel_hvsr_median(hvsr,
                                   distribution_mc="lognormal",
@@ -108,7 +213,7 @@ def plot_single_panel_hvsr_median(hvsr,
                 linewidth=median_hvsr_width,
                 linestyle='--',
                 zorder=3)
-    
+
     ax.set_xscale("log")
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel("HVSR Amplitude")
