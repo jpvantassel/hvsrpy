@@ -80,16 +80,16 @@ class HvsrTraditional():
             Initialized with ``amplitude`` and ``frequency``.
 
         """
-        self.frequency = HvsrCurve._check_input("frequency", frequency)
-        self.amplitude = np.atleast_2d(HvsrCurve._check_input("amplitude", amplitude))
+        self.frequency = HvsrCurve._check_input(frequency, "frequency")
+        self.amplitude = np.atleast_2d(HvsrCurve._check_input(amplitude, "amplitude"))
 
         if len(self.frequency) != self.amplitude.shape[1]:
             msg = f"Shape of amplitude={self.amplitude.shape} and "
             msg += f"frequency={self.frequency.shape} must be compatible."
             raise ValueError(msg)
 
-        self.n_curves = np.ones((len(self.amplitude),), dtype=bool)
-        self.valid_window_boolean_mask = np.ones((len(self.n_curves),), dtype=bool)
+        self.n_curves = len(self.amplitude)
+        self.valid_window_boolean_mask = np.ones((self.n_curves,), dtype=bool)
         self.meta = dict(meta) if isinstance(meta, dict) else dict()
 
         self._main_peak_frq = np.empty(self.n_curves)

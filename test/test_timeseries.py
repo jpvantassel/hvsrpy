@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
-# Copyright (C) 2019-2022 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -15,16 +15,16 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Test functionionality of TimeSeries."""
+"""Test functionality of TimeSeries."""
 
 import logging
 
 import numpy as np
 
 import hvsrpy
-from testtools import unittest, TestCase, get_full_path
+from testtools import unittest, TestCase
 
-logger = logging.getLogger('hvsrpy.timeseries')
+logger = logging.getLogger("hvsrpy")
 logger.setLevel(level=logging.CRITICAL)
 
 

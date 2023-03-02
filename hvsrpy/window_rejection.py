@@ -67,11 +67,11 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
     for record in records:
         for component in components:
             timeseries = getattr(record, component)
-            nsamples = timeseries.nsamples
+            n_samples = timeseries.n_samples
 
             # compute sta values.
-            npts_in_sta = sta_seconds // timeseries.dt
-            if npts_in_sta > nsamples:
+            npts_in_sta = sta_seconds // timeseries.dt_in_seconds
+            if npts_in_sta > n_samples:
                 msg = "sta_seconds must be shorter than record length;"
                 msg += f"sta_seconds is {sta_seconds} and "
                 msg += f"record length is {timeseries.time()[-1]}."
@@ -81,8 +81,8 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
             sta_values = np.mean(short_timeseries.reshape((n_sta_in_window, npts_in_sta)), axis=1)
 
             # compute lta.
-            npts_in_lta = lta_seconds // timeseries.dt
-            if npts_in_lta > nsamples:
+            npts_in_lta = lta_seconds // timeseries.dt_in_seconds
+            if npts_in_lta > n_samples:
                 msg = "lta_seconds must be shorter than record length;"
                 msg += f"lta_seconds is {lta_seconds} and "
                 msg += f"record length is {timeseries.time()[-1]}."

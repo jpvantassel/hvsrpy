@@ -35,15 +35,15 @@ class TestSeismicRecording3C(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.full_path = get_full_path(__file__, result_as_string=False)
-        cls.dt = 0.001
-        cls.time = np.arange(0, 10, cls.dt)
+        cls.dt_in_seconds = 0.001
+        cls.time = np.arange(0, 10, cls.dt_in_seconds)
         cls.ex_tseries_cosine = hvsrpy.TimeSeries(np.cos(2*np.pi*10*cls.time),
-                                                  cls.dt)
+                                                  cls.dt_in_seconds)
         cls.ex_srecord3c_cosine = hvsrpy.SeismicRecording3C(cls.ex_tseries_cosine,
                                                             cls.ex_tseries_cosine,
                                                             cls.ex_tseries_cosine)
         cls.ex_tseries_sine = hvsrpy.TimeSeries(np.sin(2*np.pi*10*cls.time),
-                                                cls.dt)
+                                                cls.dt_in_seconds)
         cls.ex_srecord3c_sine = hvsrpy.SeismicRecording3C(cls.ex_tseries_sine,
                                                           cls.ex_tseries_sine,
                                                           cls.ex_tseries_sine)

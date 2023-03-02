@@ -213,9 +213,9 @@ def read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
     vt, ns, ew = data.T
 
-    vt = TimeSeries(vt, dt=dt)
-    ns = TimeSeries(ns, dt=dt)
-    ew = TimeSeries(ew, dt=dt)
+    vt = TimeSeries(vt, dt_in_seconds=dt)
+    ns = TimeSeries(ns, dt_in_seconds=dt)
+    ew = TimeSeries(ew, dt_in_seconds=dt)
 
     meta = {"File Name(s)": str(fname)}
     return SeismicRecording3C(ns, ew, vt,
@@ -277,9 +277,9 @@ def read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
     vt, ns, ew = data.T
 
-    vt = TimeSeries(vt, dt=dt)
-    ns = TimeSeries(ns, dt=dt)
-    ew = TimeSeries(ew, dt=dt)
+    vt = TimeSeries(vt, dt_in_seconds=dt)
+    ns = TimeSeries(ns, dt_in_seconds=dt)
+    ew = TimeSeries(ew, dt_in_seconds=dt)
 
     if degrees_from_north is None:
         degrees_from_north = 0.
@@ -460,7 +460,7 @@ def read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
         _check_npts(npts_header, idx)
 
-        component_list.append(TimeSeries(amplitude, dt=dt))
+        component_list.append(TimeSeries(amplitude, dt_in_seconds=dt))
 
     # organize components - vertical
     vt_id = component_keys.index("UP")
@@ -484,7 +484,7 @@ def read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
     # peer does not require all components to be the same length.
     # therefore trim all records to the shortest time length.
-    npts = [component.nsamples for component in [ns, ew,vt]]
+    npts = [component.n_samples for component in [ns, ew,vt]]
     ns.amplitude = ns.amplitude[:min(npts)] 
     ew.amplitude = ew.amplitude[:min(npts)] 
     vt.amplitude = vt.amplitude[:min(npts)] 
