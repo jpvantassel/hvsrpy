@@ -37,55 +37,55 @@ class TestTimeSeries(TestCase):
         cls.ex_tseries_sine = hvsrpy.TimeSeries(np.sin(2*np.pi*10*cls.ex_time),
                                                 cls.ex_dt)
 
-    def test_trimming_timeseries(self):
+    def test_timeseries_trim(self):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         tseries.trim(0, 5)
         time = tseries.time()
         self.assertEqual(min(time), 0)
         self.assertEqual(max(time), 5)
 
-    def test_trimming_fails_with_bad_start_time(self):
+    def test_timeseries_trim_fails_with_bad_start_time(self):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         self.assertRaises(IndexError, tseries.trim, -1, 5)
 
-    def test_trimming_fails_with_bad_stop_time(self):
+    def test_timeseries_trim_fails_with_bad_stop_time(self):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         self.assertRaises(IndexError, tseries.trim, 0, 15)
 
-    def test_trimming_fails_with_bad_start_and_stop_times(self):
+    def test_timeseries_trim_fails_with_bad_start_and_stop_times(self):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         self.assertRaises(IndexError, tseries.trim, 4, 2)
 
-    def test_split_to_one_second_windows(self):
+    def test_timeseries_split_to_one_second_windows(self):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         windows = tseries.split(window_length_in_seconds=1.0)
         self.assertTrue(len(windows), 10)
         self.assertTrue(isinstance(windows[0], hvsrpy.TimeSeries))
 
-    def test_split_where_window_length_is_too_large(self):
+    def test_timeseries_split_where_window_length_is_too_large(self):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         self.assertRaises(ValueError, tseries.split, 11.0)
 
-    def test_init_with_bad_amplitude_non_numeric(self):
+    def test_timeseries_init_with_bad_amplitude_non_numeric(self):
         self.assertRaises(TypeError, hvsrpy.TimeSeries,
                           amplitude=["a", "b", "c"], dt_in_seconds=0.001)
 
-    def test_init_with_bad_amplitude_non_1d(self):
+    def test_timeseries_init_with_bad_amplitude_non_1d(self):
         self.assertRaises(TypeError, hvsrpy.TimeSeries,
                           amplitude=[[1.0, 2.0], [1.0, 2.0]], dt_in_seconds=0.001)
 
-    def test_fs_and_fnyq(self):
+    def test_timeseries_fs_and_fnyq(self):
         fs_in_hz = 100
         dt_in_seconds = 1/fs_in_hz
         tseries = hvsrpy.TimeSeries(amplitude=[1.0], dt_in_seconds=dt_in_seconds)
         self.assertEqual(tseries.fs, 100)
         self.assertEqual(tseries.fnyq, 50)
 
-    def test_window_with_bad_type(self):
+    def test_timeseries_window_with_bad_type(self):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         self.assertRaises(NotImplementedError, tseries.window, type="cosine")
 
-    def test_apply_filter(self):
+    def test_timeseries_filter(self):
         unfilt_tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         filt_tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
 
@@ -98,7 +98,7 @@ class TestTimeSeries(TestCase):
         filt_tseries.butterworth_filter(fcs_in_hz=(3, None))
         self.assertTrue(unfilt_tseries.is_similar(filt_tseries))
 
-    def test_is_similar_and_is_equal(self):
+    def test_timeseries_is_similar_and_equal(self):
         # baseline
         a = hvsrpy.TimeSeries(amplitude=[1., 2.], dt_in_seconds=1.)
 
@@ -120,8 +120,9 @@ class TestTimeSeries(TestCase):
         self.assertTrue(a != e)
         self.assertFalse(a.is_similar(e))
 
-    def test_repr(self):
+    def test_timeseries_str_and_repr(self):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
+        self.assertTrue(isinstance(tseries.__str__(), str))
         self.assertTrue(isinstance(tseries.__repr__(), str))
 
 

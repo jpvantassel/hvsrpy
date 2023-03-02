@@ -219,13 +219,13 @@ class SeismicRecording3C():
         angle_diff_degrees = degrees_from_north - self.degrees_from_north
         angle_diff_radians = np.radians(angle_diff_degrees)
         c = np.cos(angle_diff_radians)
-        s = np.cos(angle_diff_radians)
+        s = np.sin(angle_diff_radians)
 
         ew = self.ew.amplitude
         ns = self.ns.amplitude
 
-        self.ns.amplitude = ew*c + ns*s
-        self.ew.amplitude = ns*c - ew*s
+        self.ew.amplitude = ew*c - ns*s
+        self.ns.amplitude = ew*s + ns*c
 
         self.degrees_from_north = degrees_from_north
         self.meta["Current Degrees from North (deg)"] = degrees_from_north
@@ -277,6 +277,10 @@ class SeismicRecording3C():
         """Check if ``other`` is similar to ``self``."""
         if not isinstance(other, SeismicRecording3C):
             return False
+        
+        for attr in ["ns", "ew", "vt"]:
+            if not getattr(self, attr).is_similar(getattr(other, attr)):
+                return False
 
         return True
 

@@ -88,6 +88,23 @@ class TestProcessing(TestCase):
         results = hvsrpy.process(preprocessed_records, settings)
         self.assertTrue(isinstance(results, hvsrpy.HvsrDiffuseField))
 
+#     def test_combine_horizontals(self):
+#         dt = 0.01
+#         amplitude = np.sin(2*np.pi*1*np.arange(0, 4, dt))
+#         tseries = sigpropy.TimeSeries(amplitude, dt)
+#         fseries = sigpropy.FourierTransform.from_timeseries(tseries)
+#         sensor = hvsrpy.Sensor3c(tseries, tseries, tseries)
+
+#         for invalid_method in ["average"]:
+#             self.assertRaises(NotImplementedError,
+#                               sensor._combine_horizontal_td,
+#                               method=invalid_method,
+#                               azimuth=2.)
+#             self.assertRaises(NotImplementedError,
+#                               sensor._combine_horizontal_fd,
+#                               method=invalid_method,
+#                               ns=fseries,
+#                               ew=fseries)
 
 if __name__ == "__main__":
     unittest.main()
