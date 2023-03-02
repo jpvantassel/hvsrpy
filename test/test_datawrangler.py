@@ -18,6 +18,7 @@
 """Tests associated with hvsrpy's ability to import data."""
 
 import logging
+import warnings
 
 import hvsrpy
 from testtools import unittest, TestCase, get_full_path
@@ -92,13 +93,35 @@ class TestDataWrangler(TestCase):
 
     def test_read_on_many_miniseed(self):
         fnames = [
-            [self.input_path / f"mseed_individual/ut.stn11.a2_c50_bh{x}.mseed" for x in list("enz")],
+            [self.input_path /
+                f"mseed_individual/ut.stn11.a2_c50_bh{x}.mseed" for x in list("enz")],
             [self.input_path / "mseed_combined/ut.stn11.a2_c50.mseed"]
         ]
         data = hvsrpy.read(fnames)
         self.assertTrue(len(data) == 2)
         self.assertTrue(isinstance(data[0], hvsrpy.SeismicRecording3C))
         self.assertTrue(isinstance(data[1], hvsrpy.SeismicRecording3C))
+
+    def test_read_on_many_but_single(self):
+        fnames = self.input_path / "mseed_combined/ut.stn11.a2_c50.mseed"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            data = hvsrpy.read(fnames, obspy_read_kwargs={}, degrees_from_north=15)
+        self.assertTrue(len(data) == 1)
+        self.assertTrue(isinstance(data[0], hvsrpy.SeismicRecording3C))
+        self.assertAlmostEqual(data[0].degrees_from_north, 15)
+
+    def test_read_on_many_with_customizations(self):
+        fnames = [
+            self.input_path / "mseed_combined/ut.stn11.a2_c50.mseed",
+            self.input_path / "mseed_combined/ut.stn11.a2_c50.mseed",
+        ]
+        data = hvsrpy.read(fnames,
+                           obspy_read_kwargs=[{}, {}],
+                           degrees_from_north=[10, 20])
+        self.assertTrue(len(data) == 2)
+        self.assertAlmostEqual(data[0].degrees_from_north, 10)
+        self.assertAlmostEqual(data[1].degrees_from_north, 20)
 
 
 if __name__ == "__main__":

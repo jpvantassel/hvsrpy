@@ -90,7 +90,7 @@ def read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         not keyword arguments will be passed.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is 0.0
+        magnetic north; clock wise positive. Default is 0.0
         indicating the sensor's north component is aligned with
         magnetic north.
 
@@ -154,7 +154,7 @@ def read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         functions.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is 0.0
+        magnetic north; clock wise positive. Default is 0.0
         indicating the sensor's north component is aligned with
         magnetic north.
 
@@ -236,7 +236,7 @@ def read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         functions.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is 0.0
+        magnetic north; clock wise positive. Default is 0.0
         indicating the sensor's north component is aligned with
         magnetic north.
 
@@ -306,7 +306,7 @@ def read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         no keyword arguments will be passed.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is 0.0
+        magnetic north; clock wise positive. Default is 0.0
         indicating the sensor's north component is aligned with
         magnetic north.
 
@@ -372,7 +372,7 @@ def read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         no keyword arguments will be passed.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is 0.0
+        magnetic north; clock wise positive. Default is 0.0
         indicating the sensor's north component is aligned with
         magnetic north.
 
@@ -425,7 +425,7 @@ def read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         functions.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is 0.0
+        magnetic north; clock wise positive. Default is 0.0
         indicating the sensor's north component is aligned with
         magnetic north.
 
@@ -524,7 +524,7 @@ def read_single(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         no custom arguments will be passed to ``obspy.read``.
     degrees_from_north : float, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is ``None``
+        magnetic north; clock wise positive. Default is ``None``
         indicating either the metadata in the file denoting the sensor's
         orientation is correct and should be used or (if the sensor's
         orientation is not listed in the file) the sensor's north
@@ -561,7 +561,7 @@ def read(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
     Parameters
     ----------
-    fnames : iterable of iterable of str or interable of str
+    fnames : iterable of iterable of str or iterable of str
         Collection of file name(s) to be read. All entries should be
         readable by the function ``hvsrpy.read_single()``.
     obspy_read_kwargs : dict or iterable of dicts, optional
@@ -576,43 +576,54 @@ def read(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
         Default is ``None`` indicating standard read behavior will be
         used.
-    degrees_from_north : float, optional
+    degrees_from_north : float or iterable of floats, optional
         Rotation in degrees of the sensor's north component relative to
-        magnetic north; clock wise positve. Default is ``None``
-        indicating either the metadata in the file denoting the sensor's
-        orientation is correct and should be used or (if the sensor's
-        orientation is not listed in the file) the sensor's north
-        component is aligned with magnetic north
+        magnetic north; clock wise positive.
+
+        If ``float``, it will be repeated for all file names provided.
+
+        If ``iterable of floats`` each ``float`` will be provided
+        in order.
+
+        Default is ``None`` indicating either the metadata in the file
+        denoting the sensor's orientation is correct and should be used
+        or (if the sensor's orientation is not listed in the file) the
+        sensor's north component is aligned with magnetic north
         (i.e., ``degrees_from_north=0``).
 
     Returns
     -------
     list
         Of initialized ``SeismicRecording3C`` objects, one for each each
-        interable entry provided.
+        iterable entry provided.
 
     """
     # if only string provided put it in a list and warn user.
-    if isinstance(fnames, str):
+    if not isinstance(fnames, (list, tuple)):
         msg = "fnames should be iterable of str or iterable of "
-        msg += "iterable of str; not str."
+        msg += "iterable of str."
         warnings.warn(msg)
         fnames = [fnames]
 
-    # scale obspy_read_kwargs and degrees_from_north as needed to match fnames.
+    # scale obspy_read_kwargs as needed to match fnames.
     if isinstance(obspy_read_kwargs, (dict, type(None))):
         read_kwargs_iter = itertools.repeat(obspy_read_kwargs)
-        degrees_from_north_iter = itertools.repeat(degrees_from_north)
     else:
         read_kwargs_iter = obspy_read_kwargs
+
+    # scale degrees_from_north as needed to match fnames.
+    if isinstance(obspy_read_kwargs, (dict, type(None))):
+        degrees_from_north_iter = itertools.repeat(degrees_from_north)
+    else:
         degrees_from_north_iter = degrees_from_north
 
     seismic_recordings = []
     for fname, read_kwargs, degrees_from_north in zip(fnames, read_kwargs_iter, degrees_from_north_iter):
 
         # if entry is a list with only a single entry, remove the list.
-        if len(fname) == 1:
-            fname = fname[0]
+        if isinstance(fname, (list, tuple)):
+            if len(fname) == 1:
+                fname = fname[0]
 
         seismic_recordings.append(read_single(fname,
                                               obspy_read_kwargs=read_kwargs,
