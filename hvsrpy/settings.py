@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Definition of Settings class and its descendents."""
+"""Definition of Settings class and its descendants."""
 
 import json
 
@@ -32,7 +32,15 @@ class Settings():
 
     @property
     def attr_dict(self):
-        return {name: getattr(self, name) for name in self.attrs}
+        attr_dict = {}
+        for name in self.attrs:
+            attr = getattr(self, name)
+            try:
+                attr = attr.tolist()
+            except:
+                pass
+            attr_dict[name] = attr
+        return attr_dict
 
     def extend_attributes(self, attributes_with_defaults):
         self.attrs.extend(list(attributes_with_defaults.keys()))
@@ -46,7 +54,7 @@ class Settings():
     def load(self, fname):
         with open(fname, "r") as f:
             attr_dict = json.load(f)
-        self.custom_initialization(attr_dict)
+        self.custom_initialization(**attr_dict)
 
     def custom_initialization(self, **kwargs):
         for attr, value in kwargs.items():
@@ -68,7 +76,7 @@ class HvsrPreProcessingSettings(Settings):
             "detrend": "linear",
             "orient_to_degrees_from_north": 0.,
             "window_length_in_seconds": 60,
-            "filter_corner_frequencies_in_hz": (None, None)
+            "filter_corner_frequencies_in_hz": [None, None]
         }
         self.extend_attributes(attributes_with_defaults)
 
@@ -78,8 +86,8 @@ class HvsrProcessingSettings(Settings):
     def __init__(self):
         super().__init__()
         attributes_with_defaults = {
-            "window_type_and_width": ("tukey", 0.1),
-            "smoothing_operator_and_bandwidth": ("konno_and_ohmachi", 40),
+            "window_type_and_width": ["tukey", 0.1],
+            "smoothing_operator_and_bandwidth": ["konno_and_ohmachi", 40],
             "frequency_resampling_in_hz": np.geomspace(0.1, 50, 200),
             "fft_settings": None
         }
