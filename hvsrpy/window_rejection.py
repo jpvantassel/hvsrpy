@@ -21,6 +21,11 @@ import logging
 
 import numpy as np
 
+from .hvsr_traditional import HvsrTraditional
+from .hvsr_azimuthal import HvsrAzimuthal
+from .interact import ginput_session, plot_continue_button, is_absolute_point_in_relative_box
+from .plot_tools import plot_single_panel_hvsr_curves
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,12 +34,12 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
                              components=("ns", "ew", "vt")):
     """Performs window rejection using STA - LTA ratio.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     records: iterable of SeismicRecording3C
-        Time-domain data in the form of an interable object containing
-        SeismicRecording3C objects. This data is assumed to have already
-        been preprocessed using `hvsrpy.preprocess`.
+        Time-domain data in the form of an iterable object containing
+        ``SeismicRecording3C`` objects. This data is assumed to have
+        already been preprocessed using ``hvsrpy.preprocess``.
     sta_seconds : float
         Length of time used to determine the short term average (STA)
         in seconds.
@@ -49,7 +54,7 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
         an STA/LTA above this value will be rejected.
     components : iterable, optional
         Components on which the STA/LTA filter will be evaluated,
-        default is all components, that is, `("ns", "ew", "vt")`.
+        default is all components, that is, ``("ns", "ew", "vt")``.
 
     Returns
     -------
@@ -100,30 +105,30 @@ def maximum_value_window_rejection(records, maximum_value_threshold,
     Parameters
     ----------
     records: iterable of SeismicRecording3C
-        Time-domain data in the form of an interable object containing
-        `SeismicRecording3C` objects. This data is assumed to have
-        already been preprocessed using `hvsrpy.preprocess`.
+        Time-domain data in the form of an iterable object containing
+        ``SeismicRecording3C`` objects. This data is assumed to have
+        already been preprocessed using ``hvsrpy.preprocess``.
     maximum_value_threshold : float
         Absolute value of timeseries, that if exceeded, the record will
         be rejected. Can be relative or absolute, see parameter
-        `normalized`.
+        ``normalized``.
     normalized : bool, optional
-        Defines whether the `maximum_value_threshold` is absolute or
+        Defines whether the ``maximum_value_threshold`` is absolute or
         relative to the maximum value observed across all records and
-        all components, default is `True` indicating the
-        `maximum_value_threshold` is relative to the maximum value
+        all components, default is ``True`` indicating the
+        ``maximum_value_threshold`` is relative to the maximum value
         observed.
     components : iterable, optional
         Components on which the maximum value filter will be evaluated,
-        default is all components, that is, `("ns", "ew", "vt")`.
+        default is all components, that is, ``("ns", "ew", "vt")``.
 
     Returns
     -------
     list of SeismicRecordings3C
-        List of `SeismicRecording3C` objects with those that exceed the
-        maximum value threshold removed.
+        List of ``SeismicRecording3C`` objects with those that exceed
+        the maximum value threshold removed.
 
-    """    
+    """
     # determine the maximum value for each record, across all components.
     maximum_values = np.empty(len(records))
     for idx, record in enumerate(records):
@@ -137,207 +142,266 @@ def maximum_value_window_rejection(records, maximum_value_threshold,
 
     # normalize maximums, if applicable.
     if normalized:
-        maximum_values /= np.max(maximum_values)
+        maximum_values /= np.max(np.abs(maximum_values))
 
     # remove records that exceed threshold.
     passing_records = []
     for record, maximum_value in zip(records, maximum_values):
         if maximum_value < maximum_value_threshold:
-            passing_records.append(record)            
+            passing_records.append(record)
 
     return passing_records
 
-# def frequency_domain_window_rejection(self, hvsr, n=2, max_iterations=50,
-#                                       distribution_f0='lognormal',
-#                                       distribution_mc='lognormal',
-#                                       search_range_in_hz=(None, None)):
-#     """Frequency-domain window rejection by Cox et al., (2020).
 
-#     Parameters
-#     ----------
-#     n : float, optional
-#         Number of standard deviations from the mean, default
-#         value is 2.
-#     max_iterations : int, optional
-#         Maximum number of rejection iterations, default value is
-#         50.
-#     distribution_f0 : {'lognormal', 'normal'}, optional
-#         Assumed distribution of `f0` from time windows, the
-#         default is 'lognormal'.
-#     distribution_mc : {'lognormal', 'normal'}, optional
-#         Assumed distribution of mean curve, the default is
-#         'lognormal'.
+def frequency_domain_window_rejection(hvsr,
+                                      n=2,
+                                      max_iterations=50,
+                                      distribution_fn="lognormal",
+                                      distribution_mc="lognormal",
+                                      search_range_in_hz=(None, None),
+                                      find_peaks_kwargs=None):
+    """Frequency-domain window rejection algorithm by Cox et al., (2020).
 
-#     Returns
-#     -------
-#     int
-#         Number of iterations required for convergence.
+    Parameters
+    ----------
+    hvsr : HvsrTraditional or HvsrAzimuthal
+        HVSR object on which the window rejection algorithm will
+        be applied.
+    n : float, optional
+        Tuning parameter of the Cox et al., (2020) algorithm, indicates
+        the number of standard deviations from the mean to be removed,
+        default value is ``2``.
+    max_iterations : int, optional
+        Maximum number of rejection iterations, default value is
+        ``50``.
+    distribution_fn : {"lognormal", "normal"}, optional
+        Assumed distribution of ``fn`` from HVSR curves, the
+        default is ``"lognormal"``.
+    distribution_mc : {"lognormal", "normal"}, optional
+        Assumed distribution of mean curve, the default is
+        ``"lognormal"``.
+    search_range_in_hz : tuple, optional
+        Frequency range to be searched for peaks.
+        Half open ranges can be specified with ``None``, default is
+        ``(None, None)`` indicating the full frequency range will be
+        searched.
+    find_peaks_kwargs : dict
+        Keyword arguments for the ``scipy`` function
+        `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
+        see ``scipy`` documentation for details, default is ``None``
+        indicating defaults will be used.
 
-#     """
-#     # TODO(jpv): Review documentation here.
-#     # TODO(jpv): Review the frequency domain window rejection algorithm
+    Returns
+    -------
+    int
+        Number of iterations required for convergence.
 
-#     self.meta["n"] = n
-#     self.meta["Performed Rejection"] = True
+    """
+    if isinstance(hvsr, HvsrTraditional):
+        hvsrs = [hvsr]
+    elif isinstance(hvsr, HvsrAzimuthal):
+        hvsrs = hvsr.hvsrs
+    else:
+        msg = "The frequency domain window rejection algorithm can only "
+        msg += "be applied to HvsrTraditional and HvsrAzimuthal objects, not "
+        msg += f"{type(hvsr)} type objects."
+        raise NotImplementedError(msg)
 
-#     for c_iteration in range(1, max_iterations+1):
+    # self.meta["n"] = n
+    # self.meta["Performed Rejection"] = True
 
-#         logger.debug(f"c_iteration: {c_iteration}")
-#         logger.debug(f"valid_window_boolean_mask: {self.valid_window_boolean_mask}")
+    max_iterations = 0
+    for hvsr in hvsrs:
+        hvsr._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
+                                   find_peaks_kwargs=find_peaks_kwargs)
+        iterations = _frequency_domain_window_rejection(hvsr=hvsr,
+                                                        n=n,
+                                                        max_iterations=max_iterations,
+                                                        distribution_fn=distribution_fn,
+                                                        distribution_mc=distribution_mc)
+        if iterations > max_iterations:
+            max_iterations = iterations
 
-#         mean_f0_before = self.mean_f0_frq(distribution_f0)
-#         std_f0_before = self.std_f0_frq(distribution_f0)
-#         mc_peak_frq_before, _ = self.mean_curve_peak(distribution_mc)
-#         d_before = abs(mean_f0_before - mc_peak_frq_before)
-
-#         logger.debug(f"\tmean_f0_before: {mean_f0_before}")
-#         logger.debug(f"\tstd_f0_before: {std_f0_before}")
-#         logger.debug(f"\tmc_peak_frq_before: {mc_peak_frq_before}")
-#         logger.debug(f"\td_before: {d_before}")
-
-#         lower_bound = self.nstd_f0_frq(-n, distribution_f0)
-#         upper_bound = self.nstd_f0_frq(+n, distribution_f0)
-
-#         valid_indices = np.zeros(self.nseries, dtype=bool)
-#         for c_window, (c_valid, c_peak) in enumerate(zip(self.valid_window_boolean_mask, self._main_peak_frq)):
-#             if not c_valid:
-#                 continue
-
-#             if c_peak > lower_bound and c_peak < upper_bound:
-#                 valid_indices[c_window] = True
-
-#         self.valid_window_boolean_mask = valid_indices
-
-#         mean_f0_after = self.mean_f0_frq(distribution_f0)
-#         std_f0_after = self.std_f0_frq(distribution_f0)
-#         mc_peak_frq_after, _ = self.mean_curve_peak(distribution_mc)
-#         d_after = abs(mean_f0_after - mc_peak_frq_after)
-
-#         logger.debug(f"\tmean_f0_after: {mean_f0_after}")
-#         logger.debug(f"\tstd_f0_after: {std_f0_after}")
-#         logger.debug(f"\tmc_peak_frq_after: {mc_peak_frq_after}")
-#         logger.debug(f"\td_after: {d_after}")
-
-#         if d_before == 0 or std_f0_before == 0 or std_f0_after == 0:
-#             msg = f"Performed {c_iteration} iterations, returning b/c 0 values."
-#             logger.warning(msg)
-#             return c_iteration
-
-#         d_diff = abs(d_after - d_before)/d_before
-#         s_diff = abs(std_f0_after - std_f0_before)
-
-#         logger.debug(f"\td_diff: {d_diff}")
-#         logger.debug(f"\ts_diff: {s_diff}")
-
-#         if (d_diff < 0.01) and (s_diff < 0.01):
-#             msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
-#             logger.info(msg)
-#             return c_iteration
+    return max_iterations
 
 
-# def reject_windows_manual(self,
-#                           distribution_mc='lognormal',
-#                           find_peaks_kwargs=None,
-#                           ylims=None):
-#     """Rejection spurious HVSR windows manually.
+def _frequency_domain_window_rejection(hvsr,
+                                       n=2,
+                                       max_iterations=50,
+                                       distribution_fn="lognormal",
+                                       distribution_mc="lognormal"):
+    for c_iteration in range(1, max_iterations+1):
 
-#     Parameters
-#     ----------
-#     distribution_f0 : {'lognormal', 'normal'}, optional
-#         Assumed distribution of `f0` from time windows, the
-#         default is 'lognormal'.
-#     distribution_mc : {'lognormal', 'normal'}, optional
-#         Assumed distribution of mean curve, the default is
-#         'lognormal'.
+        logger.debug(f"c_iteration: {c_iteration}")
+        logger.debug(f"valid_window_boolean_mask: {hvsr.valid_window_boolean_mask}")
 
-#     Returns
-#     -------
-#     None
-#         Modifies Hvsr object's internal state.
+        mean_fn_before = hvsr.mean_fn_frequency(distribution_fn)
+        std_fn_before = hvsr.std_fn_frequency(distribution_fn)
+        mc_peak_frq_before, _ = hvsr.mean_curve_peak(distribution_mc)
+        diff_before = abs(mean_fn_before - mc_peak_frq_before)
 
-#     """
-#     if find_peaks_kwargs is None:
-#         raise NotImplementedError
-#     (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
+        logger.debug(f"\tmean_fn_before: {mean_fn_before}")
+        logger.debug(f"\tstd_fn_before: {std_fn_before}")
+        logger.debug(f"\tmc_peak_frq_before: {mc_peak_frq_before}")
+        logger.debug(f"\tdiff_before: {diff_before}")
 
-#     frqs, amps = [], []
-#     for amp, col_ids in zip(self.amp, valid_idxs):
-#         frqs.extend(self.frq[col_ids])
-#         amps.extend(amp[col_ids])
-#     peaks_valid = (frqs, amps)
-#     peaks_invalid = ([], [])
+        lower_bound = hvsr.nth_std_fn_frequency(-n, distribution_fn)
+        upper_bound = hvsr.nth_std_fn_frequency(+n, distribution_fn)
 
-#     fig, ax = single_plot(
-#         self, peaks_valid, peaks_invalid, distribution_mc, ylims=ylims)
-#     ax.autoscale(enable=False)
-#     fig.show()
-#     pxlim = ax.get_xlim()
-#     pylim = ax.get_ylim()
+        for _idx, (c_valid, c_peak) in enumerate(zip(hvsr.valid_window_boolean_mask, hvsr._main_peak_frq)):
+            if not c_valid:
+                continue
 
-#     # continue button
-#     upper_right_corner = (0.05, 0.95)
-#     _xc, _yc = upper_right_corner
-#     box_size = 0.1
-#     scale_x = (np.log10(max(pxlim)) - np.log10(min(pxlim)))
-#     scale_y = max(pylim) - min(pylim)
-#     x_lower, x_upper = np.exp(_xc*scale_x + np.log10(min(pxlim))
-#                               ), np.exp((_xc+box_size)*scale_x + np.log10(min(pxlim)))
-#     y_lower, y_upper = (_yc - box_size)*scale_y + \
-#         min(pylim), _yc*scale_y + min(pylim)
+            if c_peak > lower_bound and c_peak < upper_bound:
+                hvsr.valid_window_boolean_mask[_idx] = True
+            else:
+                hvsr.valid_window_boolean_mask[_idx] = False
 
-#     def draw_continue_box(ax):
-#         ax.fill([x_lower, x_upper, x_upper, x_lower],
-#                 [y_upper, y_upper, y_lower, y_lower], color="lightgreen")
-#         ax.text(_xc, _yc-box_size/2, "continue?", ha="left",
-#                 va="center", transform=ax.transAxes)
-#     draw_continue_box(ax)
+        mean_fn_after = hvsr.mean_fn_frequency(distribution_fn)
+        std_fn_after = hvsr.std_fn_frequency(distribution_fn)
+        mc_peak_frq_after, _ = hvsr.mean_curve_peak(distribution_mc)
+        d_after = abs(mean_fn_after - mc_peak_frq_after)
 
-#     while True:
-#         xs, ys = ginput_session(fig, ax, initial_adjustment=False,
-#                                 npts=2, ask_to_confirm_point=False, ask_to_continue=False)
+        logger.debug(f"\tmean_fn_after: {mean_fn_after}")
+        logger.debug(f"\tstd_fn_after: {std_fn_after}")
+        logger.debug(f"\tmc_peak_frq_after: {mc_peak_frq_after}")
+        logger.debug(f"\td_after: {d_after}")
 
-#         selected_columns = np.logical_and(
-#             self.frq > min(xs), self.frq < max(xs))
-#         was_empty = True
-#         for idx, (amp) in enumerate(zip(self.amp[:, selected_columns])):
-#             if np.any(np.logical_and(amp > min(ys), amp < max(ys))):
-#                 was_empty = False
-#                 self.valid_window_boolean_mask[idx] = False
+        if diff_before == 0 or std_fn_before == 0 or std_fn_after == 0:
+            msg = f"Performed {c_iteration} iterations, returning b/c 0 values."
+            logger.warning(msg)
+            return c_iteration
 
-#         vfrqs, vamps = [], []
-#         ivfrqs, ivamps = [], []
-#         (valid_idxs, _) = self.find_peaks(self.amp, **find_peaks_kwargs)
-#         for amp, col_ids, window_valid in zip(self.amp, valid_idxs, self.valid_window_boolean_mask):
-#             if window_valid:
-#                 vfrqs.extend(self.frq[col_ids])
-#                 vamps.extend(amp[col_ids])
-#             else:
-#                 ivfrqs.extend(self.frq[col_ids])
-#                 ivamps.extend(amp[col_ids])
+        d_diff = abs(d_after - diff_before)/diff_before
+        s_diff = abs(std_fn_after - std_fn_before)
 
-#         peaks_valid = (vfrqs, vamps)
-#         peaks_invalid = (ivfrqs, ivamps)
+        logger.debug(f"\td_diff: {d_diff}")
+        logger.debug(f"\ts_diff: {s_diff}")
 
-#         # Clear, set axis limits, and lock axis.
-#         ax.clear()
-#         ax.set_xlim(pxlim)
-#         ax.set_ylim(pylim)
-#         # Note: ax.clear() re-enables autoscale.
-#         ax.autoscale(enable=False)
-#         ax = single_plot(self, peaks_valid, peaks_invalid,
-#                          distribution_mc, ax=ax, ylims=ylims)
-#         draw_continue_box(ax)
-#         fig.canvas.draw_idle()
+        if (d_diff < 0.01) and (s_diff < 0.01):
+            msg = f"Performed {c_iteration} iterations, returning b/c rejection converged."
+            logger.info(msg)
+            return c_iteration
 
-#         if was_empty:
-#             in_continue_box = False
-#             for _x, _y in zip(xs, ys):
-#                 if (_x < x_upper) and (_x > x_lower) and (_y > y_lower) and (_y < y_upper):
-#                     in_continue_box = True
-#                     break
 
-#             if in_continue_box:
-#                 plt.close()
-#                 break
-#             else:
-#                 continue
+def manual_window_rejection(hvsr,
+                            ylims=None,
+                            distribution_fn="lognormal",
+                            distribution_mc="lognormal",
+                            search_range_in_hz=(None, None),
+                            find_peaks_kwargs=None,
+                            upper_right_corner_relative=(0.95, 0.95),
+                            box_size_relative=(0.1, 0.05)):
+    """Reject HVSR curves manually.
+
+    Parameters
+    ----------
+    hvsr : HvsrTraditional or HvsrAzimuthal
+        HVSR object on which the window rejection algorithm will
+        be applied.
+    ylims : tuple, optional
+        Upper and lower limits of plotted HVSR amplitude, default is
+        ``None`` indicating limits will automatically be selected.
+    distribution_fn : {"lognormal", "normal"}, optional
+        Assumed distribution of ``fn`` from HVSR curves, the
+        default is ``"lognormal"``.
+    distribution_mc : {"lognormal", "normal"}, optional
+        Assumed distribution of mean curve, the default is
+        ``"lognormal"``.
+    search_range_in_hz : tuple, optional
+        Frequency range to be searched for peaks.
+        Half open ranges can be specified with ``None``, default is
+        ``(None, None)`` indicating the full frequency range will be
+        searched.
+    find_peaks_kwargs : dict
+        Keyword arguments for the ``scipy`` function
+        `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
+        see ``scipy`` documentation for details, default is ``None``
+        indicating defaults will be used.
+
+    Returns
+    -------
+    None
+        Modifies Hvsr object's internal state.
+
+    """
+    if isinstance(hvsr, HvsrTraditional):
+        hvsrs = [hvsr]
+    elif isinstance(hvsr, HvsrAzimuthal):
+        hvsrs = hvsr.hvsrs
+    else:
+        msg = "The manual window rejection algorithm can only be "
+        msg += "applied to HvsrTraditional and HvsrAzimuthal objects, "
+        msg += f"not {type(hvsr)} type objects."
+        raise NotImplementedError(msg)
+
+    # # self.meta["n"] = n
+    # # self.meta["Performed Rejection"] = True
+
+    # update peaks of hvsr object.
+    if find_peaks_kwargs is None:
+        find_peaks_kwargs = {}
+
+    hvsr._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
+                               find_peaks_kwargs=find_peaks_kwargs)
+
+    # plot hvsr.
+    fig, ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
+                                            distribution_mc=distribution_mc,
+                                            distribution_fn=distribution_fn)
+    ax.autoscale(enable=False)
+    plot_continue_button(ax,
+                         upper_right_corner_relative=upper_right_corner_relative,
+                         box_size_relative=box_size_relative)
+    fig.show()
+    if ylims is not None:
+        ax.set_ylim(ylims)
+    x_lim = ax.get_xlim()
+    y_lim = ax.get_ylim()
+
+    while True:
+        xs, ys = ginput_session(fig, ax, initial_adjustment=False,
+                                npts=2, ask_to_confirm_point=False, ask_to_continue=False)
+
+        # only look at frequencies in drawn box to accelerate search.
+        selected_columns = np.logical_and(hvsr.frequency > min(xs),
+                                          hvsr.frequency < max(xs))
+        was_empty = True
+        for hvsr in hvsrs:
+            for idx, amplitude in enumerate(hvsr.amplitude[:, selected_columns]):
+                if np.any(np.logical_and(amplitude > min(ys), amplitude < max(ys))):
+                    was_empty = False
+                    hvsr.valid_window_boolean_mask[idx] = False
+        hvsr._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
+                                   find_peaks_kwargs=find_peaks_kwargs)
+
+        # Clear, set axis limits, and lock axis.
+        ax.clear()
+        # Note: ax.clear() re-enables autoscale.
+        ax.autoscale(enable=False)
+        ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
+                                           distribution_mc=distribution_mc,
+                                           distribution_fn=distribution_fn,
+                                           ax=ax)
+        ax.set_xlim(x_lim)
+        ax.set_ylim(y_lim)
+        plot_continue_button(ax,
+                             upper_right_corner_relative=upper_right_corner_relative,
+                             box_size_relative=box_size_relative)
+        fig.canvas.draw_idle()
+
+        if was_empty:
+            in_continue_box = False
+            for _x, _y in zip(xs, ys):
+                if is_absolute_point_in_relative_box(ax=ax,
+                                                     absolute_point=(_x, _y),
+                                                     upper_right_corner_relative=upper_right_corner_relative,
+                                                     box_size_relative=box_size_relative):
+                    in_continue_box = True
+                    break
+
+            if in_continue_box:
+                fig.close()
+                break
+            else:
+                continue

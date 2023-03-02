@@ -21,7 +21,7 @@ import logging
 
 import numpy as np
 
-from .statistics import mean_factory, std_factory, nth_std_factory
+from .statistics import mean_factory, std_factory, nth_std_factory, DISTRIBUTION_MAP
 from .hvsr_curve import HvsrCurve
 
 logger = logging.getLogger(__name__)
@@ -229,12 +229,55 @@ class HvsrTraditional():
         """
         return mean_factory(distribution, self.peak_amplitudes)
 
-    def std_fn_frequency(self, distribution='lognormal'):
+    def cov_fn(self, distribution="lognormal"):
+        """Covariance of HVSR resonance across all valid HVSR curves.
+
+        Parameters
+        ----------
+        distribution : {"normal", "lognormal"}, optional
+            Assumed distribution of resonance, default is
+            ``"lognormal"``.
+
+        Returns
+        -------
+        ndarray
+            Tensor of shape ``(2,2)`` that represents the
+            covariance matrix of frequency and amplitude of HVSR
+            resonance across all valid time windows.
+
+        Raises
+        ------
+        NotImplementedError
+            If ``distribution`` does not match the available options.
+
+        """
+        distribution = DISTRIBUTION_MAP[distribution]
+
+        frequencies = []
+        amplitudes = []
+        weights = []
+        for hvsr in self.hvsrs:
+            n_valid = np.sum(hvsr.valid_window_boolean_mask)
+            frequencies.extend(hvsr.peak_frequencies)
+            amplitudes.extend(hvsr.peak_frequencies)
+            weights.extend([1/n_valid]*n_valid)
+
+        if distribution == "normal":
+            pass
+        elif distribution == "lognorma":
+            frequencies = np.log(frequencies)
+            amplitudes = np.log(amplitudes)
+        else:
+            raise NotImplementedError
+
+        return np.cov(frequencies, amplitudes, aweights=weights)
+
+    def std_fn_frequency(self, distribution="lognormal"):
         """Sample standard deviation of frequency of peaks associated with ``fn`` from valid HVSR curves.
 
         Parameters
         ----------
-        distribution : {'normal', 'lognormal'}, optional
+        distribution : {"normal", "lognormal"}, optional
             Assumed distribution of ``fn``, default is ``"lognormal"``.
 
         Returns
@@ -256,7 +299,7 @@ class HvsrTraditional():
 
         Parameters
         ----------
-        distribution : {'normal', 'lognormal'}, optional
+        distribution : {"normal", "lognormal"}, optional
             Assumed distribution of ``fn``, default is ``"lognormal"``.
 
         Returns
@@ -327,9 +370,10 @@ class HvsrTraditional():
             msg += "not defined for a single window."
             raise ValueError(msg)
 
+    # TODO(jpv): Replace **kwargs here (and elsewhere).
     def mean_curve_peak(self, distribution="lognormal",
                         search_range_in_hz=(None, None),
-                        **find_peaks_kwargs):
+                        find_peaks_kwargs=None):
         """Frequency and amplitude of the peak of the mean HVSR curve.
 
         Parameters
@@ -344,7 +388,8 @@ class HvsrTraditional():
         find_peaks_kwargs : dict
             Keyword arguments for the ``scipy`` function
             `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details.    
+            see ``scipy`` documentation for details, default is ``None``
+            indicating defaults will be used.   
 
         Returns
         -------

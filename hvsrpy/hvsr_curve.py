@@ -150,7 +150,8 @@ class HvsrCurve():
                                                                 find_peak_kwargs=find_peak_kwargs)
         return (frequency, amplitude)
 
-    def __init__(self, frequency, amplitude, meta=None):
+    def __init__(self, frequency, amplitude, search_range_in_hz=(None, None),
+                 find_peaks_kwargs=None, meta=None):
         """Create ``HvsrCurve`` from iterables of frequency and amplitude.
 
         Parameters
@@ -159,6 +160,15 @@ class HvsrCurve():
             Vector of frequencies, one per ``amplitude``.
         amplitude : ndarray
             Vector of HVSR amplitudes, one per ``frequency``.
+        search_range_in_hz : tuple, optional
+            Frequency range to be searched for peaks.
+            Half open ranges can be specified with ``None``, default is
+            ``(None, None)`` indicating the full frequency range will be
+            searched.
+        find_peaks_kwargs : dict
+            Keyword arguments for the ``scipy`` function
+            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
+            see ``scipy`` documentation for details.
         meta : dict, optional
             Meta information about the object, default is `None`.
 
@@ -178,8 +188,10 @@ class HvsrCurve():
 
         self.meta = dict(meta) if isinstance(meta, dict) else dict()
 
-        self.peak_frequency, self.peak_amplitude = self._find_peaks(self.amplitude,
-                                                                    self.frequency)
+        peak = HvsrCurve._find_peak_bounded(self.frequency, self.amplitude,
+                                            search_range_in_hz=search_range_in_hz,
+                                            find_peak_kwargs=find_peaks_kwargs)
+        self.peak_frequency, self.peak_amplitude = peak
 
     def is_similar(self, other, atol=1E-9, rtol=0.):
         """Check if ``other`` is similar to ``self``."""

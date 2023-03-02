@@ -197,6 +197,49 @@ class HvsrAzimuthal():
         return mean_factory(distribution=distribution,
                             values=flatten_list(self.peak_amplitudes))
 
+    def cov_fn(self, distribution="lognormal"):
+        """Covariance of HVSR resonance across all valid HVSR curves and azimuths.
+
+        Parameters
+        ----------
+        distribution : {"normal", "lognormal"}, optional
+            Assumed distribution of resonance, default is
+            ``"lognormal"``.
+
+        Returns
+        -------
+        ndarray
+            Tensor of shape ``(2,2)`` that represents the
+            covariance matrix of frequency and amplitude of HVSR
+            resonance across all valid time windows and azimuths.
+
+        Raises
+        ------
+        NotImplementedError
+            If ``distribution`` does not match the available options.
+
+        """
+        distribution = DISTRIBUTION_MAP[distribution]
+
+        frequencies = []
+        amplitudes = []
+        weights = []
+        for hvsr in self.hvsrs:
+            n_valid = np.sum(hvsr.valid_window_boolean_mask)
+            frequencies.extend(hvsr.peak_frequencies)
+            amplitudes.extend(hvsr.peak_frequencies)
+            weights.extend([1/n_valid]*n_valid)
+
+        if distribution == "normal":
+            pass
+        elif distribution == "lognorma":
+            frequencies = np.log(frequencies)
+            amplitudes = np.log(amplitudes)
+        else:
+            raise NotImplementedError
+
+        return np.cov(frequencies, amplitudes, aweights=weights)
+
     @staticmethod
     def _std_factory(distribution, values, sum_kwargs=None):
         """Calculates azimuthal standard deviation consistent with
