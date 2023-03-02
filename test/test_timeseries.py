@@ -66,6 +66,64 @@ class TestTimeSeries(TestCase):
         tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
         self.assertRaises(ValueError, tseries.split, 11.0)
 
+    def test_init_with_bad_amplitude_non_numeric(self):
+        self.assertRaises(TypeError, hvsrpy.TimeSeries,
+                          amplitude=["a", "b", "c"], dt_in_seconds=0.001)
+
+    def test_init_with_bad_amplitude_non_1d(self):
+        self.assertRaises(TypeError, hvsrpy.TimeSeries,
+                          amplitude=[[1.0, 2.0], [1.0, 2.0]], dt_in_seconds=0.001)
+
+    def test_fs_and_fnyq(self):
+        fs_in_hz = 100
+        dt_in_seconds = 1/fs_in_hz
+        tseries = hvsrpy.TimeSeries(amplitude=[1.0], dt_in_seconds=dt_in_seconds)
+        self.assertEqual(tseries.fs, 100)
+        self.assertEqual(tseries.fnyq, 50)
+
+    def test_window_with_bad_type(self):
+        tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
+        self.assertRaises(NotImplementedError, tseries.window, type="cosine")
+
+    def test_apply_filter(self):
+        unfilt_tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
+        filt_tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
+
+        filt_tseries.butterworth_filter(fcs_in_hz=(3, 5))
+        self.assertTrue(unfilt_tseries.is_similar(filt_tseries))
+
+        filt_tseries.butterworth_filter(fcs_in_hz=(None, 5))
+        self.assertTrue(unfilt_tseries.is_similar(filt_tseries))
+
+        filt_tseries.butterworth_filter(fcs_in_hz=(3, None))
+        self.assertTrue(unfilt_tseries.is_similar(filt_tseries))
+
+    def test_is_similar_and_is_equal(self):
+        # baseline
+        a = hvsrpy.TimeSeries(amplitude=[1., 2.], dt_in_seconds=1.)
+
+        # is_similar = True
+        b = hvsrpy.TimeSeries(amplitude=[2., 3.], dt_in_seconds=1.)
+
+        self.assertTrue(a == a)
+        self.assertTrue(a.is_similar(b))
+
+        # is_similar = False
+        c = np.array([1., 2.])
+        d = hvsrpy.TimeSeries(amplitude=[1., 2.], dt_in_seconds=2.)
+        e = hvsrpy.TimeSeries(amplitude=[1., 2., 3.], dt_in_seconds=1.)
+
+        self.assertTrue(a != c)
+        self.assertFalse(a.is_similar(c))
+        self.assertTrue(a != d)
+        self.assertFalse(a.is_similar(d))
+        self.assertTrue(a != e)
+        self.assertFalse(a.is_similar(e))
+
+    def test_repr(self):
+        tseries = hvsrpy.TimeSeries.from_timeseries(self.ex_tseries_sine)
+        self.assertTrue(isinstance(tseries.__repr__(), str))
+
 
 if __name__ == "__main__":
     unittest.main()
