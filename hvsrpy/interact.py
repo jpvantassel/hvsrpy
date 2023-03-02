@@ -19,6 +19,7 @@
 
 import warnings
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 
@@ -84,7 +85,7 @@ def ginput_session(fig, ax,
         if ask_to_confirm_point:
             selection_message = "Left click to add,\nright click to remove,\nenter to accept."
             text = ax.text(0.95, 0.95, selection_message,
-                        ha="right", va="top", transform=ax.transAxes)
+                           ha="right", va="top", transform=ax.transAxes)
             vals = plt.ginput(n=-1, timeout=0)
             text.set_visible(False)
         else:
@@ -125,3 +126,133 @@ def ginput_session(fig, ax,
             transform=ax.transAxes)
 
     return (xs, ys)
+
+
+def _relative_to_absolute(relative, range_absolute, scale="linear"):
+    """Convert relative value (between 0 and 1) to absolute value.
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    abs_min, abs_max = range_absolute
+    if scale == "linear":
+        return abs_min + relative*(abs_max-abs_min)
+    elif scale == "log":
+        value = np.log10(abs_min) + relative*(np.log10(abs_max/abs_min))
+        return np.power(10, value)
+    else:
+        raise NotImplementedError
+
+
+def _absolute_to_relative(absolute, range_absolute, scale="linear"):
+    """Convert absolute value to a relative value (between 0 and 1).
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    abs_min, abs_max = range_absolute
+    if scale == "linear":
+        return (absolute - abs_min) / (abs_max - abs_min)
+    elif scale == "log":
+        value = np.log10(absolute/abs_min) / (np.log10(abs_max/abs_min))
+        return np.power(10, value)
+    else:
+        raise NotImplementedError
+
+
+def _relative_box_coordinates(upper_right_corner_relative=(0.95, 0.95),
+                              box_size_relative=(0.1, 0.05)):
+    """Relative box coordinates from relative location and size.
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    x_upper_rel, y_upper_rel = upper_right_corner_relative
+    x_box_rel, y_box_rel = box_size_relative
+    x_lower_rel, y_lower_rel = x_upper_rel - x_box_rel, y_upper_rel - y_box_rel
+    return (x_lower_rel, x_upper_rel, y_lower_rel, y_upper_rel)
+
+
+def _absolute_box_coordinates(x_range_absolute,
+                              y_range_absolute,
+                              upper_right_corner_relative=(0.95, 0.95),
+                              box_size_relative=(0.1, 0.05),
+                              x_scale="linear",
+                              y_scale="linear"):
+    """Absolute box coordinates from relative location and size.
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    # define box in relative coordinates (0 to 1).
+    rel_coordinates = _relative_box_coordinates(upper_right_corner_relative=upper_right_corner_relative,
+                                                box_size_relative=box_size_relative)
+    x_lower_rel, x_upper_rel, y_lower_rel, y_upper_rel = rel_coordinates
+
+    # scale box to absolute coordinates.
+    x_box_lower_abs = _relative_to_absolute(x_lower_rel, x_range_absolute, scale=x_scale)
+    x_box_upper_abs = _relative_to_absolute(x_upper_rel, x_range_absolute, scale=x_scale)
+    y_box_lower_abs = _relative_to_absolute(x_lower_rel, y_range_absolute, scale=y_scale)
+    y_box_upper_abs = _relative_to_absolute(x_upper_rel, y_range_absolute, scale=y_scale)
+    return (x_box_lower_abs, x_box_upper_abs, y_box_lower_abs, y_box_upper_abs)
+
+
+def plot_continue_button(ax, upper_right_corner_relative=(0.95, 0.95),
+                         box_size_relative=(0.1, 0.05), fill_kwargs=None):
+    """Draw continue button on axis.
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    x_scale = ax.get_xscale()
+    y_scale = ax.get_yscale()
+    x_range_absolute = ax.get_xlim()
+    y_range_absolute = ax.get_ylim()
+    box_rel = _relative_box_coordinates(upper_right_corner_relative=upper_right_corner_relative,
+                                        box_size_relative=box_size_relative)
+    (x_lower_rel, x_upper_rel, y_lower_rel, y_upper_rel) = box_rel
+
+    box_abs = _absolute_box_coordinates(x_range_absolute=x_range_absolute,
+                                        y_range_absolute=y_range_absolute,
+                                        upper_right_corner_relative=upper_right_corner_relative,
+                                        box_size_relative=box_size_relative,
+                                        x_scale=x_scale,
+                                        y_scale=y_scale)
+    (x_box_lower_abs, x_box_upper_abs, y_box_lower_abs, y_box_upper_abs) = box_abs
+
+    default_kwargs = dict(color="lightgreen")
+    if fill_kwargs is None:
+        fill_kwargs = {}
+    fill_kwargs = {**default_kwargs, **fill_kwargs}
+
+    ax.fill([x_box_lower_abs, x_box_lower_abs, x_box_upper_abs, x_box_upper_abs],
+            [y_box_lower_abs, y_box_upper_abs, y_box_upper_abs, y_box_lower_abs],
+            **fill_kwargs)
+    ax.text((x_lower_rel + x_upper_rel)/2, (y_lower_rel + y_upper_rel)/2, "continue?",
+            ha="center", va="center", transform=ax.transAxes)
+
+
+def is_absolute_point_in_relative_box(ax,
+                                      absolute_point,
+                                      upper_right_corner_relative=(0.95, 0.95),
+                                      box_size_relative=(0.1, 0.05)):
+    """Determines if a point (defined in absolute coordinates) is inside
+    of a box (defined in relative coordinates).
+
+    .. warning::
+        Private methods are subject to change without warning.
+
+    """
+    x_min, x_max, y_min, y_max = _relative_box_coordinates(upper_right_corner_relative=upper_right_corner_relative,
+                                                           box_size_relative=box_size_relative)
+    abs_x, abs_y = absolute_point
+    rel_x = _absolute_to_relative(abs_x, ax.get_xlim(), ax.get_xscale())
+    rel_y = _absolute_to_relative(abs_y, ax.get_ylim(), ax.get_yscale())
+    if (rel_x > x_min) and (rel_x < x_max) and (rel_y > y_min) and (rel_y < y_max):
+        return True
+    return False
