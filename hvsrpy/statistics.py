@@ -34,9 +34,9 @@ def mean_factory(distribution, values, mean_kwargs=None):
 
     distribution = DISTRIBUTION_MAP.get(distribution.lower(), None)
     if distribution == "normal":
-        return np.mean(values, **mean_kwargs)
+        return np.nanmean(values, **mean_kwargs)
     elif distribution == "lognormal":
-        return np.exp(np.mean(np.log(values), **mean_kwargs))
+        return np.exp(np.nanmean(np.log(values), **mean_kwargs))
     else:
         msg = f"distribution type {distribution} not recognized."
         raise NotImplementedError(msg)
@@ -54,9 +54,9 @@ def std_factory(distribution, values, std_kwargs=None):
 
     distribution = DISTRIBUTION_MAP.get(distribution.lower(), None)
     if distribution == "normal":
-        return np.std(values, **std_kwargs)
+        return np.nanstd(values, **std_kwargs)
     elif distribution == "lognormal":
-        return np.std(np.log(values), **std_kwargs)
+        return np.nanstd(np.log(values), **std_kwargs)
     else:
         msg = f"distribution type {distribution} not recognized."
         raise NotImplementedError(msg)
