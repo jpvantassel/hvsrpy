@@ -17,6 +17,7 @@
 
 import hvsrpy
 from hvsrpy import settings as hvsr_settings
+from hvsrpy.processing import COMBINE_HORIZONTAL_REGISTER
 from testtools import unittest, TestCase, get_full_path
 
 class TestProcessing(TestCase):
@@ -48,13 +49,23 @@ class TestProcessing(TestCase):
         preprocessed_records = hvsrpy.preprocess(self.earthquake_records, settings)
         self.assertTrue(len(preprocessed_records) == 2)
 
-    def test_process_traditional(self):
+    def test_process_traditional_default(self):
         settings = hvsr_settings.HvsrPreProcessingSettings()
         settings.window_length_in_seconds = 360
         preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
         settings = hvsr_settings.HvsrTraditionalProcessingSettings()
         results = hvsrpy.process(preprocessed_records, settings)
         self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
+
+    def test_process_traditional_w_custom_horizontals(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 360
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrTraditionalProcessingSettings()
+        for key in COMBINE_HORIZONTAL_REGISTER:
+            settings.method_to_combine_horizontals = key
+            results = hvsrpy.process(preprocessed_records, settings)
+            self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
 
     def test_process_traditional_single_azimuth(self):
         settings = hvsr_settings.HvsrPreProcessingSettings()

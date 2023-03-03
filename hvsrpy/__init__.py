@@ -29,5 +29,6 @@ from .data_wrangler import read
 from .seismic_recording_3c import SeismicRecording3C
 from .timeseries import TimeSeries
 from .processing import preprocess, process
+from .settings import HvsrPreProcessingSettings, HvsrTraditionalProcessingSettings, HvsrTraditionalSingleAzimuthProcessingSettings, HvsrTraditionalRotDppProcessingSettings, HvsrAzimuthalProcessingSettings, HvsrDiffuseFieldProcessingSettings
 
 logging.getLogger("hvsrpy").addHandler(logging.NullHandler())

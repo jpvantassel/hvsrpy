@@ -51,7 +51,7 @@ def preprocess(records, settings):
     for idx, srecord3c in enumerate(records):
 
         # check all records have some dt; required later for fft.
-        if np.abs(srecord3c.vt.dt_in_seconds - ex_dt) > 10E-6:
+        if np.abs(srecord3c.vt.dt_in_seconds - ex_dt) > 10E-6: #pragma: no cover
             msg = f"The dt_in_seconds of all records must be equal, "
             msg += f"dt_in_seconds of record {idx} is "
             msg += f"{srecord3c.vt.dt_in_seconds} which does not match "
