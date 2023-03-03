@@ -145,7 +145,7 @@ class HvsrCurve():
         """
         f_low_idx, f_high_idx = HvsrCurve._search_range_to_index_range(frequency,
                                                                        search_range_in_hz)
-        (frequency, amplitude) = HvsrCurve._find_peak_unbounded(frequency,
+        (frequency, amplitude) = HvsrCurve._find_peak_unbounded(frequency[f_low_idx:f_high_idx],
                                                                 amplitude[f_low_idx:f_high_idx],
                                                                 find_peak_kwargs=find_peak_kwargs)
         return (frequency, amplitude)
