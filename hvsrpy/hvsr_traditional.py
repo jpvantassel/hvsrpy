@@ -128,19 +128,18 @@ class HvsrTraditional():
         return cls(example.frequency, amplitude, meta=meta)
 
     @ property
-    def rejected_window_boolean_mask(self):
-        """Boolean array indicating rejected (i.e., invalid) windows."""
-        return np.invert(self.valid_window_boolean_mask)
-
-    @ property
     def peak_frequencies(self):
         """Valid peak frequency vector, one per window or earthquake recording."""
-        return self._main_peak_frq[self.valid_window_boolean_mask]
+        boolean_mask = np.logical_and(self.valid_window_boolean_mask,
+                                      ~np.isnan(self._main_peak_frq))
+        return self._main_peak_frq[boolean_mask]
 
     @ property
     def peak_amplitudes(self):
         """Valid peak amplitude vector, one per window or earthquake recording."""
-        return self._main_peak_amp[self.valid_window_boolean_mask]
+        boolean_mask = np.logical_and(self.valid_window_boolean_mask,
+                                      ~np.isnan(self._main_peak_amp))
+        return self._main_peak_amp[boolean_mask]
 
     def _update_peaks_bounded(self, search_range_in_hz=(None, None), find_peaks_kwargs=None):
         """Update peak associated with each HVSR curve, can be over bounded range.
@@ -169,22 +168,27 @@ class HvsrTraditional():
         if find_peaks_kwargs is None:
             find_peaks_kwargs = {}
 
+        all_curves_flat = True
         for _idx, _amplitude in enumerate(self.amplitude):
             (f_peak, a_peak) = HvsrCurve._find_peak_bounded(self.frequency,
                                                             _amplitude,
                                                             search_range_in_hz=search_range_in_hz,
                                                             find_peak_kwargs=find_peaks_kwargs)
 
-            # If no peaks are found set window as invalid.
             if f_peak is None:
+                logger.info(f"No peak found in window {_idx}.")
+                self._main_peak_frq[_idx] = np.nan
+                self._main_peak_amp[_idx] = np.nan
                 self.valid_window_boolean_mask[_idx] = False
-                logger.warning(f"No peak found in window {_idx}.")
-                continue
+            else:
+                all_curves_flat = False
+                self._main_peak_frq[_idx] = f_peak
+                self._main_peak_amp[_idx] = a_peak
+                self.valid_window_boolean_mask[_idx] = True
 
-            # If peak found, update peak_frequencies and peak_amplitudes.
-            self._main_peak_frq[_idx] = f_peak
-            self._main_peak_amp[_idx] = a_peak
-            self.valid_window_boolean_mask[_idx] = True
+        logger.info(f"None of the curves contained a peak.")
+        if all_curves_flat:
+            self.valid_window_boolean_mask[:] = True
 
     def mean_fn_frequency(self, distribution="lognormal"):
         """Mean frequency of peaks associated with ``fn`` from valid HVSR curves.
@@ -253,24 +257,18 @@ class HvsrTraditional():
         """
         distribution = DISTRIBUTION_MAP[distribution]
 
-        frequencies = []
-        amplitudes = []
-        weights = []
-        for hvsr in self.hvsrs:
-            n_valid = np.sum(hvsr.valid_window_boolean_mask)
-            frequencies.extend(hvsr.peak_frequencies)
-            amplitudes.extend(hvsr.peak_frequencies)
-            weights.extend([1/n_valid]*n_valid)
+        frequencies = self.peak_frequencies
+        amplitudes = self.peak_amplitudes
 
         if distribution == "normal":
             pass
-        elif distribution == "lognorma":
+        elif distribution == "lognormal":
             frequencies = np.log(frequencies)
             amplitudes = np.log(amplitudes)
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError
 
-        return np.cov(frequencies, amplitudes, aweights=weights)
+        return np.cov(frequencies, amplitudes, ddof=1)
 
     def std_fn_frequency(self, distribution="lognormal"):
         """Sample standard deviation of frequency of peaks associated with ``fn`` from valid HVSR curves.
@@ -335,9 +333,12 @@ class HvsrTraditional():
             If ``distribution`` does not match the available options.
 
         """
-        return mean_factory(distribution,
-                            self.amplitude[self.valid_window_boolean_mask],
-                            mean_kwargs=dict(axis=0))
+        if np.sum(self.valid_window_boolean_mask) == 1:
+            return self.amplitude[self.valid_window_boolean_mask].flatten()
+        else:
+            return mean_factory(distribution,
+                                self.amplitude[self.valid_window_boolean_mask],
+                                mean_kwargs=dict(axis=0))
 
     def std_curve(self, distribution="lognormal"):
         """Sample standard deviation of the HVSR curves.
@@ -361,10 +362,10 @@ class HvsrTraditional():
             If ``distribution`` does not match the available options.
 
         """
-        if self.ncurves > 1:
+        if np.sum(self.valid_window_boolean_mask) > 1:
             return std_factory(distribution,
                                self.amplitude[self.valid_window_boolean_mask],
-                               std_kwargs=dict(axis=0))
+                               std_kwargs=dict(axis=0, ddof=1))
         else:
             msg = "The standard deviation of the mean curve is "
             msg += "not defined for a single window."
@@ -430,8 +431,8 @@ class HvsrTraditional():
         """
         return nth_std_factory(n,
                                distribution,
-                               self.mean_f0_frq(distribution),
-                               self.std_f0_frq(distribution))
+                               self.mean_fn_frequency(distribution),
+                               self.std_fn_frequency(distribution))
 
     def nth_std_fn_amplitude(self, n, distribution="lognormal"):
         """Value n standard deviations from mean ``fn`` amplitude.
@@ -452,8 +453,8 @@ class HvsrTraditional():
         """
         return nth_std_factory(n,
                                distribution,
-                               self.mean_f0_amp(distribution),
-                               self.std_f0_amp(distribution))
+                               self.mean_fn_amplitude(distribution),
+                               self.std_fn_amplitude(distribution))
 
     def nth_std_curve(self, n, distribution="lognormal"):
         """nth standard deviation curve.
@@ -475,3 +476,41 @@ class HvsrTraditional():
                                distribution,
                                self.mean_curve(distribution),
                                self.std_curve(distribution))
+
+    def is_similar(self, other):
+        """Determine if ``other`` is similar to ``self``."""
+        if not isinstance(other, HvsrTraditional):
+            return False
+
+        if len(self.frequency) != len(other.frequency):
+            return False
+
+        if not np.allclose(self.frequency, other.frequency):
+            return False
+
+        if self.n_curves != other.n_curves:
+            return False
+
+        return True
+
+    def __eq__(self, other):
+        """Determine if ``other`` is equal to ``self``."""
+        if not self.is_similar(other):
+            return False
+
+        if not np.allclose(self.amplitude, other.amplitude):
+            return False
+
+        if not np.allclose(self.valid_window_boolean_mask,
+                           other.valid_window_boolean_mask):
+            return False
+
+        return True
+
+    def __str__(self):
+        """Human-readable representation of ``HvsrTraditional`` object."""
+        return f"HvsrTraditional at {id(self)}"
+
+    def __repr__(self):
+        """Unambiguous representation of ``HvsrTraditional`` object."""
+        return f"HvsrTraditional(frequency={self.frequency}, amplitude={self.amplitude}, meta={self.meta})"
