@@ -22,7 +22,7 @@ from numba import njit
 
 
 @njit(cache=True)
-def konno_ohmachi(frequencies, spectrum, fcs, bandwidth=40.):
+def konno_and_ohmachi(frequencies, spectrum, fcs, bandwidth=40.): # pragma: no cover
     """Fast Konno and Ohmachi smoothing.
 
     Parameters
@@ -88,7 +88,7 @@ def konno_ohmachi(frequencies, spectrum, fcs, bandwidth=40.):
 
 
 @njit(cache=True)
-def parzen(frequencies, spectrum, fcs, bandwidth=0.5):
+def parzen(frequencies, spectrum, fcs, bandwidth=0.5): # pragma: no cover
     """Fast Pazen-style smoothing.
 
     Parameters
@@ -154,7 +154,7 @@ def parzen(frequencies, spectrum, fcs, bandwidth=0.5):
     return smoothed_spectrum
 
 
-def savitzky_and_golay(frequencies, spectrum, fcs, bandwidth=9):
+def savitzky_and_golay(frequencies, spectrum, fcs, bandwidth=9): # pragma: no cover
     """Fast Savitzky and Golay (1964) smoothing.
 
     Parameters
@@ -195,13 +195,13 @@ def savitzky_and_golay(frequencies, spectrum, fcs, bandwidth=9):
         raise ValueError(msg)
 
     df = diff[0]
-    nfcs = np.round(fcs / df).astype(np.int)
+    nfcs = np.round((fcs - np.min(frequencies)) / df).astype(int)
 
     return _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_coefficient)
 
 
 @njit(cache=True)
-def _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_coefficient):
+def _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_coefficient): # pragma: no cover
 
     nrows, nfreqs = spectrum.shape
     ncols = nfcs.size
@@ -217,14 +217,16 @@ def _savitzky_and_golay(spectrum, nfcs, coefficients, normalization_coefficient)
 
         summation = coefficients[-1] * spectrum[:, spectrum_idx]
         for rel_idx, coefficient in enumerate(coefficients[:-1][::-1]):
-            summation += coefficient * (spectrum[:, spectrum_idx + rel_idx] +
-                                        spectrum[:, spectrum_idx - rel_idx])
+            summation += coefficient * (spectrum[:, spectrum_idx + (rel_idx + 1)] +
+                                        spectrum[:, spectrum_idx - (rel_idx + 1)])
+
         smoothed_spectrum[:, nfc_idx] = summation / normalization_coefficient
 
     return smoothed_spectrum
 
-@njit(cache=True)   
-def linear_rectangular(frequencies, spectrum, fcs, bandwidth=0.5):
+
+@njit(cache=True)
+def linear_rectangular(frequencies, spectrum, fcs, bandwidth=0.5): # pragma: no cover
     nspectra, _ = spectrum.shape
     nfcs = fcs.size
     smoothed_spectrum = np.empty((nspectra, nfcs))
@@ -256,8 +258,9 @@ def linear_rectangular(frequencies, spectrum, fcs, bandwidth=0.5):
 
     return smoothed_spectrum
 
+
 @njit(cache=True)
-def log_rectangular(frequencies, spectrum, fcs, bandwidth=0.05):
+def log_rectangular(frequencies, spectrum, fcs, bandwidth=0.05): # pragma: no cover
     lower_limit = np.power(10, -bandwidth/2)
     upper_limit = np.power(10, +bandwidth/2)
 
@@ -292,8 +295,9 @@ def log_rectangular(frequencies, spectrum, fcs, bandwidth=0.05):
 
     return smoothed_spectrum
 
+
 @njit(cache=True)
-def linear_triangular(frequencies, spectrum, fcs, bandwidth=0.5):
+def linear_triangular(frequencies, spectrum, fcs, bandwidth=0.5): # pragma: no cover
     nspectra, _ = spectrum.shape
     nfcs = fcs.size
     smoothed_spectrum = np.empty((nspectra, nfcs))
@@ -325,8 +329,9 @@ def linear_triangular(frequencies, spectrum, fcs, bandwidth=0.5):
 
     return smoothed_spectrum
 
+
 @njit(cache=True)
-def log_triangular(frequencies, spectrum, fcs, bandwidth=0.05):
+def log_triangular(frequencies, spectrum, fcs, bandwidth=0.05): # pragma: no cover 
     lower_limit = np.power(10, -bandwidth/2)
     upper_limit = np.power(10, +bandwidth/2)
 
@@ -348,10 +353,8 @@ def log_triangular(frequencies, spectrum, fcs, bandwidth=0.05):
 
             if (f < 1E-6) or (f_on_fc < lower_limit) or (f_on_fc > upper_limit):
                 continue
-            elif f_on_fc < 1:
-                window = (f_on_fc - lower_limit) / (1. - lower_limit)
             else:
-                window = 1 - (f_on_fc - 1.) / (upper_limit - 1)
+                window = 1 - np.abs(np.log10(f_on_fc))*(2/bandwidth)
 
             sumproduct += window*spectrum[:, f_index]
             sumwindow += window
@@ -365,11 +368,11 @@ def log_triangular(frequencies, spectrum, fcs, bandwidth=0.05):
 
 
 SMOOTHING_OPERATORS = {
-    "konno_and_ohmachi" : konno_ohmachi,
-    "parzen" : parzen,
-    "savitzky_and_golay" : savitzky_and_golay,
-    "linear_rectangular" : linear_rectangular,
-    "log_rectangular" : log_rectangular,
-    "linear_triangular" : linear_triangular,
-    "log_triangular" : log_triangular,
+    "konno_and_ohmachi": konno_and_ohmachi,
+    "parzen": parzen,
+    "savitzky_and_golay": savitzky_and_golay,
+    "linear_rectangular": linear_rectangular,
+    "log_rectangular": log_rectangular,
+    "linear_triangular": linear_triangular,
+    "log_triangular": log_triangular,
 }
