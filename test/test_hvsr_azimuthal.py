@@ -36,7 +36,8 @@ class TestHvsrAzimuthal(TestCase):
         cls.amplitude_1 = np.array([[1, 1, 2, 1, 1],
                                     [1, 4, 1, 5, 1],
                                     [1, 1, 3, 1, 1],
-                                    [1, 2, 4, 5, 1]], dtype=float)
+                                    [1, 2, 4, 5, 1],
+                                    [1, 1, 1, 1, 1]], dtype=float)
         cls.hvsr_1 = hvsrpy.HvsrTraditional(cls.frequency, cls.amplitude_1)
 
         cls.amplitude_2 = np.array([[1, 1, 2, 1, 1],
@@ -50,7 +51,8 @@ class TestHvsrAzimuthal(TestCase):
                                     [1, 3, 1, 1, 1]], dtype=float)
         cls.hvsr_3 = hvsrpy.HvsrTraditional(cls.frequency, cls.amplitude_3)
 
-        cls.amplitude_4 = np.array([[1, 1, 1, 2, 1],
+        cls.amplitude_4 = np.array([[1, 1, 1, 1, 1],
+                                    [1, 1, 1, 2, 1],
                                     [1, 2, 1, 3, 1],
                                     [1, 2, 1, 1, 1]], dtype=float)
         cls.hvsr_4 = hvsrpy.HvsrTraditional(cls.frequency, cls.amplitude_4)
@@ -62,21 +64,27 @@ class TestHvsrAzimuthal(TestCase):
 
         cls.full_path = get_full_path(__file__)
 
-    def test_init_hvsrazimuthal_single_azimuth(self):
+    def test_hvsrazimuthal_init_w_single_azimuth(self):
         ahvsr = hvsrpy.HvsrAzimuthal([self.hvsr_1], azimuths=[0])
         self.assertEqual(ahvsr.hvsrs[0], self.hvsr_1)
         self.assertEqual(ahvsr.azimuths[0], 0)
         self.assertEqual(ahvsr.n_azimuths, 1)
 
-    def test_init_hvsrazimuthal_bad_hvsr(self):
+    def test_hvsrazimuthal_init_w_bad_hvsr(self):
         hvsr = np.array([1, 2, 1])
         self.assertRaises(TypeError, hvsrpy.HvsrAzimuthal, [hvsr], [0])
 
-    def test_init_hvsrazimuthal_bad_azimuths(self):
+    def test_hvsrazimuthal_init_w_bad_azimuths(self):
         hvsr = hvsrpy.HvsrTraditional([1, 2, 3], [1, 2, 1])
         bad_azs = [-5, 181, 190]
         for az in bad_azs:
             self.assertRaises(ValueError, hvsrpy.HvsrAzimuthal, [hvsr], [az])
+
+    def test_hvsrazimuthal_init_w_dissimilar_hvsr(self):
+        hvsr_0 = hvsrpy.HvsrTraditional(self.frequency[:-1], self.amplitude_1[:, :-1])
+        hvsrs = [hvsr_0, self.hvsr_1]
+        azimuths = [0, 15]
+        self.assertRaises(ValueError, hvsrpy.HvsrAzimuthal, hvsrs, azimuths)
 
     # def test_properties(self):
     #     # frq
@@ -101,45 +109,53 @@ class TestHvsrAzimuthal(TestCase):
     #     # azimuth_count
     #     self.assertEqual(4, self.hvrot.azimuth_count)
 
-    def test_mean_curve_by_azimuth(self):
-        expected = np.empty((len(self.azimuths), len(self.frequency)))
-        for cnt in range(len(self.azimuths)):
-            expected[cnt, :] = np.nanmean(getattr(self, f"amplitude_{cnt+1}"), axis=0)
+    def test_hvsrazimuthal_mean_curve_by_azimuth_normal(self):
+        expected = np.array([[1.0000, 2.0000, 2.5000, 3.0000, 1.0000],
+                             [2.0000, 2.3333, 3.0000, 3.6667, 2.3333],
+                             [1.0000, 1.5000, 1.7500, 1.0000, 1.0000],
+                             [1.0000, 1.6667, 1.0000, 2.0000, 1.0000]])
         returned = self.ahvsr.mean_curve_by_azimuth(distribution="normal")
-        self.assertArrayEqual(expected, returned)
+        self.assertArrayAlmostEqual(expected, returned, places=3)
 
-#     def test_mean_factory(self):
-#         # Single-Window
-#         values = [np.array([1, 2, 3, 4, 5])]
+    def test_hvsrazimuthal_mean_curve_by_azimuth_lognormal(self):
+        expected = np.array([[1.0000, 1.6818, 2.2134, 2.2361, 1.0000],
+                             [1.5874, 1.7100, 2.2894, 2.7589, 1.7100],
+                             [1.0000, 1.3161, 1.6818, 1.0000, 1.0000],
+                             [1.0000, 1.5874, 1.0000, 1.8171, 1.0000]])
+        returned = self.ahvsr.mean_curve_by_azimuth(distribution="lognormal")
+        self.assertArrayAlmostEqual(expected, returned, places=3)
 
-#         # Normal
-#         returned = hvsrpy.HvsrRotated._mean_factory("normal", values)
-#         expected = np.mean([np.mean(x) for x in values])
-#         self.assertEqual(expected, returned)
+    def test_hvsrazimuthal_mean_fn_frequency_normal(self):
+        returned = self.ahvsr.mean_fn_frequency(distribution="normal")
+        self.assertAlmostEqual(returned, 3.3125, places=3)
 
-#         # Log-normal
-#         returned = hvsrpy.HvsrRotated._mean_factory("lognormal", values)
-#         expected = np.exp(np.mean([np.mean(np.log(x)) for x in values]))
-#         self.assertEqual(expected, returned)
+    def test_hvsrazimuthal_mean_fn_frequency_lognormal(self):
+        returned = self.ahvsr.mean_fn_frequency(distribution="lognormal")
+        self.assertAlmostEqual(returned, 3.2263, places=3)
 
-#         # Multi-Window
-#         values = [np.array([1, 2, 3, 4, 5]),
-#                   np.array([2, 1, .5, 1]),
-#                   np.array([1, 4, 5, 7, 1, 2, 3, 4, 5]),
-#                   np.array([1, 2, 1, 2, 1, 2])]
-#         # Normal
-#         returned = hvsrpy.HvsrRotated._mean_factory("normal", values)
-#         expected = np.mean([np.mean(x) for x in values])
-#         self.assertEqual(expected, returned)
-#         # Log-normal
-#         returned = hvsrpy.HvsrRotated._mean_factory("lognormal", values)
-#         expected = np.exp(np.mean([np.mean(np.log(x)) for x in values]))
-#         self.assertEqual(expected, returned)
+    def test_hvsrazimuthal_mean_fn_amplitude_normal(self):
+        returned = self.ahvsr.mean_fn_amplitude(distribution="normal")
+        self.assertAlmostEqual(returned, 3.0833, places=3)
 
-#         # Bad distribution
-#         self.assertRaises(NotImplementedError,
-#                           hvsrpy.HvsrRotated._mean_factory, "exponential",
-#                           values)
+    def test_hvsrazimuthal_mean_fn_amplitude_lognormal(self):
+        returned = self.ahvsr.mean_fn_amplitude(distribution="lognormal")
+        self.assertAlmostEqual(returned, 2.8020, places=3)
+
+    def test_hvsrazimuthal_std_fn_frequency_normal(self):
+        returned = self.ahvsr.std_fn_frequency(distribution="normal")
+        self.assertAlmostEqual(returned, 0.7392, places=3)
+
+    def test_hvsrazimuthal_std_fn_frequency_lognormal(self):
+        returned = self.ahvsr.std_fn_frequency(distribution="lognormal")
+        self.assertAlmostEqual(returned, 0.2471, places=3)
+
+    def test_hvsrazimuthal_std_fn_amplitude_normal(self):
+        returned = self.ahvsr.std_fn_amplitude(distribution="normal")
+        self.assertAlmostEqual(returned, 1.5841, places=3)
+
+    def test_hvsrazimuthal_std_fn_amplitude_lognormal(self):
+        returned = self.ahvsr.std_fn_amplitude(distribution="lognormal")
+        self.assertAlmostEqual(returned, 0.4282, places=3)
 
 #     def test_std_factory(self):
 #         # Single-Window
@@ -240,23 +256,16 @@ class TestHvsrAzimuthal(TestCase):
         self.assertAlmostEqual(f_peak, 4)
         self.assertAlmostEqual(a_peak, 1.830, places=2)
 
-#     def test_std_curve(self):
-#         # Normal
-#         returned = self.hvrot.std_curve("normal")
-#         expected = np.array([0.8611, 1.318, 1.505, 2.009, 1.148])
-#         self.assertArrayAlmostEqual(expected, returned, places=2)
+    # def test_hvsrazimuthal_std_curve_normal(self):
+    #     returned = self.ahvsr.std_curve("normal")
+    #     expected = np.array([0.8611, 1.318, 1.505, 2.009, 1.148])
+    #     self.assertArrayAlmostEqual(expected, returned, places=2)
 
-#         # Lognormal
-#         returned = self.hvrot.std_curve("lognormal")
-#         expected = np.array([0.3979, 0.5880, 0.602, 0.7457, 0.462])
-#         self.assertArrayAlmostEqual(expected, returned, places=2)
+    # def test_hvsrazimuthal_std_curve_lognormal(self):
+    #     returned = self.ahvsr.std_curve("lognormal")
+    #     expected = np.array([0.3979, 0.5880, 0.602, 0.7457, 0.462])
+    #     self.assertArrayAlmostEqual(expected, returned, places=2)
 
-#     def test_reject_windows(self):
-#         expecteds = self.hvrot.peak_frq
-#         self.hvrot_for_rej.reject_windows(n=4)
-#         returneds = self.hvrot_for_rej.peak_frq
-#         for expected, returned in zip(expecteds, returneds):
-#             self.assertArrayEqual(expected, returned)
 
 #     def test_nstd(self):
 #         for n in [-2, -1, -0.5, 0.5, 1, 2]:
@@ -273,27 +282,6 @@ class TestHvsrAzimuthal(TestCase):
 #             expected = np.exp(np.log(mean) + n*stddev)
 #             returned = self.hvrot.nstd_f0_frq(n, "lognormal")
 #             self.assertEqual(expected, returned)
-
-#     def test_basic_stats(self):
-#         # Mean f0 - Frequency
-#         for dist, expected in zip(["normal", "lognormal"], [3.313, 3.226]):
-#             returned = self.hvrot.mean_f0_frq(distribution=dist)
-#             self.assertAlmostEqual(expected, returned, places=2)
-
-#         # Std f0 - Frequency
-#         for dist, expected in zip(["normal", "lognormal"], [0.7392, 0.2471]):
-#             returned = self.hvrot.std_f0_frq(distribution=dist)
-#             self.assertAlmostEqual(expected, returned, places=2)
-
-#         # Mean f0 - Amplitude
-#         for dist, expected in zip(["normal", "lognormal"], [3.083, 2.802]):
-#             returned = self.hvrot.mean_f0_amp(distribution=dist)
-#             self.assertAlmostEqual(expected, returned, places=2)
-
-#         # Std f0 - Amplitude
-#         for dist, expected in zip(["normal", "lognormal"], [1.584, 0.4282]):
-#             returned = self.hvrot.std_f0_amp(distribution=dist)
-#             self.assertAlmostEqual(expected, returned, places=2)
 
     def test_hvsrazimuthal_str_repr(self):
         ahvsr = self.ahvsr

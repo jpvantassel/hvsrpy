@@ -30,7 +30,7 @@ PRE_PROCESS_FUNCTION_MAP = {
 
 POST_PROCESS_FUNCTION_MAP = {
     "normal": {"mean": lambda values: values,
-               "std": lambda values: values, },
+               "std": lambda values: values},
     "lognormal": {"mean": lambda values: np.exp(values),
                   "std": lambda values: values}
 }
@@ -52,20 +52,6 @@ def _distribution_factory(distribution, calculation="mean"):
         raise NotImplementedError(msg)
     return (preprocess_fxn, postprocess_fxn)
 
-def _mean_weighted(distribution, values, weights=None, mean_kwargs=None):
-    """Calculates weighted mean of ``values`` consistent with distribution.
-
-    .. warning:: 
-        Private methods are subject to change without warning.
-
-    """
-    pre_fxn, post_fxn = _distribution_factory(distribution=distribution,
-                                              calculation="mean")
-
-    if mean_kwargs is None:
-        mean_kwargs = {}
-
-    values = pre_fxn(values)
 
 def _nanmean_weighted(distribution, values, weights=None, mean_kwargs=None):
     """Calculates weighted mean of ``values`` consistent with distribution.
@@ -91,24 +77,41 @@ def _nanmean_weighted(distribution, values, weights=None, mean_kwargs=None):
     return post_fxn(weighted_mean)
 
 
-def std_factory(distribution, values, std_kwargs=None):
-    """Calculates standard deviation consistent with distribution.
+def _nanstd_weighted(distribution, values, weights=None, std_kwargs=None, denominator="nist"):
+    """Calculates weighted standard deviation of ``values`` consistent with distribution.
 
     .. warning:: 
         Private methods are subject to change without warning.
 
     """
-    if std_kwargs is None:
-        std_kwargs = dict(ddof=1)
+    # compute weighted mean.
+    mean = _nanmean_weighted(distribution=distribution, values=values,
+                             weights=weights, mean_kwargs=std_kwargs)
+    if distribution == "lognormal":
+        mean = np.log(mean)
 
-    distribution = DISTRIBUTION_MAP.get(distribution.lower(), None)
-    if distribution == "normal":
-        return np.nanstd(values, **std_kwargs)
-    elif distribution == "lognormal":
-        return np.nanstd(np.log(values), **std_kwargs)
-    else:
-        msg = f"distribution type {distribution} not recognized."
-        raise NotImplementedError(msg)
+    pre_fxn, post_fxn = _distribution_factory(distribution=distribution,
+                                              calculation="std")
+
+    if std_kwargs is None:
+        std_kwargs = {}
+
+    values = pre_fxn(values)
+    is_nan_mask = np.isnan(values)
+
+    if weights is None:
+        weights = np.full_like(values, 1)
+        weights[is_nan_mask] = np.nan
+
+    numerator = np.nansum(weights*(values-mean)**2, **std_kwargs)
+    if denominator == "nist":
+        non_nan_weights = np.sum(~np.isnan(weights), **std_kwargs)
+        denominator = (1-(1/non_nan_weights))*np.nansum(weights, **std_kwargs)
+    elif denominator == "cheng":
+        denominator = 1-np.nansum(weights**2, **std_kwargs)
+    else: # pragma: no cover
+        raise NotImplementedError
+    return post_fxn(np.sqrt(numerator / denominator))
 
 
 def nth_std_factory(n, distribution, mean, std):
@@ -123,7 +126,7 @@ def nth_std_factory(n, distribution, mean, std):
         return (mean + n*std)
     elif distribution == "lognormal":
         return (np.exp(np.log(mean) + n*std))
-    else:
+    else: # pragma: no cover
         msg = f"distribution type {distribution} not recognized."
         raise NotImplementedError(msg)
 

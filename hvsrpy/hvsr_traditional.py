@@ -21,7 +21,7 @@ import logging
 
 import numpy as np
 
-from .statistics import _nanmean_weighted, std_factory, nth_std_factory, DISTRIBUTION_MAP
+from .statistics import _nanmean_weighted, _nanstd_weighted, nth_std_factory, DISTRIBUTION_MAP
 from .hvsr_curve import HvsrCurve
 
 logger = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ class HvsrTraditional():
         find_peaks_kwargs : dict
             Keyword arguments for the ``scipy`` function
             `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details.    
+            see ``scipy`` documentation for details.
         meta : dict, optional
             Meta information about the object, default is ``None``.
 
@@ -157,7 +157,7 @@ class HvsrTraditional():
         find_peaks_kwargs : dict
             Keyword arguments for the ``scipy`` function
             `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details.    
+            see ``scipy`` documentation for details.
 
         Returns
         -------
@@ -292,7 +292,7 @@ class HvsrTraditional():
             If ``distribution`` does not match the available options.
 
         """
-        return std_factory(distribution, self.peak_frequencies)
+        return _nanstd_weighted(distribution, self.peak_frequencies)
 
     def std_fn_amplitude(self, distribution="lognormal"):
         """Sample standard deviation of amplitude of peaks associated with ``fn`` from valid HVSR curves.
@@ -314,7 +314,7 @@ class HvsrTraditional():
             If ``distribution`` does not match the available options.
 
         """
-        return std_factory(distribution, self.peak_amplitudes)
+        return _nanstd_weighted(distribution, self.peak_amplitudes)
 
     def mean_curve(self, distribution="lognormal"):
         """Mean HVSR curve.
@@ -365,9 +365,9 @@ class HvsrTraditional():
 
         """
         if np.sum(self.valid_window_boolean_mask) > 1:
-            return std_factory(distribution,
-                               self.amplitude[self.valid_window_boolean_mask],
-                               std_kwargs=dict(axis=0, ddof=1))
+            return _nanstd_weighted(distribution,
+                                    self.amplitude[self.valid_window_boolean_mask],
+                                    std_kwargs=dict(axis=0))
         else:
             msg = "The standard deviation of the mean curve is "
             msg += "not defined for a single window."
@@ -392,7 +392,7 @@ class HvsrTraditional():
             Keyword arguments for the ``scipy`` function
             `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
             see ``scipy`` documentation for details, default is ``None``
-            indicating defaults will be used.   
+            indicating defaults will be used.
 
         Returns
         -------

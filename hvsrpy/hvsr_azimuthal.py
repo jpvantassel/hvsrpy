@@ -25,7 +25,7 @@ from .hvsr_curve import HvsrCurve
 from .hvsr_traditional import HvsrTraditional
 from .metadata import __version__
 from .constants import DISTRIBUTION_MAP
-from .statistics import _nanmean_weighted, flatten_list, nth_std_factory
+from .statistics import _nanmean_weighted, _nanstd_weighted, flatten_list, nth_std_factory
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +157,20 @@ class HvsrAzimuthal():
     def n_azimuths(self):
         return len(self.azimuths)
 
+    def _compute_peak_weights(self):
+        """Compute weighting term following Cheng et al. (2020).
+
+        .. warning::
+            Private methods are subject to change without warning.
+
+        """
+        weights = []
+        n_azimuths = len(self.azimuths)
+        for hvsr in self.hvsrs:
+            n_valid_peaks = int(np.sum(hvsr.valid_peak_boolean_mask))
+            weights.extend([1/(n_azimuths*n_valid_peaks)]*n_valid_peaks)
+        return np.array(weights)
+
     def mean_fn_frequency(self, distribution="lognormal"):
         """Mean frequency of ``fn`` across all valid HVSR curves and azimuths.
 
@@ -177,7 +191,8 @@ class HvsrAzimuthal():
 
         """
         return _nanmean_weighted(distribution=distribution,
-                                 values=flatten_list(self.peak_frequencies))
+                                 weights=self._compute_peak_weights(),
+                                 values=np.array(flatten_list(self.peak_frequencies)))
 
     def mean_fn_amplitude(self, distribution="lognormal"):
         """Mean amplitude of ``fn`` across all valid HVSR curves and azimuths.
@@ -200,7 +215,8 @@ class HvsrAzimuthal():
 
         """
         return _nanmean_weighted(distribution=distribution,
-                                 values=flatten_list(self.peak_amplitudes))
+                                 weights=self._compute_peak_weights(),
+                                 values=np.array(flatten_list(self.peak_amplitudes)))
 
     def cov_fn(self, distribution="lognormal"):
         """Covariance of HVSR resonance across all valid HVSR curves and azimuths.
@@ -237,51 +253,13 @@ class HvsrAzimuthal():
 
         if distribution == "normal":
             pass
-        elif distribution == "lognorma":
+        elif distribution == "lognormal":
             frequencies = np.log(frequencies)
             amplitudes = np.log(amplitudes)
         else:
             raise NotImplementedError
 
         return np.cov(frequencies, amplitudes, aweights=weights)
-
-    @staticmethod
-    def _std_factory(distribution, values, sum_kwargs=None):
-        """Calculates azimuthal standard deviation consistent with
-        distribution using the approach of Cheng et al. (2020).
-
-        .. warning::
-            Private methods are subject to change without warning.
-
-        """
-        distribution = DISTRIBUTION_MAP.get(distribution, None)
-        mean = _nanmean_weighted(distribution=distribution,
-                                 values=flatten_list(values))
-
-        if distribution == "normal":
-            def _diff(value, mean):
-                return value - mean
-        elif distribution == "lognormal":
-            def _diff(value, mean):
-                return np.log(value) - np.log(mean)
-        else:
-            msg = f"distribution type {distribution} not recognized."
-            raise NotImplementedError(msg)
-
-        if sum_kwargs is None:
-            sum_kwargs = {}
-
-        n = len(values)
-        num = 0
-        wi2 = 0
-        for value in values:
-            i = len(value)
-            diff = _diff(value, mean)
-            wi = 1/(n*i)
-            num += np.sum(diff*diff*wi, **sum_kwargs)
-            wi2 += wi*wi*i
-
-        return np.sqrt(num/(1-wi2))
 
     def std_fn_frequency(self, distribution="lognormal"):
         """Sample standard deviation frequency of ``fn`` across all valid HVSR curves and azimuths.
@@ -302,8 +280,10 @@ class HvsrAzimuthal():
             If ``distribution`` does not match the available options.
 
         """
-        return self._std_factory(distribution=distribution,
-                                 values=self.peak_frequencies)
+        return _nanstd_weighted(distribution=distribution,
+                                weights=self._compute_peak_weights(),
+                                values=np.array(flatten_list(self.peak_frequencies)),
+                                denominator="cheng")
 
     def std_fn_amplitude(self, distribution="lognormal"):
         """Sample standard deviation amplitude of ``fn`` across all valid HVSR curves and azimuths.
@@ -325,8 +305,10 @@ class HvsrAzimuthal():
             If ``distribution`` does not match the available options.
 
         """
-        return self._std_factory(distribution=distribution,
-                                 values=self.peak_amplitudes)
+        return _nanstd_weighted(distribution=distribution,
+                                weights=self._compute_peak_weights(),
+                                values=np.array(flatten_list(self.peak_amplitudes)),
+                                denominator="cheng")
 
     @property
     def amplitude(self):
@@ -421,7 +403,8 @@ class HvsrAzimuthal():
 
         mean_curve = np.empty_like(self.frequency)
         for _idx in range(len(mean_curve)):
-            amplitude = [hvsr.amplitude[:, _idx].tolist() for hvsr in self.hvsrs]
+            amplitude = [hvsr.amplitude[hvsr.valid_window_boolean_mask][:, _idx].tolist()
+                         for hvsr in self.hvsrs]
             amplitude = flatten_list(amplitude)
             mean_curve[_idx] = _nanmean_weighted(distribution=distribution,
                                                  values=np.array(amplitude),
