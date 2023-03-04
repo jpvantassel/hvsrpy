@@ -21,7 +21,7 @@ import logging
 
 import numpy as np
 
-from .statistics import mean_factory, std_factory, nth_std_factory, DISTRIBUTION_MAP
+from .statistics import _nanmean_weighted, std_factory, nth_std_factory, DISTRIBUTION_MAP
 from .hvsr_curve import HvsrCurve
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,9 @@ class HvsrTraditional():
     valid_curve_boolean_mask : ndarray
         Boolean array indicating whether each HVSR curve is valid
         (``True``) or invalid (``False``).
+    valid_peak_boolean_mask : ndarray
+        Boolean array indicating whether the peak of each HVSR curve
+        is valid (``True``) or invalid (``False``).
 
     """
 
@@ -90,6 +93,7 @@ class HvsrTraditional():
 
         self.n_curves = len(self.amplitude)
         self.valid_window_boolean_mask = np.ones((self.n_curves,), dtype=bool)
+        self.valid_peak_boolean_mask = np.ones((self.n_curves,), dtype=bool)
         self.meta = dict(meta) if isinstance(meta, dict) else dict()
 
         self._main_peak_frq = np.empty(self.n_curves)
@@ -130,16 +134,12 @@ class HvsrTraditional():
     @ property
     def peak_frequencies(self):
         """Valid peak frequency vector, one per window or earthquake recording."""
-        boolean_mask = np.logical_and(self.valid_window_boolean_mask,
-                                      ~np.isnan(self._main_peak_frq))
-        return self._main_peak_frq[boolean_mask]
+        return self._main_peak_frq[self.valid_peak_boolean_mask]
 
     @ property
     def peak_amplitudes(self):
         """Valid peak amplitude vector, one per window or earthquake recording."""
-        boolean_mask = np.logical_and(self.valid_window_boolean_mask,
-                                      ~np.isnan(self._main_peak_amp))
-        return self._main_peak_amp[boolean_mask]
+        return self._main_peak_amp[self.valid_peak_boolean_mask]
 
     def _update_peaks_bounded(self, search_range_in_hz=(None, None), find_peaks_kwargs=None):
         """Update peak associated with each HVSR curve, can be over bounded range.
@@ -180,11 +180,13 @@ class HvsrTraditional():
                 self._main_peak_frq[_idx] = np.nan
                 self._main_peak_amp[_idx] = np.nan
                 self.valid_window_boolean_mask[_idx] = False
+                self.valid_peak_boolean_mask[_idx] = False
             else:
                 all_curves_flat = False
                 self._main_peak_frq[_idx] = f_peak
                 self._main_peak_amp[_idx] = a_peak
                 self.valid_window_boolean_mask[_idx] = True
+                self.valid_peak_boolean_mask[_idx] = True
 
         logger.info(f"None of the curves contained a peak.")
         if all_curves_flat:
@@ -209,7 +211,7 @@ class HvsrTraditional():
             If ``distribution`` does not match the available options.
 
         """
-        return mean_factory(distribution, self.peak_frequencies)
+        return _nanmean_weighted(distribution, self.peak_frequencies)
 
     def mean_fn_amplitude(self, distribution="lognormal"):
         """Mean amplitude of peaks associated with ``fn`` from valid HVSR curves.
@@ -231,7 +233,7 @@ class HvsrTraditional():
             If ``distribution`` does not match the available options.
 
         """
-        return mean_factory(distribution, self.peak_amplitudes)
+        return _nanmean_weighted(distribution, self.peak_amplitudes)
 
     def cov_fn(self, distribution="lognormal"):
         """Covariance of HVSR resonance across all valid HVSR curves.
@@ -336,9 +338,9 @@ class HvsrTraditional():
         if np.sum(self.valid_window_boolean_mask) == 1:
             return self.amplitude[self.valid_window_boolean_mask].flatten()
         else:
-            return mean_factory(distribution,
-                                self.amplitude[self.valid_window_boolean_mask],
-                                mean_kwargs=dict(axis=0))
+            return _nanmean_weighted(distribution,
+                                     self.amplitude[self.valid_window_boolean_mask],
+                                     mean_kwargs=dict(axis=0))
 
     def std_curve(self, distribution="lognormal"):
         """Sample standard deviation of the HVSR curves.
@@ -488,9 +490,6 @@ class HvsrTraditional():
         if not np.allclose(self.frequency, other.frequency):
             return False
 
-        if self.n_curves != other.n_curves:
-            return False
-
         return True
 
     def __eq__(self, other):
@@ -498,11 +497,18 @@ class HvsrTraditional():
         if not self.is_similar(other):
             return False
 
+        if self.n_curves != other.n_curves:
+            return False
+
         if not np.allclose(self.amplitude, other.amplitude):
             return False
 
         if not np.allclose(self.valid_window_boolean_mask,
                            other.valid_window_boolean_mask):
+            return False
+
+        if not np.allclose(self.valid_peak_boolean_mask,
+                           other.valid_peak_boolean_mask):
             return False
 
         return True

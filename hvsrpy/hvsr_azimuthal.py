@@ -25,7 +25,7 @@ from .hvsr_curve import HvsrCurve
 from .hvsr_traditional import HvsrTraditional
 from .metadata import __version__
 from .constants import DISTRIBUTION_MAP
-from .statistics import mean_factory, flatten_list, nth_std_factory
+from .statistics import _nanmean_weighted, flatten_list, nth_std_factory
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +101,13 @@ class HvsrAzimuthal():
         """
         self.hvsrs = []
         self.azimuths = []
-        for hvsr, azimuth in zip(hvsrs, azimuths):
+        ex_hvsr = hvsrs[0]
+        for _idx, (hvsr, azimuth) in enumerate(zip(hvsrs, azimuths)):
             hvsr, azimuth = self._check_input(hvsr, azimuth)
+            if not ex_hvsr.is_similar(hvsr):
+                msg = "All HvsrTraditional must be similar; hvsrs[0] "
+                msg += f"is not similar to hvsrs[{_idx}]"
+                raise ValueError(msg)
             self.hvsrs.append(HvsrTraditional(hvsr.frequency, hvsr.amplitude,
                                               search_range_in_hz=search_range_in_hz,
                                               find_peaks_kwargs=find_peaks_kwargs,
@@ -171,8 +176,8 @@ class HvsrAzimuthal():
             If ``distribution`` does not match the available options.
 
         """
-        return mean_factory(distribution=distribution,
-                            values=flatten_list(self.peak_frequencies))
+        return _nanmean_weighted(distribution=distribution,
+                                 values=flatten_list(self.peak_frequencies))
 
     def mean_fn_amplitude(self, distribution="lognormal"):
         """Mean amplitude of ``fn`` across all valid HVSR curves and azimuths.
@@ -194,8 +199,8 @@ class HvsrAzimuthal():
             If ``distribution`` does not match the available options.
 
         """
-        return mean_factory(distribution=distribution,
-                            values=flatten_list(self.peak_amplitudes))
+        return _nanmean_weighted(distribution=distribution,
+                                 values=flatten_list(self.peak_amplitudes))
 
     def cov_fn(self, distribution="lognormal"):
         """Covariance of HVSR resonance across all valid HVSR curves and azimuths.
@@ -250,8 +255,8 @@ class HvsrAzimuthal():
 
         """
         distribution = DISTRIBUTION_MAP.get(distribution, None)
-        mean = mean_factory(distribution=distribution,
-                            values=flatten_list(values))
+        mean = _nanmean_weighted(distribution=distribution,
+                                 values=flatten_list(values))
 
         if distribution == "normal":
             def _diff(value, mean):
@@ -408,9 +413,22 @@ class HvsrAzimuthal():
             If ``distribution`` does not match the available options.
 
         """
-        return mean_factory(distribution=distribution,
-                            values=self.amplitude,
-                            mean_kwargs=dict(axis=0))
+        weights = []
+        for hvsr in self.hvsrs:
+            n_valid = np.sum(hvsr.valid_window_boolean_mask)
+            weights.extend([1/n_valid]*n_valid)
+        weights = np.array(weights, dtype=float)
+
+        mean_curve = np.empty_like(self.frequency)
+        for _idx in range(len(mean_curve)):
+            amplitude = [hvsr.amplitude[:, _idx].tolist() for hvsr in self.hvsrs]
+            amplitude = flatten_list(amplitude)
+            mean_curve[_idx] = _nanmean_weighted(distribution=distribution,
+                                                 values=np.array(amplitude),
+                                                 weights=weights,
+                                                 mean_kwargs=dict(axis=0))
+
+        return mean_curve
 
     def std_curve(self, distribution="lognormal"):
         """Sample standard deviation associated with mean HVSR curve
@@ -502,3 +520,40 @@ class HvsrAzimuthal():
             raise ValueError(msg)
 
         return (f_peak, a_peak)
+
+    def is_similar(self, other):
+        """Determine if ``other`` is similar to ``self``."""
+        if not isinstance(other, HvsrAzimuthal):
+            return False
+
+        if len(self.hvsrs) != len(other.hvsrs):
+            return False
+
+        for self_hvsr, other_hvsr in zip(self.hvsrs, other.hvsrs):
+            if not self_hvsr.is_similar(other_hvsr):
+                return False
+
+        for self_azi, other_azi in zip(self.azimuths, other.azimuths):
+            if abs(self_azi - other_azi) > 0.1:
+                return False
+
+        return True
+
+    def __eq__(self, other):
+        """Determine if ``other`` is equal to ``self``."""
+        if not self.is_similar(other):
+            return False
+
+        for self_hvsr, other_hvsr in zip(self.hvsrs, other.hvsrs):
+            if self_hvsr != other_hvsr:
+                return False
+
+        return True
+
+    def __str__(self):
+        """Human-readable representation of ``HvsrAzimuthal`` object."""
+        return f"HvsrAzimuthal at {id(self)}"
+
+    def __repr__(self):
+        """Unambiguous representation of ``HvsrAzimuthal`` object."""
+        return f"HvsrAzimuthal(hvsrs={self.hvsrs}, azimuths={self.azimuths}, meta={self.meta})"

@@ -21,25 +21,74 @@ import numpy as np
 
 from .constants import DISTRIBUTION_MAP
 
+PRE_PROCESS_FUNCTION_MAP = {
+    "normal": {"mean": lambda values: values,
+               "std": lambda values: values},
+    "lognormal": {"mean": lambda values: np.log(values),
+                  "std": lambda values: np.log(values)}
+}
 
-def mean_factory(distribution, values, mean_kwargs=None):
-    """Calculates mean of ``values`` consistent with distribution.
+POST_PROCESS_FUNCTION_MAP = {
+    "normal": {"mean": lambda values: values,
+               "std": lambda values: values, },
+    "lognormal": {"mean": lambda values: np.exp(values),
+                  "std": lambda values: values}
+}
+
+
+def _distribution_factory(distribution, calculation="mean"):
+    """Provides pre- and post-processing functions.
 
     .. warning:: 
         Private methods are subject to change without warning.
 
     """
+    try:
+        distribution = DISTRIBUTION_MAP.get(distribution.lower(), None)
+        preprocess_fxn = PRE_PROCESS_FUNCTION_MAP[distribution][calculation]
+        postprocess_fxn = POST_PROCESS_FUNCTION_MAP[distribution][calculation]
+    except KeyError:
+        msg = f"distribution type {distribution} not recognized."
+        raise NotImplementedError(msg)
+    return (preprocess_fxn, postprocess_fxn)
+
+def _mean_weighted(distribution, values, weights=None, mean_kwargs=None):
+    """Calculates weighted mean of ``values`` consistent with distribution.
+
+    .. warning:: 
+        Private methods are subject to change without warning.
+
+    """
+    pre_fxn, post_fxn = _distribution_factory(distribution=distribution,
+                                              calculation="mean")
+
     if mean_kwargs is None:
         mean_kwargs = {}
 
-    distribution = DISTRIBUTION_MAP.get(distribution.lower(), None)
-    if distribution == "normal":
-        return np.nanmean(values, **mean_kwargs)
-    elif distribution == "lognormal":
-        return np.exp(np.nanmean(np.log(values), **mean_kwargs))
-    else:
-        msg = f"distribution type {distribution} not recognized."
-        raise NotImplementedError(msg)
+    values = pre_fxn(values)
+
+def _nanmean_weighted(distribution, values, weights=None, mean_kwargs=None):
+    """Calculates weighted mean of ``values`` consistent with distribution.
+
+    .. warning:: 
+        Private methods are subject to change without warning.
+
+    """
+    pre_fxn, post_fxn = _distribution_factory(distribution=distribution,
+                                              calculation="mean")
+
+    if mean_kwargs is None:
+        mean_kwargs = {}
+
+    values = pre_fxn(values)
+    is_nan_mask = np.isnan(values)
+
+    if weights is None:
+        weights = np.full_like(values, 1)
+        weights[is_nan_mask] = np.nan
+
+    weighted_mean = np.nansum(values*weights, **mean_kwargs) / np.nansum(weights, **mean_kwargs)
+    return post_fxn(weighted_mean)
 
 
 def std_factory(distribution, values, std_kwargs=None):

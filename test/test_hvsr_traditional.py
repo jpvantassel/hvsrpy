@@ -146,18 +146,18 @@ class TestHvsrTraditional(TestCase):
         mean_curve = hvsr.mean_curve(distribution="lognormal")
         std_curve = hvsr.std_curve(distribution="lognormal")
         for c_idx in range(amplitude.shape[1]):
-            self.assertEqual(np.exp(np.mean(np.log(amplitude[:, c_idx]))),
-                             mean_curve[c_idx])
-            self.assertEqual(np.std(np.log(amplitude[:, c_idx]), ddof=1),
-                             std_curve[c_idx])
+            self.assertAlmostEqual(np.exp(np.mean(np.log(amplitude[:, c_idx]))),
+                                   mean_curve[c_idx])
+            self.assertAlmostEqual(np.std(np.log(amplitude[:, c_idx]), ddof=1),
+                                   std_curve[c_idx])
 
         mean_curve = hvsr.mean_curve(distribution="normal")
         std_curve = hvsr.std_curve(distribution="normal")
         for c_idx in range(amplitude.shape[1]):
-            self.assertEqual(np.mean(amplitude[:, c_idx]),
-                             mean_curve[c_idx])
-            self.assertEqual(np.std(amplitude[:, c_idx], ddof=1),
-                             std_curve[c_idx])
+            self.assertAlmostEqual(np.mean(amplitude[:, c_idx]),
+                                   mean_curve[c_idx])
+            self.assertAlmostEqual(np.std(amplitude[:, c_idx], ddof=1),
+                                   std_curve[c_idx])
 
     def test_hvsrtraditional_cov_fn(self):
         frequency = np.arange(0, 10, 1)
@@ -258,7 +258,7 @@ class TestHvsrTraditional(TestCase):
         self.assertTrue(a == b)
         self.assertTrue(a.is_similar(b))
         self.assertFalse(a == c)
-        self.assertFalse(a.is_similar(c))
+        self.assertTrue(a.is_similar(c))
         self.assertFalse(a == d)
         self.assertFalse(a.is_similar(d))
         self.assertFalse(a == e)
