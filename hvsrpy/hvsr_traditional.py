@@ -173,7 +173,7 @@ class HvsrTraditional():
             (f_peak, a_peak) = HvsrCurve._find_peak_bounded(self.frequency,
                                                             _amplitude,
                                                             search_range_in_hz=search_range_in_hz,
-                                                            find_peak_kwargs=find_peaks_kwargs)
+                                                            find_peaks_kwargs=find_peaks_kwargs)
 
             if f_peak is None:
                 logger.info(f"No peak found in window {_idx}.")
@@ -406,7 +406,7 @@ class HvsrTraditional():
         f_peak, a_peak = HvsrCurve._find_peak_bounded(self.frequency,
                                                       amplitude,
                                                       search_range_in_hz=search_range_in_hz,
-                                                      find_peak_kwargs=find_peaks_kwargs)
+                                                      find_peaks_kwargs=find_peaks_kwargs)
 
         if f_peak is None or a_peak is None:
             msg = "Mean curve does not have a peak in the specified range."

@@ -157,7 +157,7 @@ class HvsrAzimuthal():
     def n_azimuths(self):
         return len(self.azimuths)
 
-    def _compute_peak_weights(self):
+    def _compute_statistical_weights(self):
         """Compute weighting term following Cheng et al. (2020).
 
         .. warning::
@@ -191,7 +191,7 @@ class HvsrAzimuthal():
 
         """
         return _nanmean_weighted(distribution=distribution,
-                                 weights=self._compute_peak_weights(),
+                                 weights=self._compute_statistical_weights(),
                                  values=np.array(flatten_list(self.peak_frequencies)))
 
     def mean_fn_amplitude(self, distribution="lognormal"):
@@ -215,7 +215,7 @@ class HvsrAzimuthal():
 
         """
         return _nanmean_weighted(distribution=distribution,
-                                 weights=self._compute_peak_weights(),
+                                 weights=self._compute_statistical_weights(),
                                  values=np.array(flatten_list(self.peak_amplitudes)))
 
     def cov_fn(self, distribution="lognormal"):
@@ -242,22 +242,18 @@ class HvsrAzimuthal():
         """
         distribution = DISTRIBUTION_MAP[distribution]
 
-        frequencies = []
-        amplitudes = []
-        weights = []
-        for hvsr in self.hvsrs:
-            n_valid = np.sum(hvsr.valid_window_boolean_mask)
-            frequencies.extend(hvsr.peak_frequencies)
-            amplitudes.extend(hvsr.peak_frequencies)
-            weights.extend([1/n_valid]*n_valid)
+        frequencies = np.concatenate(self.peak_frequencies)
+        amplitudes =  np.concatenate(self.peak_amplitudes)
+        weights = self._compute_statistical_weights()
 
         if distribution == "normal":
             pass
         elif distribution == "lognormal":
             frequencies = np.log(frequencies)
             amplitudes = np.log(amplitudes)
-        else:
-            raise NotImplementedError
+        else: # pragma: no cover
+            msg = f"distribution type {distribution} not recognized."
+            raise NotImplementedError(msg)
 
         return np.cov(frequencies, amplitudes, aweights=weights)
 
@@ -281,7 +277,7 @@ class HvsrAzimuthal():
 
         """
         return _nanstd_weighted(distribution=distribution,
-                                weights=self._compute_peak_weights(),
+                                weights=self._compute_statistical_weights(),
                                 values=np.array(flatten_list(self.peak_frequencies)),
                                 denominator="cheng")
 
@@ -306,13 +302,13 @@ class HvsrAzimuthal():
 
         """
         return _nanstd_weighted(distribution=distribution,
-                                weights=self._compute_peak_weights(),
+                                weights=self._compute_statistical_weights(),
                                 values=np.array(flatten_list(self.peak_amplitudes)),
                                 denominator="cheng")
 
     @property
     def amplitude(self):
-        return [hvsr.amplitude[hvsr.valid_window_boolean_mask] for hvsr in self.hvsrs]
+        return [hvsr.amplitude for hvsr in self.hvsrs]
 
     @property
     def frequency(self):
@@ -340,7 +336,7 @@ class HvsrAzimuthal():
 
     def mean_curve_peak_by_azimuth(self, distribution="lognormal",
                                    search_range_in_hz=(None, None),
-                                   **find_peaks_kwargs):
+                                   find_peaks_kwargs=None):
         """Peak from each mean curve, one per azimuth.
 
         Parameters
@@ -370,7 +366,7 @@ class HvsrAzimuthal():
         for _idx, hvsr in enumerate(self.hvsrs):
             f_peak, a_peak = hvsr.mean_curve_peak(distribution=distribution,
                                                   search_range_in_hz=search_range_in_hz,
-                                                  find_peak_kwargs=find_peaks_kwargs)
+                                                  find_peaks_kwargs=find_peaks_kwargs)
             peak_frequencies[_idx] = f_peak
             peak_amplitudes[_idx] = a_peak
         return (peak_frequencies, peak_amplitudes)
@@ -395,12 +391,7 @@ class HvsrAzimuthal():
             If ``distribution`` does not match the available options.
 
         """
-        weights = []
-        for hvsr in self.hvsrs:
-            n_valid = np.sum(hvsr.valid_window_boolean_mask)
-            weights.extend([1/n_valid]*n_valid)
-        weights = np.array(weights, dtype=float)
-
+        weights = self._compute_statistical_weights()
         mean_curve = np.empty_like(self.frequency)
         for _idx in range(len(mean_curve)):
             amplitude = [hvsr.amplitude[hvsr.valid_window_boolean_mask][:, _idx].tolist()
@@ -436,9 +427,19 @@ class HvsrAzimuthal():
             If ``distribution`` does not match the available options.
 
         """
-        return self._std_factory(distribution=distribution,
-                                 values=self.amplitude,
-                                 sum_kwargs=dict(axis=0))
+        weights = self._compute_statistical_weights()
+        std_curve = np.empty_like(self.frequency)
+        for _idx in range(len(std_curve)):
+            amplitude = [hvsr.amplitude[hvsr.valid_window_boolean_mask][:, _idx].tolist()
+                         for hvsr in self.hvsrs]
+            amplitude = flatten_list(amplitude)
+            std_curve[_idx] = _nanstd_weighted(distribution=distribution,
+                                               values=np.array(amplitude),
+                                               weights=weights,
+                                               std_kwargs=dict(axis=0),
+                                               denominator="cheng")
+
+        return std_curve
 
     def nth_std_curve(self, n, distribution="lognormal"):
         """nth standard deviation on mean curve considering all valid
@@ -467,7 +468,7 @@ class HvsrAzimuthal():
     def mean_curve_peak(self,
                         distribution="lognormal",
                         search_range_in_hz=(None, None),
-                        **find_peaks_kwargs):
+                        find_peaks_kwargs=None):
         """Frequency and amplitude of the peak of the mean HVSR curve.
 
         Parameters
@@ -496,9 +497,9 @@ class HvsrAzimuthal():
         f_peak, a_peak = HvsrCurve._find_peak_bounded(self.frequency,
                                                       amplitude,
                                                       search_range_in_hz=search_range_in_hz,
-                                                      find_peak_kwargs=find_peaks_kwargs)
+                                                      find_peaks_kwargs=find_peaks_kwargs)
 
-        if f_peak is None or a_peak is None:
+        if f_peak is None or a_peak is None: # pragma: no cover
             msg = "Mean curve does not have a peak in the specified range."
             raise ValueError(msg)
 
@@ -512,9 +513,9 @@ class HvsrAzimuthal():
         if len(self.hvsrs) != len(other.hvsrs):
             return False
 
-        for self_hvsr, other_hvsr in zip(self.hvsrs, other.hvsrs):
-            if not self_hvsr.is_similar(other_hvsr):
-                return False
+        # note: do not need to check all because all must be similar.
+        if not self.hvsrs[0].is_similar(other.hvsrs[0]):
+            return False
 
         for self_azi, other_azi in zip(self.azimuths, other.azimuths):
             if abs(self_azi - other_azi) > 0.1:

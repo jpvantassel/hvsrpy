@@ -91,16 +91,16 @@ class HvsrCurve():
         return value
 
     @staticmethod
-    def _find_peak_unbounded(frequency, amplitude, find_peak_kwargs=None):
+    def _find_peak_unbounded(frequency, amplitude, find_peaks_kwargs=None):
         """Finds frequency and amplitude associated with highest peak.
 
         .. warning:: 
             Private methods are subject to change without warning.
 
         """
-        if find_peak_kwargs is None:
-            find_peak_kwargs = {}
-        potential_peak_indices, _ = find_peaks(amplitude, **find_peak_kwargs)
+        if find_peaks_kwargs is None:
+            find_peaks_kwargs = {}
+        potential_peak_indices, _ = find_peaks(amplitude, **find_peaks_kwargs)
 
         # If no peaks found, then indices array will be empty.
         if len(potential_peak_indices) == 0:
@@ -136,7 +136,7 @@ class HvsrCurve():
         return (f_low_idx, f_high_idx)
 
     @staticmethod
-    def _find_peak_bounded(frequency, amplitude, search_range_in_hz=(None, None), find_peak_kwargs=None):
+    def _find_peak_bounded(frequency, amplitude, search_range_in_hz=(None, None), find_peaks_kwargs=None):
         """Finds frequency and amplitude associated with highest peak over a bounded range.
 
         .. warning:: 
@@ -147,7 +147,7 @@ class HvsrCurve():
                                                                        search_range_in_hz)
         (frequency, amplitude) = HvsrCurve._find_peak_unbounded(frequency[f_low_idx:f_high_idx],
                                                                 amplitude[f_low_idx:f_high_idx],
-                                                                find_peak_kwargs=find_peak_kwargs)
+                                                                find_peaks_kwargs=find_peaks_kwargs)
         return (frequency, amplitude)
 
     def __init__(self, frequency, amplitude, search_range_in_hz=(None, None),
@@ -190,7 +190,7 @@ class HvsrCurve():
 
         peak = HvsrCurve._find_peak_bounded(self.frequency, self.amplitude,
                                             search_range_in_hz=search_range_in_hz,
-                                            find_peak_kwargs=find_peaks_kwargs)
+                                            find_peaks_kwargs=find_peaks_kwargs)
         self.peak_frequency, self.peak_amplitude = peak
 
     def is_similar(self, other, atol=1E-9, rtol=0.):
