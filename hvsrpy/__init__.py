@@ -30,5 +30,6 @@ from .seismic_recording_3c import SeismicRecording3C
 from .timeseries import TimeSeries
 from .processing import preprocess, process
 from .settings import HvsrPreProcessingSettings, HvsrTraditionalProcessingSettings, HvsrTraditionalSingleAzimuthProcessingSettings, HvsrTraditionalRotDppProcessingSettings, HvsrAzimuthalProcessingSettings, HvsrDiffuseFieldProcessingSettings
+from .window_rejection import sta_lta_window_rejection, maximum_value_window_rejection, frequency_domain_window_rejection, manual_window_rejection
 
 logging.getLogger("hvsrpy").addHandler(logging.NullHandler())

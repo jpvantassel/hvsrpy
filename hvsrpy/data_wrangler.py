@@ -48,14 +48,14 @@ def _arrange_traces(traces):
         elif trace.meta.channel.endswith("Z") and not found_vt:
             vt = TimeSeries.from_trace(trace)
             found_vt = True
-        else:
+        else: # pragma: no cover
             msg = "Missing, duplicate, or incorrectly named components."
             raise ValueError(msg)
     return ns, ew, vt
 
 
 def _check_npts(npts_header, npts_found):
-    if npts_header != npts_found:
+    if npts_header != npts_found: # pragma: no cover
         msg = f"Points listed in file header ({npts_header}) does not match "
         msg += f"the number of points found ({npts_found}) please report this "
         msg += "issue to the hvsrpy developers via GitHub issues "
@@ -112,7 +112,7 @@ def read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         trace_list = []
         for fname in fnames:
             stream = _quiet_obspy_read(fname, **obspy_read_kwargs)
-            if len(stream) != 1:
+            if len(stream) != 1: # pragma: no cover
                 msg = f"File {fname} contained {len(stream)}"
                 msg += "traces, rather than 1 as was expected."
                 raise IndexError(msg)
@@ -120,12 +120,12 @@ def read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
             trace_list.append(trace)
         traces = obspy.Stream(trace_list)
         fnames = [str(fname) for fname in fnames]
-    else:
+    else: # pragma: no cover
         msg = "`fnames` must be either `str` or `list`"
         msg += f"cannot be {type(fnames)}."
         raise ValueError(msg)
 
-    if len(traces) != 3:
+    if len(traces) != 3: # pragma: no cover
         msg = f"Provided {len(traces)} traces, but must only provide 3."
         raise ValueError(msg)
 
@@ -184,7 +184,7 @@ def read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         try:
             north_rot = float(saf_north_rot_exec.search(text).groups()[0])
-        except:
+        except: # pragma: no cover
             msg = f"The provided saf file {fname} does not include the "
             msg += "NORTH_ROT keyword, assuming equal to zero."
             warnings.warn(msg, UserWarning)
@@ -194,7 +194,7 @@ def read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
                 degrees_from_north = north_rot
             elif e_ch == 1:
                 degrees_from_north = north_rot + 90.
-            else:
+            else: # pragma: no cover
                 msg = f"The provided saf file {fname} is not properly formatted."
                 msg += " CH1 must be vertical; CH2 & CH3 the horizontals."
                 raise ValueError(msg)
@@ -343,7 +343,7 @@ def read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         trace_list.append(trace)
     traces = obspy.Stream(trace_list)
 
-    if len(traces) != 3:
+    if len(traces) != 3: # pragma: no cover
         msg = f"Provided {len(traces)} traces, but must only provide 3."
         raise ValueError(msg)
 
@@ -395,7 +395,7 @@ def read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     if isinstance(fname, (str, pathlib.Path)):
         traces = _quiet_obspy_read(fname, **obspy_read_kwargs)
 
-    if len(traces) != 3:
+    if len(traces) != 3: # pragma: no cover
         msg = f"Provided {len(traces)} traces, but must only provide 3."
         raise ValueError(msg)
 
@@ -435,7 +435,7 @@ def read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         Initialized 3-component seismic recording object.
 
     """
-    if not isinstance(fnames, (list, tuple)):
+    if not isinstance(fnames, (list, tuple)): # pragma: no cover
         msg = "Must provide 3 peer files (one per trace) as list or tuple, "
         msg += f"not {type(fnames)}."
         raise ValueError(msg)
@@ -549,7 +549,7 @@ def read_single(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         else:
             logger.info(f"File type identified as {ftype}.")
             break
-    else:
+    else: # pragma: no cover
         msg = "File format not recognized. Only the following are supported: "
         msg += f"{READ_FUNCTION_DICT.keys()}."
         raise ValueError(msg)

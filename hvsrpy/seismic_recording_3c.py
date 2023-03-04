@@ -138,7 +138,7 @@ class SeismicRecording3C():
         Returns
         -------
         list
-            List of ``TimeSeries`` objects, one per split.
+            List of ``SeismicRecording3C`` objects, one per split.
 
         Notes
         -----

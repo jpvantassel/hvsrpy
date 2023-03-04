@@ -24,7 +24,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from scipy import stats
 
-from .statistics import statistics
 from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
 
@@ -49,7 +48,7 @@ DEFAULT_KWARGS = {
 }
 
 
-def _plot_individual_hvsr_curves(ax, hvsr, valid=True, plot_kwargs=None):
+def _plot_individual_hvsr_curves(ax, hvsr, valid=True, plot_kwargs=None): # pragma: no cover
     """Plot individual HVSR curves.
 
     .. warning::
@@ -82,7 +81,7 @@ def _plot_individual_hvsr_curves(ax, hvsr, valid=True, plot_kwargs=None):
             plot_kwargs["label"] = None
 
 
-def _plot_mean_hvsr_curve(ax, hvsr, distribution="lognormal", plot_kwargs=None):
+def _plot_mean_hvsr_curve(ax, hvsr, distribution="lognormal", plot_kwargs=None): # pragma: no cover
     """Plot mean HVSR curve.
 
     .. warning::
@@ -96,7 +95,7 @@ def _plot_mean_hvsr_curve(ax, hvsr, distribution="lognormal", plot_kwargs=None):
     ax.plot(hvsr.frequency, hvsr.mean_curve(distribution=distribution), **plot_kwargs)
 
 
-def _plot_nth_std_hvsr_curve(ax, hvsr, distribution="lognormal", n=1., plot_kwargs=None):
+def _plot_nth_std_hvsr_curve(ax, hvsr, distribution="lognormal", n=1., plot_kwargs=None): # pragma: no cover
     """Plot nth standard deviation HVSR curve.
 
     .. warning::
@@ -111,7 +110,7 @@ def _plot_nth_std_hvsr_curve(ax, hvsr, distribution="lognormal", n=1., plot_kwar
     ax.plot(hvsr.frequency, hvsr.nth_std_curve(n=n, distribution=distribution), **plot_kwargs)
 
 
-def _plot_nth_std_frequency_range(ax, hvsr, distribution="lognormal", n=1., fill_kwargs=None):
+def _plot_nth_std_frequency_range(ax, hvsr, distribution="lognormal", n=1., fill_kwargs=None): # pragma: no cover
     """Plot nth standard deviation frequency.
 
     .. warning::
@@ -128,8 +127,7 @@ def _plot_nth_std_frequency_range(ax, hvsr, distribution="lognormal", n=1., fill
             [y_min, y_max, y_max, y_min], **fill_kwargs)
 
 
-# TODO(jpv): Estimate covariance matrix for HvsrTraditional and HvsrAzimuthal
-def _plot_resonance_pdf(ax, hvsr, distribution="lognormal", contour_kwargs=None):
+def _plot_resonance_pdf(ax, hvsr, distribution="lognormal", contour_kwargs=None): # pragma: no cover
     """Plot resonance probability density function (PDF).
 
     .. warning::
@@ -144,7 +142,6 @@ def _plot_resonance_pdf(ax, hvsr, distribution="lognormal", contour_kwargs=None)
     cov = hvsr.cov_fn(distribution=distribution)
     std_frequency = np.sqrt(cov[0, 0])
     std_amplitude = np.sqrt(cov[1, 1])
-    corr = cov[0, 1]/std_frequency/std_amplitude
 
     # plot pdf.
     f_lower, f_upper = mean_frequency - 3*std_frequency, mean_frequency + 3*std_frequency
@@ -160,15 +157,17 @@ def _plot_resonance_pdf(ax, hvsr, distribution="lognormal", contour_kwargs=None)
     cmap.set_under("white")
     pdf_x = pdf_x if distribution == "normal" else np.exp(pdf_x)
     pdf_y = pdf_y if distribution == "normal" else np.exp(pdf_y)
-    ax.contour(pdf_x, pdf_y, pdf_values, levels=3,
-               cmap=cmap, vmin=0.001, linewidths=0.8, zorder=7)
+    default_contour_kwargs = dict(levels=3, cmap=cmap, vmin=0.001,
+                                  linewidths=0.8, zorder=7)
+    contour_kwargs = {**default_contour_kwargs, **contour_kwargs}
+    ax.contour(pdf_x, pdf_y, pdf_values, **contour_kwargs)
 
 
 def plot_single_panel_hvsr_curves(hvsr,
                                   distribution_mc="lognormal",
                                   distribution_fn="lognormal",
                                   ax=None,
-                                  ):
+                                  ): # pragma: no cover
     """Plot valid & invalid HVSR windows with curve & resonance statistics."""
     ax_was_none = False
     if ax is None:

@@ -70,24 +70,24 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
             n_samples = timeseries.n_samples
 
             # compute sta values.
-            npts_in_sta = sta_seconds // timeseries.dt_in_seconds
+            npts_in_sta = int(sta_seconds // timeseries.dt_in_seconds)
             if npts_in_sta > n_samples:
                 msg = "sta_seconds must be shorter than record length;"
                 msg += f"sta_seconds is {sta_seconds} and "
                 msg += f"record length is {timeseries.time()[-1]}."
                 raise IndexError(msg)
-            n_sta_in_window = timeseries.samples // npts_in_sta
+            n_sta_in_window = int(timeseries.n_samples // npts_in_sta)
             short_timeseries = timeseries.amplitude[:npts_in_sta*n_sta_in_window]
-            sta_values = np.mean(short_timeseries.reshape((n_sta_in_window, npts_in_sta)), axis=1)
+            sta_values = np.mean(np.abs(short_timeseries.reshape((n_sta_in_window, npts_in_sta))), axis=1)
 
             # compute lta.
-            npts_in_lta = lta_seconds // timeseries.dt_in_seconds
+            npts_in_lta = int(lta_seconds // timeseries.dt_in_seconds)
             if npts_in_lta > n_samples:
                 msg = "lta_seconds must be shorter than record length;"
                 msg += f"lta_seconds is {lta_seconds} and "
                 msg += f"record length is {timeseries.time()[-1]}."
                 raise IndexError(msg)
-            lta = np.mean(short_timeseries[:npts_in_lta])
+            lta = np.mean(np.abs(short_timeseries[:npts_in_lta]))
 
             # check mininum and maximum sta - lta ratio.
             if (np.max(sta_values/lta) > max_sta_lta_ratio) or (np.min(sta_values/lta) < min_sta_lta_ratio):
@@ -97,9 +97,9 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
 
     return passing_records
 
-
+# TODO(jpv): Write tests for maximum_value_window_rejection.
 def maximum_value_window_rejection(records, maximum_value_threshold,
-                                   normalized=True, components=("ns", "ew", "vt")):
+                                   normalized=True, components=("ns", "ew", "vt")): # pragma: no cover
     """Performs window rejection based on maximum value of time series.
 
     Parameters
@@ -201,16 +201,22 @@ def frequency_domain_window_rejection(hvsr,
         hvsrs = [hvsr]
     elif isinstance(hvsr, HvsrAzimuthal):
         hvsrs = hvsr.hvsrs
-    else:
+    else: # pragma: no cover
         msg = "The frequency domain window rejection algorithm can only "
         msg += "be applied to HvsrTraditional and HvsrAzimuthal objects, not "
         msg += f"{type(hvsr)} type objects."
         raise NotImplementedError(msg)
 
-    # self.meta["n"] = n
-    # self.meta["Performed Rejection"] = True
+    hvsr.meta["Performed Window Rejection"] = True
+    hvsr.meta["Window Rejection Algorithm"] = "FDWRA by Cox et al. (2020)"
+    hvsr.meta["Window Rejection Algorithm Arguments"] = dict(n=n,
+                                                             max_iterations=max_iterations,
+                                                             distribution_fn=distribution_fn,
+                                                             distribution_mc=distribution_mc,
+                                                             search_range_in_hz=search_range_in_hz,
+                                                             find_peaks_kwargs=find_peaks_kwargs)
 
-    max_iterations = 0
+    max_performed_iterations = 0
     for hvsr in hvsrs:
         hvsr._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
                                    find_peaks_kwargs=find_peaks_kwargs)
@@ -219,10 +225,10 @@ def frequency_domain_window_rejection(hvsr,
                                                         max_iterations=max_iterations,
                                                         distribution_fn=distribution_fn,
                                                         distribution_mc=distribution_mc)
-        if iterations > max_iterations:
-            max_iterations = iterations
+        if iterations > max_performed_iterations:
+            max_performed_iterations = iterations
 
-    return max_iterations
+    return max_performed_iterations
 
 
 def _frequency_domain_window_rejection(hvsr,
@@ -231,9 +237,9 @@ def _frequency_domain_window_rejection(hvsr,
                                        distribution_fn="lognormal",
                                        distribution_mc="lognormal"):
     for c_iteration in range(1, max_iterations+1):
-
         logger.debug(f"c_iteration: {c_iteration}")
         logger.debug(f"valid_window_boolean_mask: {hvsr.valid_window_boolean_mask}")
+        logger.debug(f"valid_peak_boolean_mask: {hvsr.valid_peak_boolean_mask}")
 
         mean_fn_before = hvsr.mean_fn_frequency(distribution_fn)
         std_fn_before = hvsr.std_fn_frequency(distribution_fn)
@@ -248,14 +254,16 @@ def _frequency_domain_window_rejection(hvsr,
         lower_bound = hvsr.nth_std_fn_frequency(-n, distribution_fn)
         upper_bound = hvsr.nth_std_fn_frequency(+n, distribution_fn)
 
-        for _idx, (c_valid, c_peak) in enumerate(zip(hvsr.valid_window_boolean_mask, hvsr._main_peak_frq)):
+        for _idx, (c_valid, c_peak) in enumerate(zip(hvsr.valid_peak_boolean_mask, hvsr._main_peak_frq)):
             if not c_valid:
                 continue
 
             if c_peak > lower_bound and c_peak < upper_bound:
                 hvsr.valid_window_boolean_mask[_idx] = True
+                hvsr.valid_peak_boolean_mask[_idx] = True
             else:
                 hvsr.valid_window_boolean_mask[_idx] = False
+                hvsr.valid_peak_boolean_mask[_idx] = False
 
         mean_fn_after = hvsr.mean_fn_frequency(distribution_fn)
         std_fn_after = hvsr.std_fn_frequency(distribution_fn)
@@ -283,7 +291,7 @@ def _frequency_domain_window_rejection(hvsr,
             logger.info(msg)
             return c_iteration
 
-
+# TODO(jpv): Write tests for manual_window_rejection.
 def manual_window_rejection(hvsr,
                             ylims=None,
                             distribution_fn="lognormal",
@@ -291,7 +299,7 @@ def manual_window_rejection(hvsr,
                             search_range_in_hz=(None, None),
                             find_peaks_kwargs=None,
                             upper_right_corner_relative=(0.95, 0.95),
-                            box_size_relative=(0.1, 0.05)):
+                            box_size_relative=(0.1, 0.05)): # pragma: no cover
     """Reject HVSR curves manually.
 
     Parameters
@@ -335,8 +343,15 @@ def manual_window_rejection(hvsr,
         msg += f"not {type(hvsr)} type objects."
         raise NotImplementedError(msg)
 
-    # # self.meta["n"] = n
-    # # self.meta["Performed Rejection"] = True
+    hvsr.meta["Performed Window Rejection"] = True
+    hvsr.meta["Window Rejection Algorithm"] = "Manual after SESAME (2004)"
+    hvsr.meta["Window Rejection Algorithm Arguments"] = dict(ylims=ylims,
+                                                             distribution_fn=distribution_fn,
+                                                             distribution_mc=distribution_mc,
+                                                             search_range_in_hz=search_range_in_hz,
+                                                             find_peaks_kwargs=find_peaks_kwargs,
+                                                             upper_right_corner_relative=upper_right_corner_relative,
+                                                             box_size_relative=box_size_relative)
 
     # update peaks of hvsr object.
     if find_peaks_kwargs is None:

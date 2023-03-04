@@ -30,7 +30,7 @@ def ginput_session(fig, ax,
                    n_points=1,
                    ask_to_confirm_point=True,
                    ask_to_continue=True,
-                   ask_to_continue_message=None):
+                   ask_to_continue_message=None): # pragma: no cover
     """Start ginput session using the provided axes object.
 
     Parameters
@@ -128,7 +128,7 @@ def ginput_session(fig, ax,
     return (xs, ys)
 
 
-def _relative_to_absolute(relative, range_absolute, scale="linear"):
+def _relative_to_absolute(relative, range_absolute, scale="linear"): # pragma: no cover
     """Convert relative value (between 0 and 1) to absolute value.
 
     .. warning::
@@ -145,7 +145,7 @@ def _relative_to_absolute(relative, range_absolute, scale="linear"):
         raise NotImplementedError
 
 
-def _absolute_to_relative(absolute, range_absolute, scale="linear"):
+def _absolute_to_relative(absolute, range_absolute, scale="linear"): # pragma: no cover
     """Convert absolute value to a relative value (between 0 and 1).
 
     .. warning::
@@ -163,7 +163,7 @@ def _absolute_to_relative(absolute, range_absolute, scale="linear"):
 
 
 def _relative_box_coordinates(upper_right_corner_relative=(0.95, 0.95),
-                              box_size_relative=(0.1, 0.05)):
+                              box_size_relative=(0.1, 0.05)): # pragma: no cover
     """Relative box coordinates from relative location and size.
 
     .. warning::
@@ -181,7 +181,7 @@ def _absolute_box_coordinates(x_range_absolute,
                               upper_right_corner_relative=(0.95, 0.95),
                               box_size_relative=(0.1, 0.05),
                               x_scale="linear",
-                              y_scale="linear"):
+                              y_scale="linear"): # pragma: no cover
     """Absolute box coordinates from relative location and size.
 
     .. warning::
@@ -202,7 +202,7 @@ def _absolute_box_coordinates(x_range_absolute,
 
 
 def plot_continue_button(ax, upper_right_corner_relative=(0.95, 0.95),
-                         box_size_relative=(0.1, 0.05), fill_kwargs=None):
+                         box_size_relative=(0.1, 0.05), fill_kwargs=None): # pragma: no cover
     """Draw continue button on axis.
 
     .. warning::
@@ -240,7 +240,7 @@ def plot_continue_button(ax, upper_right_corner_relative=(0.95, 0.95),
 def is_absolute_point_in_relative_box(ax,
                                       absolute_point,
                                       upper_right_corner_relative=(0.95, 0.95),
-                                      box_size_relative=(0.1, 0.05)):
+                                      box_size_relative=(0.1, 0.05)): # pragma: no cover
     """Determines if a point (defined in absolute coordinates) is inside
     of a box (defined in relative coordinates).
 
