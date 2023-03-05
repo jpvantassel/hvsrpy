@@ -15,17 +15,14 @@ Public API
 Private API
 -----------
 
-.. warning:: 
-    Private API is subject to change without warning.
+.. autofunction:: hvsrpy.data_wrangler._read_mseed
 
-.. autofunction:: hvsrpy.data_wrangler.read_mseed
+.. autofunction:: hvsrpy.data_wrangler._read_saf
 
-.. autofunction:: hvsrpy.data_wrangler.read_saf
+.. autofunction:: hvsrpy.data_wrangler._read_minishark
 
-.. autofunction:: hvsrpy.data_wrangler.read_minishark
+.. autofunction:: hvsrpy.data_wrangler._read_sac
 
-.. autofunction:: hvsrpy.data_wrangler.read_sac
+.. autofunction:: hvsrpy.data_wrangler._read_gcf
 
-.. autofunction:: hvsrpy.data_wrangler.read_gcf
-
-.. autofunction:: hvsrpy.data_wrangler.read_peer
+.. autofunction:: hvsrpy.data_wrangler._read_peer

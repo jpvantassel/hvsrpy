@@ -70,8 +70,11 @@ def _quiet_obspy_read(*args, **kwargs):
     return results
 
 
-def read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+def _read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     """Read seismic data from file(s) in miniSEED format.
+
+    .. warning::
+        Private API is subject to change without warning.
 
     Parameters
     ----------
@@ -79,8 +82,8 @@ def read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         If ``str`` then ``fnames`` is the name of the miniSEED file,
         full path may be used if desired. The file should contain
         three traces with the appropriate channel names. Refer to
-        the SEED Manual
-        `here <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
+        the 
+        `SEED Manual <https://www.fdsn.org/seed_manual/SEEDManual_V2.4.pdf>`_.
         for specifics.
         If ``list`` then ``fnames`` is a list of length three with the
         names of miniSEED files for each component.
@@ -139,16 +142,19 @@ def read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+def _read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     """Read seismic data from file(s) in SESAME ASCII format (SAF).
+
+    .. warning::
+        Private API is subject to change without warning.
 
     Parameters
     ----------
     fnames : str
         Name of the SESAME ASCII format file, full path may be used if
         desired. The file should contain three traces with the
-        appropriate channel names. See SESAME standard 
-        `here <http://sesame.geopsy.org/Delivrables/D09-03_Texte.pdf>`_.
+        appropriate channel names. See  
+        `SESAME standard <http://sesame.geopsy.org/Delivrables/D09-03_Texte.pdf>`_.
     obspy_read_kwargs : dict, optional
         Ignored, kept only to maintain consistency with other read
         functions.
@@ -222,9 +228,12 @@ def read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+def _read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     """Read seismic data from file(s) in MiniShark format.
 
+    .. warning::
+        Private API is subject to change without warning.
+    
     Parameters
     ----------
     fnames : str
@@ -289,8 +298,11 @@ def read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+def _read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     """Read seismic data from file(s) in Seismic Analysis Code format.
+
+    .. warning::
+        Private API is subject to change without warning.
 
     Parameters
     ----------
@@ -298,8 +310,8 @@ def read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         List of length three with the names of the Seismic Analysis
         Code (SAC) format files; one per component. Files can be little
         endian or big endian. Each file should the appropriate channel
-        names. See SAC manual
-        `here <https://ds.iris.edu/files/sac-manual/sac_manual.pdf>`_.
+        names. See 
+        `SAC manual <https://ds.iris.edu/files/sac-manual/sac_manual.pdf>`_.
     obspy_read_kwargs : dict, optional
         For passing arguments to the ``obspy.read`` function to
         customize its behavior, default is ``None`` indicating
@@ -357,8 +369,11 @@ def read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+def _read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     """Read seismic data from file(s) in Guralp Compressed Format (GCF).
+
+    .. warning::
+        Private API is subject to change without warning.
 
     Parameters
     ----------
@@ -409,17 +424,20 @@ def read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
                               degrees_from_north=degrees_from_north, meta=meta)
 
 
-def read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+def _read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     """Read seismic data from file(s) in PEER format.
+
+    .. warning::
+        Private API is subject to change without warning.
 
     Parameters
     ----------
     fnames : list
         List of length three with the names of the Pacific Earthquake
         Engineering Research (PEER) format files; one per component.
-        Each file should have appropriate channel names. For some
-        information on PEER see
-        `here <https://strike.scec.org/scecpedia/PEER_Data_Format>`_.
+        Each file should have appropriate channel names. Some
+        information on the PEER format is provided by
+        `SCEC <https://strike.scec.org/scecpedia/PEER_Data_Format>`_.
     obspy_read_kwargs : dict, optional
         Ignored, kept only to maintain consistency with other read
         functions.
@@ -495,12 +513,12 @@ def read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
 
 READ_FUNCTION_DICT = {
-    "mseed": read_mseed,
-    "saf": read_saf,
-    "minishark": read_minishark,
-    "sac": read_sac,
-    "gcf": read_gcf,
-    "peer": read_peer
+    "mseed": _read_mseed,
+    "saf": _read_saf,
+    "minishark": _read_minishark,
+    "sac": _read_sac,
+    "gcf": _read_gcf,
+    "peer": _read_peer
 }
 
 

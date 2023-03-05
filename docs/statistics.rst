@@ -1,4 +1,4 @@
-.. _hvsr_traditional:
+.. _statistics_api:
 
 Statistics
 ==========

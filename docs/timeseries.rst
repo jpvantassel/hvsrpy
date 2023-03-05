@@ -1,4 +1,4 @@
-.. _timeseries:
+.. _timeseries_api:
 
 TimeSeries
 ==========

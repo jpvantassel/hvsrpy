@@ -277,7 +277,7 @@ class SeismicRecording3C():
         """Check if ``other`` is similar to ``self``."""
         if not isinstance(other, SeismicRecording3C):
             return False
-        
+
         for attr in ["ns", "ew", "vt"]:
             if not getattr(self, attr).is_similar(getattr(other, attr)):
                 return False

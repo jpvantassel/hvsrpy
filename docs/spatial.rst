@@ -1,4 +1,4 @@
-.. _hvsr_spatial:
+.. _spatial:
 
 HvsrSpatial
 ===========
