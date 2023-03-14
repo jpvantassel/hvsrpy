@@ -138,7 +138,7 @@ def _read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": fnames}
+    meta = {"file name(s)": fnames}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
@@ -227,7 +227,7 @@ def _read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     ns = TimeSeries(ns, dt_in_seconds=dt)
     ew = TimeSeries(ew, dt_in_seconds=dt)
 
-    meta = {"File Name(s)": str(fname)}
+    meta = {"file name(s)": str(fname)}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
@@ -300,7 +300,7 @@ def _read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": str(fname)}
+    meta = {"file name(s)": str(fname)}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
@@ -373,7 +373,7 @@ def _read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": [str(fname) for fname in fnames]}
+    meta = {"file name(s)": [str(fname) for fname in fnames]}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
@@ -428,7 +428,7 @@ def _read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     if degrees_from_north is None:
         degrees_from_north = 0.
 
-    meta = {"File Name(s)": str(fname)}
+    meta = {"file name(s)": str(fname)}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
@@ -520,7 +520,7 @@ def _read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     ew.amplitude = ew.amplitude[:min(npts)] 
     vt.amplitude = vt.amplitude[:min(npts)] 
 
-    meta = {"File Name(s)": [str(fname) for fname in fnames]}
+    meta = {"file name(s)": [str(fname) for fname in fnames]}
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 

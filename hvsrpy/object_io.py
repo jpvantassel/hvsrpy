@@ -1,3 +1,123 @@
+import numpy as np
+
+from .hvsr_diffuse_field import HvsrDiffuseField
+from .hvsr_traditional import HvsrTraditional
+from .hvsr_azimuthal import HvsrAzimuthal
+
+
+def _nested_dictionary_to_lines(data, key=None):
+    lines = []
+    for key, value in data.items():
+        if isinstance(value, dict):
+            _lines = _nested_dictionary_to_lines(value, key=key)
+            lines.append(f"{key}:\n")
+            _lines = [f"\t{line}" for line in _lines]
+            lines.extend(_lines)
+        else:
+            if key == "frequency_resampling_in_hz":
+                continue
+            line = f"{key}: {value}\n"
+            lines.append(line)
+    return lines
+
+# TODO(jpv): Remove distirubtion_mean_curve.
+def write_hvsr_to_file(hvsr, fname, distribution_mean_curve="lognormal"):
+    """Writes HVSR object to text-based file.
+    
+    Parameters
+    ----------
+    hvsr : {HvsrTraditional, HvsrAzimuthal, HvsrDiffuseField}
+        HVSR object that should be archived to a file on disk.
+    fname : str
+        Name of output file where the contents of the HVSR object are
+        to be stored. May be a relative or the full path.
+
+    Returns
+    -------
+    None
+        Instead writes HVSR object to disk.
+
+    """
+    header_lines = _nested_dictionary_to_lines(hvsr.meta)
+    header = "".join(header_lines)
+    
+    if isinstance(hvsr, HvsrDiffuseField):
+        categories = ["frequency (Hz)", "hvsr curve 1", f"mean curve", f"mean curve std"]
+        last_header_line = ",".join(categories)
+        array = np.empty((len(hvsr.frequency), len(categories)))
+        array[:, 0] = hvsr.frequency
+        array[:, 1] = hvsr.amplitude
+        array[:, -2] = hvsr.mean_curve(distribution=distribution_mean_curve)
+        array[:, -1] = 0
+    elif isinstance(hvsr, HvsrTraditional):
+        categories = ["frequency (Hz)"]
+        categories.extend([f"hvsr curve {x}" for x in range(1, hvsr.n_curves+1)])
+        categories.extend([f"mean curve ({distribution_mean_curve})", f"mean curve std ({distribution_mean_curve})"])
+        last_header_line = ",".join(categories)
+        array = np.empty((len(hvsr.frequency), len(categories)))
+        array[:, 0] = hvsr.frequency
+        array[:, 1:-2] = hvsr.amplitude.T
+        array[:, -2] = hvsr.mean_curve(distribution=distribution_mean_curve)
+        array[:, -1] = hvsr.std_curve(distribution=distribution_mean_curve)
+    elif isinstance(hvsr, HvsrAzimuthal):
+        categories = ["frequency (Hz)"]
+        # Note: HvsrAzimuthal does not require each HvsrTraditional to have the same number of curves.
+        _categories = []
+        for azimuth, _hvsr in zip(hvsr.azimuths, hvsr.hvsrs):
+            for curve_idx in range(1, _hvsr.n_curves+1):
+                _categories.append(f"azimuth {azimuth}|hvsr curve {curve_idx}")
+        categories.extend(_categories)
+        categories.extend([f"mean curve ({distribution_mean_curve})", f"mean curve std ({distribution_mean_curve})"])
+        last_header_line = ",".join(categories)
+        array = np.empty((len(hvsr.frequency), len(categories)))
+        array[:, 0] = hvsr.frequency
+        start_index = 1
+        for hvsr in hvsr.hvsrs:
+            stop_index = start_index + hvsr.n_curves
+            array[:, start_index:stop_index] = hvsr.amplitude.T
+            start_index = stop_index
+        array[:, -2] = hvsr.mean_curve(distribution=distribution_mean_curve)
+        array[:, -1] = hvsr.std_curve(distribution=distribution_mean_curve)
+    else:
+        raise NotImplementedError
+    
+    header = "".join([header, last_header_line])
+
+    np.savetxt(fname, array, delimiter=",", header=header, encoding="utf-8")
+
+
+def read_hvsr_from_file(fname):
+    """Reads HVSR object from text-based file.
+    
+    Parameters
+    ----------
+    fname : str
+        Name of output file where the contents of the HVSR object are
+        stored. May be a relative or the full path.
+
+    Returns
+    -------
+    hvsr : {HvsrTraditional, HvsrAzimuthal, HvsrDiffuseField}
+        HVSR object that was archived in a file on disk.
+
+    """
+    pass
+    # return hvsr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #     # def print_stats(self, distribution_f0, places=2):  # pragma: no cover
 #     #     """Print basic statistics of `Hvsr` instance."""
 #     #     display(self._stats(distribution_f0=distribution_f0).round(places))

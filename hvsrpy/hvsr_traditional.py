@@ -52,7 +52,8 @@ class HvsrTraditional():
 
     """
 
-    def __init__(self, frequency, amplitude, search_range_in_hz=(None, None),
+    def __init__(self, frequency, amplitude,
+                 search_range_in_hz=(None, None),
                  find_peaks_kwargs=None, meta=None):
         """Create ``HvsrTraditional`` from amplitude and frequency.
 

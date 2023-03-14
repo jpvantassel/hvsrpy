@@ -192,8 +192,7 @@ def traditional_hvsr_processing(records, settings):
     # compute hvsr
     hvsr_spectra = smooth_spectra[:len(records)] / smooth_spectra[len(records):]
 
-    return HvsrTraditional(frq, hvsr_spectra)
-    # TODO(jpv): Add metadata HvsrTraditional.
+    return HvsrTraditional(frq, hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
 
 
 def traditional_single_azimuth_hvsr_processing(records, settings):
@@ -231,8 +230,7 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
     # compute hvsr
     hvsr_spectra = smooth_spectra[:len(records)] / smooth_spectra[len(records):]
 
-    return HvsrTraditional(frq, hvsr_spectra)
-    # TODO(jpv): Add metadata HvsrTraditional.
+    return HvsrTraditional(frq, hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
 
 
 def traditional_rotdpp_hvsr_processing(records, settings):
@@ -270,7 +268,7 @@ def traditional_rotdpp_hvsr_processing(records, settings):
         smooth_v = smooth_spectra[-1]
         rotdpp_hvsr_spectra.append(smooth_h / smooth_v)
 
-    return HvsrTraditional(frq, rotdpp_hvsr_spectra)
+    return HvsrTraditional(frq, rotdpp_hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
 
 
 TRADITIONAL_PROCESSING_REGISTER = {
@@ -294,6 +292,7 @@ def traditional_hvsr_processing_base(records, settings):
 
 
 def azimuthal_hvsr_processing(records, settings):
+    prepare_fft_setttings(records, settings)
     single_azimuth_settings = HvsrTraditionalSingleAzimuthProcessingSettings()
     hvsr_per_azimuth = []
     for azimuth in settings.azimuths_in_degrees:
@@ -301,8 +300,7 @@ def azimuthal_hvsr_processing(records, settings):
         hvsr = traditional_single_azimuth_hvsr_processing(records,
                                                           single_azimuth_settings)
         hvsr_per_azimuth.append(hvsr)
-    return HvsrAzimuthal(hvsr_per_azimuth, settings.azimuths_in_degrees)
-    # TODO(jpv): Add metadata HvsrAzimuthal and associated HvsrTraditional.
+    return HvsrAzimuthal(hvsr_per_azimuth, settings.azimuths_in_degrees, meta={**records[0].meta, **settings.attr_dict})
 
 
 def diffuse_field_hvsr_processing(records, settings):
@@ -345,7 +343,7 @@ def diffuse_field_hvsr_processing(records, settings):
     ver = smooth_spectra[1]
 
     # compute hvsr
-    return HvsrDiffuseField(frq, np.sqrt((hor)/ver))
+    return HvsrDiffuseField(frq, np.sqrt((hor)/ver), meta={**records[0].meta, **settings.attr_dict})
 
 
 PROCESSING_METHODS = {
@@ -368,8 +366,9 @@ def process(records, settings):
 
     Returns
     -------
-    Hvsr
-        # TODO(jpv): Finish docstring.
+    HvsrTraditional, HvsrAzimuthal, HvsrDiffuseField
+        Instantiated HVSR object according to the processing settings
+        selected.
 
     """
     return PROCESSING_METHODS[settings.processing_method](records, settings)

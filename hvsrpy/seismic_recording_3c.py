@@ -74,9 +74,9 @@ class SeismicRecording3C():
         self.degrees_from_north = float(degrees_from_north - 360*(degrees_from_north // 360))
 
         meta = {} if meta is None else meta
-        self.meta = {"File Name(s)": "Was not created from file",
-                     "Deployed Degrees from North (deg)": self.degrees_from_north,
-                     "Current Degrees from North (deg)": self.degrees_from_north,
+        self.meta = {"file name(s)": "seismic recording was not created from file",
+                     "deployed degrees from north": self.degrees_from_north,
+                     "current degrees from north": self.degrees_from_north,
                      **meta}
 
     def trim(self, start_time, end_time):
@@ -103,6 +103,7 @@ class SeismicRecording3C():
             record.
 
         """
+        self.meta["trim"] = (start_time, end_time) 
         for component in ["ns", "ew", "vt"]:
             getattr(self, component).trim(start_time=start_time,
                                           end_time=end_time)
@@ -124,6 +125,7 @@ class SeismicRecording3C():
             Performs inplace detrend on the ``amplitude`` attribute.
 
         """
+        self.meta["detrend"] = type
         for component in ["ns", "ew", "vt"]:
             getattr(self, component).detrend(type=type)
 
@@ -148,11 +150,14 @@ class SeismicRecording3C():
             record could not be broken into 10, 1-minute records.
 
         """
+        self.meta["split"] = window_length_in_seconds
         split_recordings = []
         for (_ns, _ew, _vt) in zip(self.ns.split(window_length_in_seconds),
                                    self.ew.split(window_length_in_seconds),
                                    self.vt.split(window_length_in_seconds)):
-            split_recordings.append(SeismicRecording3C(_ns, _ew, _vt))
+            split_recordings.append(SeismicRecording3C(_ns, _ew, _vt,
+                                                       degrees_from_north=self.degrees_from_north,
+                                                       meta=self.meta))
         return split_recordings
 
     def window(self, type="tukey", width=0.1):
@@ -173,6 +178,7 @@ class SeismicRecording3C():
             Applies window to the ``amplitude`` attribute in-place.
 
         """
+        self.meta["window_type_and_width"] = (type, width)
         for component in ["ns", "ew", "vt"]:
             getattr(self, component).window(type=type, width=width)
 
@@ -195,6 +201,7 @@ class SeismicRecording3C():
             Filters ``amplitude`` attribute in-place.
 
         """
+        self.meta["butterworth_filter"] = fcs_in_hz
         for component in ["ns", "ew", "vt"]:
             getattr(self, component).butterworth_filter(fcs_in_hz=fcs_in_hz,
                                                         order=order)
@@ -228,7 +235,7 @@ class SeismicRecording3C():
         self.ns.amplitude = ew*s + ns*c
 
         self.degrees_from_north = degrees_from_north
-        self.meta["Current Degrees from North (deg)"] = degrees_from_north
+        self.meta["current degrees from north"] = degrees_from_north
 
     def _to_dict(self):
         return dict(dt_in_seconds=self.ns.dt_in_seconds,

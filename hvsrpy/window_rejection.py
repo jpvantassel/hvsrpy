@@ -207,9 +207,8 @@ def frequency_domain_window_rejection(hvsr,
         msg += f"{type(hvsr)} type objects."
         raise NotImplementedError(msg)
 
-    hvsr.meta["Performed Window Rejection"] = True
-    hvsr.meta["Window Rejection Algorithm"] = "FDWRA by Cox et al. (2020)"
-    hvsr.meta["Window Rejection Algorithm Arguments"] = dict(n=n,
+    hvsr.meta["performed window rejection"] = "FDWRA by Cox et al. (2020)"
+    hvsr.meta["window rejection algorithm arguments"] = dict(n=n,
                                                              max_iterations=max_iterations,
                                                              distribution_fn=distribution_fn,
                                                              distribution_mc=distribution_mc,
@@ -343,9 +342,8 @@ def manual_window_rejection(hvsr,
         msg += f"not {type(hvsr)} type objects."
         raise NotImplementedError(msg)
 
-    hvsr.meta["Performed Window Rejection"] = True
-    hvsr.meta["Window Rejection Algorithm"] = "Manual after SESAME (2004)"
-    hvsr.meta["Window Rejection Algorithm Arguments"] = dict(ylims=ylims,
+    hvsr.meta["window rejection algorithm"] = "Manual after SESAME (2004)"
+    hvsr.meta["window rejection algorithm arguments"] = dict(ylims=ylims,
                                                              distribution_fn=distribution_fn,
                                                              distribution_mc=distribution_mc,
                                                              search_range_in_hz=search_range_in_hz,

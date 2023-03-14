@@ -150,6 +150,7 @@ class HvsrCurve():
                                                                 find_peaks_kwargs=find_peaks_kwargs)
         return (frequency, amplitude)
 
+    #TODO(jpv): Harmonize when and when not search_range_in_hz and find_peaks_kwargs should be provided.
     def __init__(self, frequency, amplitude, search_range_in_hz=(None, None),
                  find_peaks_kwargs=None, meta=None):
         """Create ``HvsrCurve`` from iterables of frequency and amplitude.
