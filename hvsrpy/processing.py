@@ -62,7 +62,7 @@ def preprocess(records, settings):
         if settings.orient_to_degrees_from_north is not None:
             srecord3c.orient_sensor_to(settings.orient_to_degrees_from_north)
 
-        # bandpass filter raw signal.
+        # time-domain filter raw signal.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             srecord3c.butterworth_filter(settings.filter_corner_frequencies_in_hz)

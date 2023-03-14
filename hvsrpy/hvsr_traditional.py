@@ -21,7 +21,7 @@ import logging
 
 import numpy as np
 
-from .statistics import _nanmean_weighted, _nanstd_weighted, nth_std_factory, DISTRIBUTION_MAP
+from .statistics import _nanmean_weighted, _nanstd_weighted,_nth_std_factory, DISTRIBUTION_MAP
 from .hvsr_curve import HvsrCurve
 
 logger = logging.getLogger(__name__)
@@ -431,7 +431,7 @@ class HvsrTraditional():
             Value n standard deviations from mean ``fn`` frequency.
 
         """
-        return nth_std_factory(n,
+        return _nth_std_factory(n,
                                distribution,
                                self.mean_fn_frequency(distribution),
                                self.std_fn_frequency(distribution))
@@ -453,7 +453,7 @@ class HvsrTraditional():
             Value n standard deviations from mean ``fn`` amplitude.
 
         """
-        return nth_std_factory(n,
+        return _nth_std_factory(n,
                                distribution,
                                self.mean_fn_amplitude(distribution),
                                self.std_fn_amplitude(distribution))
@@ -474,7 +474,7 @@ class HvsrTraditional():
             nth standard deviation curve.
 
         """
-        return nth_std_factory(n,
+        return _nth_std_factory(n,
                                distribution,
                                self.mean_curve(distribution),
                                self.std_curve(distribution))

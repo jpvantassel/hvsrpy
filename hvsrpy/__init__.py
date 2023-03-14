@@ -25,7 +25,7 @@ from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
 from .hvsr_diffuse_field import HvsrDiffuseField
 from .hvsr_spatial import HvsrVault, montecarlo_f0
-from .data_wrangler import read
+from .data_wrangler import read, read_single
 from .seismic_recording_3c import SeismicRecording3C
 from .timeseries import TimeSeries
 from .processing import preprocess, process

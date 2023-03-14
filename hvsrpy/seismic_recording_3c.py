@@ -112,7 +112,7 @@ class SeismicRecording3C():
 
         Parameters
         ----------
-        type = {"constant", "linear"}, optional
+        type : {"constant", "linear"}, optional
             Type of detrending. If ``type == "linear"`` (default), the
             result of a linear least-squares fit to data is subtracted
             from data. If ``type == "constant"``, only the mean of data
@@ -230,25 +230,32 @@ class SeismicRecording3C():
         self.degrees_from_north = degrees_from_north
         self.meta["Current Degrees from North (deg)"] = degrees_from_north
 
-    def save(self, fname):
-        with open(fname, "w") as f:
-            json.dump(dict(dt_in_seconds=self.ns.dt_in_seconds,
-                           ns_amplitude=self.ns.amplitude.tolist(),
-                           ew_amplitude=self.ew.amplitude.tolist(),
-                           vt_amplitude=self.vt.amplitude.tolist(),
-                           degrees_from_north=self.degrees_from_north,
-                           meta=self.meta), f)
+    def _to_dict(self):
+        return dict(dt_in_seconds=self.ns.dt_in_seconds,
+                    ns_amplitude=self.ns.amplitude.tolist(),
+                    ew_amplitude=self.ew.amplitude.tolist(),
+                    vt_amplitude=self.vt.amplitude.tolist(),
+                    degrees_from_north=self.degrees_from_north,
+                    meta=self.meta)
 
     @classmethod
-    def load(cls, fname):
-        with open(fname, "r") as f:
-            data = json.load(f)
+    def _from_dict(cls, data):
         ns = TimeSeries(data["ns_amplitude"], data["dt_in_seconds"])
         ew = TimeSeries(data["ew_amplitude"], data["dt_in_seconds"])
         vt = TimeSeries(data["vt_amplitude"], data["dt_in_seconds"])
         degrees_from_north = data["degrees_from_north"]
         meta = data["meta"]
         return cls(ns, ew, vt, degrees_from_north=degrees_from_north, meta=meta)
+
+    def save(self, fname):
+        with open(fname, "w") as f:
+            json.dump(self._to_dict(), f)
+
+    @classmethod
+    def load(cls, fname):
+        with open(fname, "r") as f:
+            data = json.load(f)
+        return cls._from_dict(data)
 
     @classmethod
     def from_seismic_recording_3c(cls, seismic_recording_3c):

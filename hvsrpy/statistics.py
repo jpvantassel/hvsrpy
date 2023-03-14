@@ -114,7 +114,7 @@ def _nanstd_weighted(distribution, values, weights=None, std_kwargs=None, denomi
     return post_fxn(np.sqrt(numerator / denominator))
 
 
-def nth_std_factory(n, distribution, mean, std):
+def _nth_std_factory(n, distribution, mean, std):
     """Calculates nth standard deviation consistent with distribution.
 
     .. warning:: 
@@ -131,7 +131,7 @@ def nth_std_factory(n, distribution, mean, std):
         raise NotImplementedError(msg)
 
 
-def flatten_list(unflattened_list):
+def _flatten_list(unflattened_list):
     """Flattens ``list`` of lists to single flattened ``list``.
 
     .. warning:: 

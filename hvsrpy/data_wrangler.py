@@ -21,6 +21,7 @@ import pathlib
 import warnings
 import logging
 import itertools
+import io
 
 import obspy
 import numpy as np
@@ -107,7 +108,7 @@ def _read_mseed(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         obspy_read_kwargs = {"format": "MSEED"}
 
     # one miniSEED file with all three components.
-    if isinstance(fnames, (str, pathlib.Path)):
+    if isinstance(fnames, (str, pathlib.Path, io.BytesIO)):
         traces = _quiet_obspy_read(fnames, **obspy_read_kwargs)
         fnames = str(fnames)
     # three miniSEED files; one per component.
@@ -173,11 +174,14 @@ def _read_saf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     if isinstance(fnames, (list, tuple)):
         msg = f"Only 1 saf file allowed; {len(fnames)} provided. "
         raise ValueError(msg)
+    elif isinstance(fnames, (io.StringIO,)):
+        fname = fnames
+        fname.seek(0, 0)
+        text = fname.read()
     else:
         fname = fnames
-
-    with open(fname, "r") as f:
-        text = f.read()
+        with open(fname, "r") as f:
+            text = f.read()
 
     # ensure the file is saf format.
     _ = saf_version_exec.search(text).groups()[0]
@@ -256,13 +260,16 @@ def _read_minishark(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
     """
     if isinstance(fnames, (list, tuple)):
-        msg = f"Only 1 minishark file allowed; {len(fnames)} provided. "
+        msg = f"Only 1 minishark file allowed; {len(fnames)} provided."
         raise ValueError(msg)
+    elif isinstance(fnames, io.StringIO):
+        fnames.seek(0, 0)
+        text = fnames.read()
+        fname = fnames
     else:
         fname = fnames
-
-    with open(fname, "r") as f:
-        text = f.read()
+        with open(fname, "r") as f:
+            text = f.read()
 
     npts_header = int(mshark_npts_exec.search(text).groups()[0])
     dt = 1/float(mshark_fs_exec.search(text).groups()[0])
@@ -338,6 +345,8 @@ def _read_sac(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     trace_list = []
     for fname in fnames:
         for byteorder in ["little", "big"]:
+            if isinstance(fname, io.BytesIO):
+                fname.seek(0,0)
             obspy_read_kwargs["byteorder"] = byteorder
             try:
                 stream = _quiet_obspy_read(fname, **obspy_read_kwargs)
@@ -407,7 +416,7 @@ def _read_gcf(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         fname = fnames
 
     # one gcf file with all three components.
-    if isinstance(fname, (str, pathlib.Path)):
+    if isinstance(fname, (str, pathlib.Path, io.BytesIO)):
         traces = _quiet_obspy_read(fname, **obspy_read_kwargs)
 
     if len(traces) != 3: # pragma: no cover
@@ -461,8 +470,12 @@ def _read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     component_list = []
     component_keys = []
     for fname in fnames:
-        with open(fname, "r") as f:
-            text = f.read()
+        if isinstance(fname, io.StringIO):
+            fname.seek(0, 0)
+            text = fname.read()
+        else:
+            with open(fname, "r") as f:
+                text = f.read()
 
         component_keys.append(peer_direction_exec.search(text).groups()[0])
 

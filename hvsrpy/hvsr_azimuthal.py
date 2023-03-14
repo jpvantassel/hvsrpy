@@ -25,7 +25,7 @@ from .hvsr_curve import HvsrCurve
 from .hvsr_traditional import HvsrTraditional
 from .metadata import __version__
 from .constants import DISTRIBUTION_MAP
-from .statistics import _nanmean_weighted, _nanstd_weighted, flatten_list, nth_std_factory
+from .statistics import _nanmean_weighted, _nanstd_weighted, _flatten_list, _nth_std_factory
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +192,7 @@ class HvsrAzimuthal():
         """
         return _nanmean_weighted(distribution=distribution,
                                  weights=self._compute_statistical_weights(),
-                                 values=np.array(flatten_list(self.peak_frequencies)))
+                                 values=np.array(_flatten_list(self.peak_frequencies)))
 
     def mean_fn_amplitude(self, distribution="lognormal"):
         """Mean amplitude of ``fn`` across all valid HVSR curves and azimuths.
@@ -216,7 +216,7 @@ class HvsrAzimuthal():
         """
         return _nanmean_weighted(distribution=distribution,
                                  weights=self._compute_statistical_weights(),
-                                 values=np.array(flatten_list(self.peak_amplitudes)))
+                                 values=np.array(_flatten_list(self.peak_amplitudes)))
 
     def cov_fn(self, distribution="lognormal"):
         """Covariance of HVSR resonance across all valid HVSR curves and azimuths.
@@ -278,7 +278,7 @@ class HvsrAzimuthal():
         """
         return _nanstd_weighted(distribution=distribution,
                                 weights=self._compute_statistical_weights(),
-                                values=np.array(flatten_list(self.peak_frequencies)),
+                                values=np.array(_flatten_list(self.peak_frequencies)),
                                 denominator="cheng")
 
     def std_fn_amplitude(self, distribution="lognormal"):
@@ -303,7 +303,7 @@ class HvsrAzimuthal():
         """
         return _nanstd_weighted(distribution=distribution,
                                 weights=self._compute_statistical_weights(),
-                                values=np.array(flatten_list(self.peak_amplitudes)),
+                                values=np.array(_flatten_list(self.peak_amplitudes)),
                                 denominator="cheng")
 
     @property
@@ -396,7 +396,7 @@ class HvsrAzimuthal():
         for _idx in range(len(mean_curve)):
             amplitude = [hvsr.amplitude[hvsr.valid_window_boolean_mask][:, _idx].tolist()
                          for hvsr in self.hvsrs]
-            amplitude = flatten_list(amplitude)
+            amplitude = _flatten_list(amplitude)
             mean_curve[_idx] = _nanmean_weighted(distribution=distribution,
                                                  values=np.array(amplitude),
                                                  weights=weights,
@@ -432,7 +432,7 @@ class HvsrAzimuthal():
         for _idx in range(len(std_curve)):
             amplitude = [hvsr.amplitude[hvsr.valid_window_boolean_mask][:, _idx].tolist()
                          for hvsr in self.hvsrs]
-            amplitude = flatten_list(amplitude)
+            amplitude = _flatten_list(amplitude)
             std_curve[_idx] = _nanstd_weighted(distribution=distribution,
                                                values=np.array(amplitude),
                                                weights=weights,
@@ -444,7 +444,7 @@ class HvsrAzimuthal():
     def nth_std_curve(self, n, distribution="lognormal"):
         """nth standard deviation on mean curve considering all valid
         windows across all azimuths."""
-        return nth_std_factory(n=n,
+        return _nth_std_factory(n=n,
                                distribution=distribution,
                                mean=self.mean_curve(distribution=distribution),
                                std=self.std_curve(distribution=distribution))
@@ -452,7 +452,7 @@ class HvsrAzimuthal():
     def nth_std_fn_frequency(self, n, distribution="lognormal"):
         """nth standard deviation on frequency of ``fn`` considering all
         valid windows across all azimuths."""
-        return nth_std_factory(n=n,
+        return _nth_std_factory(n=n,
                                distribution=distribution,
                                mean=self.mean_fn_frequency(distribution=distribution),
                                std=self.std_fn_frequency(distribution=distribution))
@@ -460,7 +460,7 @@ class HvsrAzimuthal():
     def nth_std_fn_amplitude(self, n, distribution="lognormal"):
         """nth standard deviation on amplitude of ``fn`` considering all
         valid windows across all azimuths."""
-        return nth_std_factory(n=n,
+        return _nth_std_factory(n=n,
                                distribution=distribution,
                                mean=self.mean_fn_amplitude(distribution=distribution),
                                std=self.std_fn_amplitude(distribution=distribution))
