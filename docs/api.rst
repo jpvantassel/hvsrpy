@@ -12,6 +12,7 @@ order they would be used in a HVSR processing workflow.
 
    data_wrangler
    time_series_objects
+   hvsr_processing_overview
    hvsr_objects
    window_rejection
    statistics
