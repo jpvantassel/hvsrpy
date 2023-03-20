@@ -293,7 +293,12 @@ def traditional_hvsr_processing_base(records, settings):
 
 def azimuthal_hvsr_processing(records, settings):
     prepare_fft_setttings(records, settings)
-    single_azimuth_settings = HvsrTraditionalSingleAzimuthProcessingSettings()
+    single_azimuth_settings = HvsrTraditionalSingleAzimuthProcessingSettings(
+        window_type_and_width=settings.window_type_and_width,
+        smoothing_operator_and_bandwidth=settings.smoothing_operator_and_bandwidth,
+        frequency_resampling_in_hz=settings.frequency_resampling_in_hz,
+        fft_settings=settings.fft_settings,
+    )
     hvsr_per_azimuth = []
     for azimuth in settings.azimuths_in_degrees:
         single_azimuth_settings.azimuth_in_degrees = azimuth
