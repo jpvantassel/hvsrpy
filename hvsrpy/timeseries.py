@@ -149,7 +149,7 @@ class TimeSeries():
             Performs inplace detrend on the ``amplitude`` attribute.
 
         """
-        detrend(self.amplitude, type=type, overwrite_data=True)
+        self.amplitude = detrend(self.amplitude, type=type)
 
     # TODO (jpv): Consider adding the ability to overlap windows.
     def split(self, window_length_in_seconds):
