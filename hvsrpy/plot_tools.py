@@ -43,8 +43,8 @@ DEFAULT_KWARGS = {
     "label_of_nth_std_mean_hvsr_curve": "Mean Curve",
     "linestyle_of_nth_std_mean_hvsr_curve": "--",
     "color_of_nth_std_frequency_range": "#ff8080",
-    "label_of_nth_std_frequency_range_normal": r"$\mu_{fn} \pm \sigma_{fn}",
-    "label_of_nth_std_frequency_range_lognormal": r"$(\mu_{ln,fn} \pm \sigma_{ln,fn})^*",
+    "label_of_nth_std_frequency_range_normal": r"$\mu_{fn} \pm \sigma_{fn}$",
+    "label_of_nth_std_frequency_range_lognormal": r"$(\mu_{ln,fn} \pm \sigma_{ln,fn})^*$",
 }
 
 
@@ -88,9 +88,9 @@ def _plot_mean_hvsr_curve(ax, hvsr, distribution="lognormal", plot_kwargs=None):
         Private methods are subject to change without warning.
 
     """
-    default_kwargs = dict(linewidth=DEFAULT_KWARGS["width_of_mean_curve"],
-                          color=DEFAULT_KWARGS["color_of_mean_curve"],
-                          label=DEFAULT_KWARGS["label_of_mean_curve"])
+    default_kwargs = dict(linewidth=DEFAULT_KWARGS["width_of_mean_hvsr_curve"],
+                          color=DEFAULT_KWARGS["color_of_mean_hvsr_curve"],
+                          label=DEFAULT_KWARGS["label_of_mean_hvsr_curve"])
     plot_kwargs = default_kwargs if plot_kwargs is None else {**default_kwargs, **plot_kwargs}
     ax.plot(hvsr.frequency, hvsr.mean_curve(distribution=distribution), **plot_kwargs)
 
