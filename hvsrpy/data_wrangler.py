@@ -469,6 +469,7 @@ def _read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
     component_list = []
     component_keys = []
+    dts = []
     for fname in fnames:
         if isinstance(fname, io.StringIO):
             fname.seek(0, 0)
@@ -481,6 +482,7 @@ def _read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
         npts_header = int(peer_npts_exec.search(text).groups()[0])
         dt = float(peer_dt_exec.search(text).groups()[0])
+        dts.append(dt)
 
         amplitude = np.empty((npts_header))
         idx = 0
@@ -493,20 +495,52 @@ def _read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
 
         component_list.append(TimeSeries(amplitude, dt_in_seconds=dt))
 
+    # check the dt from all files are equal
+    for idx, dt in enumerate(dts):
+        if dt != dts[0]:
+            msg = "All time steps must be equal. "
+            msg += f"Time step of file {idx} is {dt} s which is not equal to "
+            msg += f"that of file 0 that is {dts[0]} s."
+            raise ValueError(msg)
+
     # organize components - vertical
-    vt_id = component_keys.index("UP")
+    orientation_is_numeric = False
+    try:
+        vt_id = component_keys.index("UP")
+        orientation_is_numeric = True
+    except:
+        for vt_id, _key in enumerate(component_keys):
+            if _key[-1].lower() == "z":
+                break
+        else:
+            msg = f"Components {component_keys} in header are not recognized. "
+            msg += "If you believe this is an error please contact the developer."
+            raise ValueError(msg)
     vt = component_list[vt_id]
     del component_list[vt_id], component_keys[vt_id]
 
     # organize components - horizontals
-    component_keys_abs = np.array(component_keys, dtype=int)
-    component_keys_rel = component_keys_abs.copy()
-    component_keys_rel[component_keys_abs > 180] -= 360
-    ns_id = np.argmin(abs(component_keys_rel))
-    ns = component_list[ns_id]
-    ew_id = np.argmax(abs(component_keys_rel))
-    ew = component_list[ew_id]
-    del component_list, component_keys
+    if orientation_is_numeric:
+        component_keys_abs = np.array(component_keys, dtype=int)
+        component_keys_rel = component_keys_abs.copy()
+        component_keys_rel[component_keys_abs > 180] -= 360
+        ns_id = np.argmin(abs(component_keys_rel))
+        ns = component_list[ns_id]
+        ew_id = np.argmax(abs(component_keys_rel))
+        ew = component_list[ew_id]
+        del component_list, component_keys
+    else:
+        component_keys_abs = np.zeros(3, dtype=int)
+        for _id, _key in enumerate(component_keys):
+            if _key[-1] == "N":
+                ns_id = _id
+                ns = component_list[ns_id]
+            elif _key[-1] == "E":
+                ew = component_list[_id]
+            else:
+                msg = f"Components {component_keys} in header are not recognized. "
+                msg += "If you believe this is an error please contact the developer."
+                raise ValueError(msg)
 
     # set rotation iff degrees_from_north is not already set.
     if degrees_from_north is None:
@@ -576,6 +610,10 @@ def read_single(fnames, obspy_read_kwargs=None, degrees_from_north=None):
                                           degrees_from_north=degrees_from_north)
         except Exception as e:
             logger.info(f"Tried reading as {ftype}, got exception |  {e}")
+
+            if ftype == "peer":
+                raise e
+
             pass
         else:
             logger.info(f"File type identified as {ftype}.")
