@@ -40,7 +40,7 @@ DEFAULT_KWARGS = {
     "label_of_mean_hvsr_curve": "Mean Curve",
     "color_of_nth_std_mean_hvsr_curve": "black",
     "width_of_nth_std_mean_hvsr_curve": 1.3,
-    "label_of_nth_std_mean_hvsr_curve": "Mean Curve",
+    "label_of_nth_std_mean_hvsr_curve": r"$\pm$ 1 Std Curve",
     "linestyle_of_nth_std_mean_hvsr_curve": "--",
     "color_of_nth_std_frequency_range": "#ff8080",
     "label_of_nth_std_frequency_range_normal": r"$\mu_{fn} \pm \sigma_{fn}$",
@@ -185,7 +185,7 @@ def plot_single_panel_hvsr_curves(hvsr,
 
     # +/- 1 std hvsr curve
     _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=+1)
-    _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=-1)
+    _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=-1, plot_kwargs=dict(label=None))
 
     # +/- std fn
     _plot_nth_std_frequency_range(ax=ax, hvsr=hvsr, distribution=distribution_fn, n=+1)
