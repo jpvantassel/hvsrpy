@@ -50,13 +50,13 @@ def preprocess(records, settings):
     ex_dt = records[0].vt.dt_in_seconds
     for idx, srecord3c in enumerate(records):
 
-        # check all records have some dt; required later for fft.
-        if np.abs(srecord3c.vt.dt_in_seconds - ex_dt) > 10E-6: #pragma: no cover
-            msg = f"The dt_in_seconds of all records must be equal, "
+        # check if all records have same dt.
+        if np.abs(srecord3c.vt.dt_in_seconds - ex_dt) > 1E-5 and not settings.ignore_dissimilar_time_step_warning:  # pragma: no cover
+            msg = f"The dt_in_seconds of all records are not equal, "
             msg += f"dt_in_seconds of record {idx} is "
             msg += f"{srecord3c.vt.dt_in_seconds} which does not match "
             msg += f"dt_in_seconds of record 0 of {ex_dt}."
-            raise ValueError(msg)
+            raise warnings.warn(msg)
 
         # orient receiver to north.
         if settings.orient_to_degrees_from_north is not None:
@@ -76,7 +76,7 @@ def preprocess(records, settings):
         for window in windows:
 
             # detrend each time window individually.
-            if settings.detrend is not None:
+            if settings.detrend is not None or settings.detrend != "none":
                 window.detrend(type=settings.detrend)
 
         preprocessed_records.extend(windows)
@@ -133,16 +133,17 @@ def rfft(amplitude, **kwargs):
     return rfft
 
 
-def nextpow2(n, minimum_power_of_two=2**15): # 2**15 = 32768
+def nextpow2(n, minimum_power_of_two=2**15):  # 2**15 = 32768
     power_of_two = minimum_power_of_two
     while True:
         if power_of_two > n:
             return power_of_two
         power_of_two *= 2
 
+
 def prepare_fft_setttings(records, settings):
-    # To accelerate smoothing, need consistent value of n.
-    # Will round to nearest power of 2 to accelerate FFT.
+    # to accelerate smoothing, need consistent value of n.
+    # will round to nearest power of 2 to accelerate FFT.
     max_n_samples = 0
     for record in records:
         if record.vt.n_samples > max_n_samples:
@@ -156,119 +157,251 @@ def prepare_fft_setttings(records, settings):
         settings.fft_settings["n"] = good_n if good_n > user_n else user_n
 
 
+def prepare_records_with_inconsistent_dt(records, settings):
+    # identify dt of records provided and track count.
+    dt_with_count = dict()
+    for record in records:
+        _dt = record.ns.dt_in_seconds
+        try:
+            dt_with_count[_dt] += 1
+        except KeyError:
+            dt_with_count[_dt] = 1
+
+    if settings.handle_dissimilar_time_steps_by == "frequency_domain_resampling":
+        return records, dt_with_count
+
+    elif settings.handle_dissimilar_time_steps_by == "keeping_smallest_time_step":
+        smallest_dt = min(dt_with_count.keys())
+        _records = []
+        count = 0
+        for record in records:
+            if record.ns.dt_in_seconds == smallest_dt:
+                _records.append(record)
+                count += 1
+                if count == dt_with_count[smallest_dt]:
+                    break
+        msg = "Keeping the smallest time step resulting in the removal of "
+        msg += f"{len(records) - len(_records)} of {len(records)} records. "
+        msg += f"{len(_records)} records remain."
+        warnings.warn(msg)
+        return records, {smallest_dt: count}
+
+    elif settings.handle_dissimilar_time_steps_by == "keeping_majority_time_step":
+        majority_count = 0
+        for potential_dt, count in dt_with_count.items():
+            if count > majority_count:
+                majority_dt = potential_dt
+                majority_count = count
+        _records = []
+        count = 0
+        for record in records:
+            if record.ns.dt_in_seconds == majority_dt:
+                _records.append(record)
+                count += 1
+                if majority_count == dt_with_count[majority_dt]:
+                    break
+        msg = "Keeping the majority time step resulting in the removal of "
+        msg += f"{len(records) - len(_records)} of {len(records)} records. "
+        msg += f"{len(_records)} records remain."
+        warnings.warn(msg)
+        return records, {majority_dt, majority_count}
+
+def check_nyquist_frequency(dt, user_frq):
+    # check resampling does not violate the Nyquist.
+    fnyq = 1/(2*dt)
+    if max(user_frq) > fnyq:
+        msg = f"The maximum resampling frequency of {np.max(user_frq):.2f} Hz "
+        msg += f"exceeds the records Nyquist frequency of {fnyq:.2f} Hz"
+        raise ValueError(msg)
+
+
 def traditional_hvsr_processing(records, settings):
     prepare_fft_setttings(records, settings)
 
-    h_idx = 0
-    v_idx = len(records)
-    fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], records[0].ns.dt_in_seconds)
-    spectra = np.empty((len(records)*2, len(fft_frq)))
-    for record in records:
-        # window time series to mitigate frequency-domain artifacts.
-        record.window(*settings.window_type_and_width)
+    records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
-        # compute fft of horizontals and combine.
-        fft_ns = np.abs(rfft(record.ns.amplitude, **settings.fft_settings))
-        fft_ew = np.abs(rfft(record.ew.amplitude, **settings.fft_settings))
-        method = COMBINE_HORIZONTAL_REGISTER[settings.method_to_combine_horizontals]
-        h = method(fft_ns, fft_ew, settings)
+    # allocate array for hvsr results.
+    user_frq = settings.frequency_resampling_in_hz
+    hvsr_spectra = np.empty((len(records), len(user_frq)))
+    check_nyquist_frequency(max(dt_with_count.keys()), user_frq)
 
-        # compute fft of vertical.
-        v = np.abs(rfft(record.vt.amplitude, **settings.fft_settings))
+    # process in groups of constant dt for efficiency.
+    hvsr_idx = 0
+    cur_idx = 0
+    hvsr_indices_to_order = np.empty(len(records), dtype=int)
+    for dt, count in dt_with_count.items():
 
-        # store
-        spectra[h_idx] = h
-        spectra[v_idx] = v
+        fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], dt)
+        raw_spectra = np.empty((count*2, len(fft_frq)))
+        hor_idx = 0
+        ver_idx = count
+        for org_idx, record in enumerate(records):
+            # only examine records with the current dt.
+            if record.ns.dt_in_seconds != dt:
+                continue
 
-        # increment
-        h_idx += 1
-        v_idx += 1
+            # track original position for later reorder.
+            hvsr_indices_to_order[org_idx] = cur_idx
+            cur_idx += 1
 
-    # smooth.
-    smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-    frq = settings.frequency_resampling_in_hz
-    smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra, frq, bandwidth)
+            # window time series to mitigate frequency-domain artifacts.
+            record.window(*settings.window_type_and_width)
 
-    # compute hvsr
-    hvsr_spectra = smooth_spectra[:len(records)] / smooth_spectra[len(records):]
+            # compute fft of horizontals and combine.
+            fft_ns = np.abs(rfft(record.ns.amplitude, **settings.fft_settings))
+            fft_ew = np.abs(rfft(record.ew.amplitude, **settings.fft_settings))
+            method = COMBINE_HORIZONTAL_REGISTER[settings.method_to_combine_horizontals]
+            h = method(fft_ns, fft_ew, settings)
 
-    return HvsrTraditional(frq, hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
+            # compute fft of vertical.
+            v = np.abs(rfft(record.vt.amplitude, **settings.fft_settings))
+
+            # store.
+            raw_spectra[hor_idx] = h
+            raw_spectra[ver_idx] = v
+            hor_idx += 1
+            ver_idx += 1
+
+        # smooth each dt group at once to boost performance.
+        smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
+        smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](
+            fft_frq, raw_spectra, user_frq, bandwidth)
+
+        # compute hvsr.
+        hvsr_spectra[hvsr_idx:hvsr_idx+count] = smooth_spectra[:count] / smooth_spectra[count:]
+        hvsr_idx += count
+
+    # reorder hvsr spectra to follow original order.
+    hvsr_spectra = hvsr_spectra[hvsr_indices_to_order]
+
+    if np.isnan(hvsr_spectra).any():
+        for idx, spectra in enumerate(hvsr_spectra):
+            if np.isnan(spectra).any():
+                print(f"{idx} - {spectra}")
+
+    return HvsrTraditional(user_frq, hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
 
 
 def traditional_single_azimuth_hvsr_processing(records, settings):
     prepare_fft_setttings(records, settings)
 
-    h_idx = 0
-    v_idx = len(records)
-    fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], records[0].ns.dt_in_seconds)
-    spectra = np.empty((len(records)*2, len(fft_frq)))
-    for record in records:
-        # combine horizontal components in the time domain.
-        h = single_azimuth(record.ns.amplitude,
-                           record.ew.amplitude,
-                           settings.azimuth_in_degrees)
-        h = TimeSeries(h, record.ns.dt_in_seconds)
+    records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
-        # window time series to mitigate frequency-domain artifacts.
-        h.window(*settings.window_type_and_width)
-        v = record.vt
-        v.window(*settings.window_type_and_width)
+    # allocate array for hvsr results.
+    user_frq = settings.frequency_resampling_in_hz
+    hvsr_spectra = np.empty((len(records), len(user_frq)))
+    check_nyquist_frequency(max(dt_with_count.keys()), user_frq)
 
-        # compute fourier transform.
-        spectra[h_idx] = np.abs(rfft(h.amplitude, **settings.fft_settings))
-        spectra[v_idx] = np.abs(rfft(v.amplitude, **settings.fft_settings))
+    # process in groups of constant dt for efficiency.
+    hvsr_idx = 0
+    cur_idx = 0
+    hvsr_indices_to_order = np.empty(len(records), dtype=int)
+    for dt, count in dt_with_count.items():
 
-        # increment.
-        h_idx += 1
-        v_idx += 1
+        fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], dt)
+        raw_spectra = np.empty((count*2, len(fft_frq)))
+        hor_idx = 0
+        ver_idx = count
+        for org_idx, record in enumerate(records):
+            # only examine records with defined dt.
+            if record.ns.dt_in_seconds != dt:
+                continue
 
-    # smooth all at once to boost performance.
-    smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-    frq = settings.frequency_resampling_in_hz
-    smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra, frq, bandwidth)
+            # track original position for later reorder.
+            hvsr_indices_to_order[org_idx] = cur_idx
+            cur_idx += 1
 
-    # compute hvsr
-    hvsr_spectra = smooth_spectra[:len(records)] / smooth_spectra[len(records):]
-
-    return HvsrTraditional(frq, hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
-
-
-def traditional_rotdpp_hvsr_processing(records, settings):
-    prepare_fft_setttings(records, settings)
-
-    frq = settings.frequency_resampling_in_hz
-    fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], records[0].vt.dt_in_seconds)
-    spectra_per_record = np.empty((len(settings.azimuths_in_degrees)+1, len(fft_frq)))
-    rotdpp_hvsr_spectra = []
-    for record in records:
-        # prepare vertical component only once per record.
-        v = record.vt
-        v.window(*settings.window_type_and_width)
-        fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
-        spectra_per_record[-1] = fft_v
-
-        # rotate horizontals through defined azimuths.
-        for idx, azimuth in enumerate(settings.azimuths_in_degrees):
+            # combine horizontal components in the time domain.
             h = single_azimuth(record.ns.amplitude,
                                record.ew.amplitude,
-                               azimuth)
-            h = TimeSeries(h, dt_in_seconds=record.ns.dt_in_seconds)
+                               settings.azimuth_in_degrees)
+            h = TimeSeries(h, record.ns.dt_in_seconds)
+
+            # window time series to mitigate frequency-domain artifacts.
             h.window(*settings.window_type_and_width)
-            fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
-            spectra_per_record[idx] = fft_h
+            v = record.vt
+            v.window(*settings.window_type_and_width)
 
-        # smooth.
+            # compute fourier transform.
+            raw_spectra[hor_idx] = np.abs(rfft(h.amplitude, **settings.fft_settings))
+            raw_spectra[ver_idx] = np.abs(rfft(v.amplitude, **settings.fft_settings))
+            hor_idx += 1
+            ver_idx += 1
+
+        # smooth each dt group at once to boost performance.
         smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-        frq = settings.frequency_resampling_in_hz
-        smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra_per_record, frq, bandwidth)
+        smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](
+            fft_frq, raw_spectra, user_frq, bandwidth)
 
-        smooth_h = np.percentile(smooth_spectra[:-1],
-                                 settings.ppth_percentile_for_rotdpp_computation,
-                                 axis=0)
-        smooth_v = smooth_spectra[-1]
-        rotdpp_hvsr_spectra.append(smooth_h / smooth_v)
+        # compute hvsr.
+        hvsr_spectra[hvsr_idx:hvsr_idx+count] = smooth_spectra[:count] / smooth_spectra[count:]
+        hvsr_idx += count
 
-    return HvsrTraditional(frq, rotdpp_hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
+    # reorder hvsr spectra to follow original order.
+    hvsr_spectra = hvsr_spectra[hvsr_indices_to_order]
+
+    return HvsrTraditional(user_frq, hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
+
+
+# def traditional_rotdpp_hvsr_processing(records, settings):
+#     prepare_fft_setttings(records, settings)
+
+#     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
+
+#     # allocate array for hvsr results.
+#     user_frq = settings.frequency_resampling_in_hz
+#     hvsr_spectra = np.empty((len(records), len(user_frq)))
+#     check_nyquist_frequency(max(dt_with_count.keys()), user_frq)
+
+#     # process in groups of constant dt for efficiency.
+#     hvsr_idx = 0
+#     cur_idx = 0
+#     hvsr_indices_to_order = np.empty(len(records), dtype=int)
+#     for dt, count in dt_with_count.items():
+
+#         fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], dt)
+#         raw_spectra_per_record = np.empty((len(settings.azimuths_in_degrees)+1, len(fft_frq)))
+#         hor_idx = 0
+#         ver_idx = count
+#         for org_idx, record in enumerate(records):
+#             # only examine records with defined dt.
+#             if record.ns.dt_in_seconds != dt:
+#                 continue
+
+#     rotdpp_hvsr_spectra = []
+#     for record in records:
+#         # prepare vertical component only once per record.
+#         v = record.vt
+#         v.window(*settings.window_type_and_width)
+#         fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
+#         spectra_per_record[-1] = fft_v
+
+#         # rotate horizontals through defined azimuths.
+#         for idx, azimuth in enumerate(settings.azimuths_in_degrees):
+#             h = single_azimuth(record.ns.amplitude,
+#                                record.ew.amplitude,
+#                                azimuth)
+#             h = TimeSeries(h, dt_in_seconds=record.ns.dt_in_seconds)
+#             h.window(*settings.window_type_and_width)
+#             fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
+#             spectra_per_record[idx] = fft_h
+
+#         # smooth.
+#         smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
+#         frq = settings.frequency_resampling_in_hz
+#         smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](
+#             fft_frq, spectra_per_record, frq, bandwidth)
+
+#         smooth_h = np.percentile(smooth_spectra[:-1],
+#                                  settings.ppth_percentile_for_rotdpp_computation,
+#                                  axis=0)
+#         smooth_v = smooth_spectra[-1]
+#         hvsr_spectra[].append(smooth_h / smooth_v)
+
+#     # reorder hvsr spectra to follow original order.
+#     hvsr_spectra = hvsr_spectra[hvsr_indices_to_order]
+
+#     return HvsrTraditional(frq, rotdpp_hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
 
 
 TRADITIONAL_PROCESSING_REGISTER = {
@@ -291,6 +424,7 @@ def traditional_hvsr_processing_base(records, settings):
     return method(records, settings)
 
 
+# TODO(jpv): Check azimuthal for different values of dt.
 def azimuthal_hvsr_processing(records, settings):
     prepare_fft_setttings(records, settings)
     single_azimuth_settings = HvsrTraditionalSingleAzimuthProcessingSettings(
@@ -310,6 +444,20 @@ def azimuthal_hvsr_processing(records, settings):
 
 def diffuse_field_hvsr_processing(records, settings):
     prepare_fft_setttings(records, settings)
+
+    records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
+
+    if len(dt_with_count.keys()) > 1:
+        msg = "You cannot use diffuse wavefield processing with records with "
+        msg += "dissimilar time steps. You can select those records with "
+        msg += "similar time steps by using 'keeping_smallest_time_step' or "
+        msg += "'keeping_majority_time_step'."
+        raise ValueError(msg)
+
+    # allocate array for hvsr results.
+    user_frq = settings.frequency_resampling_in_hz
+    hvsr_spectra = np.empty((len(records), len(user_frq)))
+    check_nyquist_frequency(max(dt_with_count.keys()), user_frq)
 
     fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], records[0].vt.dt_in_seconds)
     psd_ns = np.zeros(len(fft_frq))
