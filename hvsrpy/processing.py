@@ -343,65 +343,69 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
     return HvsrTraditional(user_frq, hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
 
 
-# def traditional_rotdpp_hvsr_processing(records, settings):
-#     prepare_fft_setttings(records, settings)
+def traditional_rotdpp_hvsr_processing(records, settings):
+    prepare_fft_setttings(records, settings)
 
-#     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
+    records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
-#     # allocate array for hvsr results.
-#     user_frq = settings.frequency_resampling_in_hz
-#     hvsr_spectra = np.empty((len(records), len(user_frq)))
-#     check_nyquist_frequency(max(dt_with_count.keys()), user_frq)
+    # allocate array for hvsr results.
+    user_frq = settings.frequency_resampling_in_hz
+    hvsr_spectra = np.empty((len(records), len(user_frq)))
+    check_nyquist_frequency(max(dt_with_count.keys()), user_frq)
 
-#     # process in groups of constant dt for efficiency.
-#     hvsr_idx = 0
-#     cur_idx = 0
-#     hvsr_indices_to_order = np.empty(len(records), dtype=int)
-#     for dt, count in dt_with_count.items():
+    # process in groups of constant dt for efficiency.
+    hvsr_idx = 0
+    cur_idx = 0
+    hvsr_indices_to_order = np.empty(len(records), dtype=int)
+    # TODO (jpv): Accelerate computation by smoothing all azimuth and all dt simultaneously.
+    for dt, _ in dt_with_count.items():
 
-#         fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], dt)
-#         raw_spectra_per_record = np.empty((len(settings.azimuths_in_degrees)+1, len(fft_frq)))
-#         hor_idx = 0
-#         ver_idx = count
-#         for org_idx, record in enumerate(records):
-#             # only examine records with defined dt.
-#             if record.ns.dt_in_seconds != dt:
-#                 continue
+        fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], dt)
+        raw_spectra_per_record = np.empty((len(settings.azimuths_in_degrees)+1, len(fft_frq)))
+        for org_idx, record in enumerate(records):
+            # only examine records with defined dt.
+            if record.ns.dt_in_seconds != dt:
+                continue
 
-#     rotdpp_hvsr_spectra = []
-#     for record in records:
-#         # prepare vertical component only once per record.
-#         v = record.vt
-#         v.window(*settings.window_type_and_width)
-#         fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
-#         spectra_per_record[-1] = fft_v
+            # track original position for later reorder.
+            hvsr_indices_to_order[org_idx] = cur_idx
+            cur_idx += 1
 
-#         # rotate horizontals through defined azimuths.
-#         for idx, azimuth in enumerate(settings.azimuths_in_degrees):
-#             h = single_azimuth(record.ns.amplitude,
-#                                record.ew.amplitude,
-#                                azimuth)
-#             h = TimeSeries(h, dt_in_seconds=record.ns.dt_in_seconds)
-#             h.window(*settings.window_type_and_width)
-#             fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
-#             spectra_per_record[idx] = fft_h
+            # prepare vertical component only once per record.
+            v = record.vt
+            v.window(*settings.window_type_and_width)
+            fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
+            raw_spectra_per_record[-1] = fft_v
 
-#         # smooth.
-#         smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-#         frq = settings.frequency_resampling_in_hz
-#         smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](
-#             fft_frq, spectra_per_record, frq, bandwidth)
+            # rotate horizontals through defined azimuths.
+            for idx, azimuth in enumerate(settings.azimuths_in_degrees):
+                h = single_azimuth(record.ns.amplitude,
+                                   record.ew.amplitude,
+                                   azimuth
+                                  )
+                h = TimeSeries(h, dt_in_seconds=record.ns.dt_in_seconds)
+                h.window(*settings.window_type_and_width)
+                fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
+                raw_spectra_per_record[idx] = fft_h
 
-#         smooth_h = np.percentile(smooth_spectra[:-1],
-#                                  settings.ppth_percentile_for_rotdpp_computation,
-#                                  axis=0)
-#         smooth_v = smooth_spectra[-1]
-#         hvsr_spectra[].append(smooth_h / smooth_v)
+            # smooth.
+            smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
+            smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, raw_spectra_per_record, user_frq, bandwidth)
 
-#     # reorder hvsr spectra to follow original order.
-#     hvsr_spectra = hvsr_spectra[hvsr_indices_to_order]
+            # select ppth percentile.
+            smooth_h = np.percentile(smooth_spectra[:-1],
+                                     settings.ppth_percentile_for_rotdpp_computation,
+                                     axis=0)
+            smooth_v = smooth_spectra[-1]
 
-#     return HvsrTraditional(frq, rotdpp_hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
+            # compute hvsr.
+            hvsr_spectra[hvsr_idx] = smooth_h / smooth_v
+            hvsr_idx += 1
+
+    # reorder hvsr spectra to follow original order.
+    hvsr_spectra = hvsr_spectra[hvsr_indices_to_order]
+
+    return HvsrTraditional(user_frq, hvsr_spectra, meta={**records[0].meta, **settings.attr_dict})
 
 
 TRADITIONAL_PROCESSING_REGISTER = {
@@ -424,13 +428,13 @@ def traditional_hvsr_processing_base(records, settings):
     return method(records, settings)
 
 
-# TODO(jpv): Check azimuthal for different values of dt.
 def azimuthal_hvsr_processing(records, settings):
     prepare_fft_setttings(records, settings)
     single_azimuth_settings = HvsrTraditionalSingleAzimuthProcessingSettings(
         window_type_and_width=settings.window_type_and_width,
         smoothing_operator_and_bandwidth=settings.smoothing_operator_and_bandwidth,
         frequency_resampling_in_hz=settings.frequency_resampling_in_hz,
+        handle_dissimilar_time_steps_by=settings.handle_dissimilar_time_steps_by,
         fft_settings=settings.fft_settings,
     )
     hvsr_per_azimuth = []
@@ -448,10 +452,11 @@ def diffuse_field_hvsr_processing(records, settings):
     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
     if len(dt_with_count.keys()) > 1:
-        msg = "You cannot use diffuse wavefield processing with records with "
-        msg += "dissimilar time steps. You can select those records with "
-        msg += "similar time steps by using 'keeping_smallest_time_step' or "
-        msg += "'keeping_majority_time_step'."
+        msg = "You cannot use diffuse field processing with records with "
+        msg += "dissimilar time steps. Try setting "
+        msg += "'handle_dissimilar_time_steps_by' to "
+        msg += "'keeping_smallest_time_step' or 'keeping_majority_time_step' "
+        msg += "to only process those records with similar time steps."
         raise ValueError(msg)
 
     # allocate array for hvsr results.
@@ -476,7 +481,7 @@ def diffuse_field_hvsr_processing(records, settings):
         fft_vt = np.abs(rfft(record.vt.amplitude, **settings.fft_settings))
 
         # compute psd with appropriate normalization for completeness;
-        # note normalization is not technically needed for this application.
+        # note normalization is not required for hvsr.
         psd_ns += (fft_ns * fft_ns) / (2*df)
         psd_ew += (fft_ew * fft_ew) / (2*df)
         psd_vt += (fft_vt * fft_vt) / (2*df)
@@ -488,15 +493,15 @@ def diffuse_field_hvsr_processing(records, settings):
 
     # smooth.
     smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-    frq = settings.frequency_resampling_in_hz
+    user_frq = settings.frequency_resampling_in_hz
 
     spectra = np.array([psd_ns + psd_ew, psd_vt])
-    smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra, frq, bandwidth)
+    smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra, user_frq, bandwidth)
     hor = smooth_spectra[0]
     ver = smooth_spectra[1]
 
     # compute hvsr
-    return HvsrDiffuseField(frq, np.sqrt((hor)/ver), meta={**records[0].meta, **settings.attr_dict})
+    return HvsrDiffuseField(user_frq, np.sqrt(hor/ver), meta={**records[0].meta, **settings.attr_dict})
 
 
 PROCESSING_METHODS = {
