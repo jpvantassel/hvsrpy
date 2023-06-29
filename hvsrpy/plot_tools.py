@@ -125,6 +125,7 @@ def _plot_nth_std_frequency_range(ax, hvsr, distribution="lognormal", n=1., fill
     f_max = hvsr.nth_std_fn_frequency(n=+n, distribution=distribution)
     ax.fill([f_min, f_min, f_max, f_max],
             [y_min, y_max, y_max, y_min], **fill_kwargs)
+    ax.set_ylim((y_min, y_max))
 
 
 def _plot_resonance_pdf(ax, hvsr, distribution="lognormal", contour_kwargs=None): # pragma: no cover
@@ -166,6 +167,8 @@ def _plot_resonance_pdf(ax, hvsr, distribution="lognormal", contour_kwargs=None)
 def plot_single_panel_hvsr_curves(hvsr,
                                   distribution_mc="lognormal",
                                   distribution_fn="lognormal",
+                                  plot_mc=True,
+                                  plot_fn=True,
                                   ax=None,
                                   ): # pragma: no cover
     """Plot valid & invalid HVSR windows with curve & resonance statistics."""
@@ -180,15 +183,17 @@ def plot_single_panel_hvsr_curves(hvsr,
     # individual hvsr curves - invalid
     _plot_individual_hvsr_curves(ax=ax, hvsr=hvsr, valid=False)
 
-    # mean hvsr curve
-    _plot_mean_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc)
+    if plot_mc:
+        # mean hvsr curve
+        _plot_mean_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc)
 
-    # +/- 1 std hvsr curve
-    _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=+1)
-    _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=-1, plot_kwargs=dict(label=None))
+        # +/- 1 std hvsr curve
+        _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=+1)
+        _plot_nth_std_hvsr_curve(ax=ax, hvsr=hvsr, distribution=distribution_mc, n=-1, plot_kwargs=dict(label=None))
 
     # +/- std fn
-    _plot_nth_std_frequency_range(ax=ax, hvsr=hvsr, distribution=distribution_fn, n=+1)
+    if plot_fn:
+        _plot_nth_std_frequency_range(ax=ax, hvsr=hvsr, distribution=distribution_fn, n=+1)
 
     ax.set_xscale("log")
     ax.set_xlabel("Frequency (Hz)")
