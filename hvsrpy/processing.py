@@ -56,7 +56,7 @@ def preprocess(records, settings):
             msg += f"dt_in_seconds of record {idx} is "
             msg += f"{srecord3c.vt.dt_in_seconds} which does not match "
             msg += f"dt_in_seconds of record 0 of {ex_dt}."
-            raise warnings.warn(msg)
+            warnings.warn(msg)
 
         # orient receiver to north.
         if settings.orient_to_degrees_from_north is not None:
