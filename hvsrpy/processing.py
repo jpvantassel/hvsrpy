@@ -25,15 +25,16 @@ from .hvsr_azimuthal import HvsrAzimuthal
 from .hvsr_diffuse_field import HvsrDiffuseField
 from .timeseries import TimeSeries
 from .settings import HvsrTraditionalSingleAzimuthProcessingSettings
+from .seismic_recording_3c import SeismicRecording3C
 
 
 def preprocess(records, settings):
     """Preprocess time domain data before performing HVSR calculations.
 
-    records: iterable of SeismicRecording3C
-        Time-domain data in the form of an iterable object containing
-        ``SeismicRecording3C`` objects. This is the data that will be
-        preprocessed.
+    records: SeismicRecording3C or iterable of SeismicRecording3C
+        Time-domain data as an ``SeismicRecording3C`` object or iterable
+        object containing ``SeismicRecording3C`` objects. This is the
+        data that will be preprocessed.
     settings : HvsrPreProcessingSettings
         ``HvsrPreProcessingSettings`` object that controls how the
         time-domain data will be preprocessed.
@@ -46,6 +47,9 @@ def preprocess(records, settings):
 
     """
     preprocessed_records = []
+
+    if isinstance(records, SeismicRecording3C):
+        records = [records]
 
     ex_dt = records[0].vt.dt_in_seconds
     for idx, srecord3c in enumerate(records):
