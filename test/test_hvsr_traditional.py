@@ -77,8 +77,8 @@ class TestHvsrTraditional(TestCase):
         self.assertArrayEqual(expected, returned)
 
     def test_hvsrtraditional_peak_frequency_with_rejection(self):
-        hvsr = hvsrpy.HvsrTraditional(self.frequency, self.amplitude,
-                                      search_range_in_hz=(2.6, None))
+        hvsr = hvsrpy.HvsrTraditional(self.frequency, self.amplitude)
+        hvsr.update_peaks_bounded(search_range_in_hz=(2.6, None))
         expected = np.array([4., 5])
         returned = hvsr.peak_frequencies
         self.assertArrayEqual(expected, returned)
@@ -89,8 +89,8 @@ class TestHvsrTraditional(TestCase):
         self.assertArrayEqual(expected, returned)
 
     def test_hvsrtraditional_peak_amplitude_with_rejection(self):
-        hvsr = hvsrpy.HvsrTraditional(self.frequency, self.amplitude,
-                                      search_range_in_hz=(2.9, None))
+        hvsr = hvsrpy.HvsrTraditional(self.frequency, self.amplitude)
+        hvsr.update_peaks_bounded(search_range_in_hz=(2.9, None))
         expected = np.array([5., 6])
         returned = hvsr.peak_amplitudes
         self.assertArrayEqual(expected, returned)
@@ -252,8 +252,8 @@ class TestHvsrTraditional(TestCase):
         new_amplitude = np.array(self.amplitude, dtype=float)
         new_amplitude[0, 1] += 0.1
         g = hvsrpy.HvsrTraditional(self.frequency, new_amplitude)
-        h = hvsrpy.HvsrTraditional(self.frequency, self.amplitude,
-                                   search_range_in_hz=(2.5, None))
+        h = hvsrpy.HvsrTraditional(self.frequency, self.amplitude)
+        h.update_peaks_bounded(search_range_in_hz=(2.5, None))
 
         self.assertTrue(a == b)
         self.assertTrue(a.is_similar(b))

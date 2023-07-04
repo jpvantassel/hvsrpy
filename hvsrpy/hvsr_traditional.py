@@ -21,7 +21,7 @@ import logging
 
 import numpy as np
 
-from .statistics import _nanmean_weighted, _nanstd_weighted,_nth_std_factory, DISTRIBUTION_MAP
+from .statistics import _nanmean_weighted, _nanstd_weighted, _nth_std_factory, DISTRIBUTION_MAP
 from .hvsr_curve import HvsrCurve
 
 logger = logging.getLogger(__name__)
@@ -52,9 +52,7 @@ class HvsrTraditional():
 
     """
 
-    def __init__(self, frequency, amplitude,
-                 search_range_in_hz=(None, None),
-                 find_peaks_kwargs=None, meta=None):
+    def __init__(self, frequency, amplitude, meta=None):
         """Create ``HvsrTraditional`` from amplitude and frequency.
 
         Parameters
@@ -66,15 +64,6 @@ class HvsrTraditional():
         frequency : ndarray
             Vector of frequencies, corresponding to each column of
             ``amplitude``.
-        search_range_in_hz : tuple, optional
-            Frequency range to be searched for peaks.
-            Half open ranges can be specified with ``None``, default is
-            ``(None, None)`` indicating the full frequency range will be
-            searched.
-        find_peaks_kwargs : dict
-            Keyword arguments for the ``scipy`` function
-            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details.
         meta : dict, optional
             Meta information about the object, default is ``None``.
 
@@ -99,8 +88,9 @@ class HvsrTraditional():
 
         self._main_peak_frq = np.empty(self.n_curves)
         self._main_peak_amp = np.empty(self.n_curves)
-        self._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
-                                   find_peaks_kwargs=find_peaks_kwargs)
+        self._search_range_in_hz = "default_overwritten_below"
+        self._find_peaks_kwargs = "default_overwritten_below"
+        self.update_peaks_bounded()
 
     @ classmethod
     def from_hvsr_curves(cls, hvsr_curves, meta=None):
@@ -142,11 +132,8 @@ class HvsrTraditional():
         """Valid peak amplitude vector, one per window or earthquake recording."""
         return self._main_peak_amp[self.valid_peak_boolean_mask]
 
-    def _update_peaks_bounded(self, search_range_in_hz=(None, None), find_peaks_kwargs=None):
+    def update_peaks_bounded(self, search_range_in_hz=(None, None), find_peaks_kwargs=None):
         """Update peak associated with each HVSR curve, can be over bounded range.
-
-        .. warning::
-            Private methods are subject to change without warning.
 
         Parameters
         ----------
@@ -166,15 +153,18 @@ class HvsrTraditional():
             Updates internal peak-related attributes.
 
         """
-        if find_peaks_kwargs is None:
-            find_peaks_kwargs = {}
+        if (search_range_in_hz == self._search_range_in_hz) and (find_peaks_kwargs == self._find_peaks_kwargs):
+            return
+        else:
+            self._search_range_in_hz = tuple(search_range_in_hz)
+            self._find_peaks_kwargs = {} if find_peaks_kwargs is None else dict(find_peaks_kwargs)
 
         all_curves_flat = True
         for _idx, _amplitude in enumerate(self.amplitude):
             (f_peak, a_peak) = HvsrCurve._find_peak_bounded(self.frequency,
                                                             _amplitude,
-                                                            search_range_in_hz=search_range_in_hz,
-                                                            find_peaks_kwargs=find_peaks_kwargs)
+                                                            search_range_in_hz=self._search_range_in_hz,
+                                                            find_peaks_kwargs=self._find_peaks_kwargs)
 
             if f_peak is None:
                 logger.info(f"No peak found in window {_idx}.")
@@ -374,26 +364,13 @@ class HvsrTraditional():
             msg += "not defined for a single window."
             raise ValueError(msg)
 
-    # TODO(jpv): Replace **kwargs here (and elsewhere).
-    def mean_curve_peak(self, distribution="lognormal",
-                        search_range_in_hz=(None, None),
-                        find_peaks_kwargs=None):
+    def mean_curve_peak(self, distribution="lognormal"):
         """Frequency and amplitude of the peak of the mean HVSR curve.
 
         Parameters
         ----------
         distribution : {"normal", "lognormal"}, optional
             Assumed distribution of HVSR curve, default is ``"lognormal"``.
-        search_range_in_hz : tuple, optional
-            Frequency range to be searched for peaks.
-            Half open ranges can be specified with ``None``, default is
-            ``(None, None)`` indicating the full frequency range will be
-            searched.
-        find_peaks_kwargs : dict
-            Keyword arguments for the ``scipy`` function
-            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details, default is ``None``
-            indicating defaults will be used.
 
         Returns
         -------
@@ -406,8 +383,8 @@ class HvsrTraditional():
         amplitude = self.mean_curve(distribution)
         f_peak, a_peak = HvsrCurve._find_peak_bounded(self.frequency,
                                                       amplitude,
-                                                      search_range_in_hz=search_range_in_hz,
-                                                      find_peaks_kwargs=find_peaks_kwargs)
+                                                      search_range_in_hz=self._search_range_in_hz,
+                                                      find_peaks_kwargs=self._find_peaks_kwargs)
 
         if f_peak is None or a_peak is None:
             msg = "Mean curve does not have a peak in the specified range."
@@ -433,9 +410,9 @@ class HvsrTraditional():
 
         """
         return _nth_std_factory(n,
-                               distribution,
-                               self.mean_fn_frequency(distribution),
-                               self.std_fn_frequency(distribution))
+                                distribution,
+                                self.mean_fn_frequency(distribution),
+                                self.std_fn_frequency(distribution))
 
     def nth_std_fn_amplitude(self, n, distribution="lognormal"):
         """Value n standard deviations from mean ``fn`` amplitude.
@@ -455,9 +432,9 @@ class HvsrTraditional():
 
         """
         return _nth_std_factory(n,
-                               distribution,
-                               self.mean_fn_amplitude(distribution),
-                               self.std_fn_amplitude(distribution))
+                                distribution,
+                                self.mean_fn_amplitude(distribution),
+                                self.std_fn_amplitude(distribution))
 
     def nth_std_curve(self, n, distribution="lognormal"):
         """nth standard deviation curve.
@@ -476,9 +453,9 @@ class HvsrTraditional():
 
         """
         return _nth_std_factory(n,
-                               distribution,
-                               self.mean_curve(distribution),
-                               self.std_curve(distribution))
+                                distribution,
+                                self.mean_curve(distribution),
+                                self.std_curve(distribution))
 
     def is_similar(self, other):
         """Determine if ``other`` is similar to ``self``."""

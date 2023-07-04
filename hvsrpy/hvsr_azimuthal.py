@@ -70,8 +70,7 @@ class HvsrAzimuthal():
 
         return (hvsr, azimuth)
 
-    def __init__(self, hvsrs, azimuths, search_range_in_hz=(None, None),
-                 find_peaks_kwargs=None, meta=None):
+    def __init__(self, hvsrs, azimuths, meta=None):
         """``HvsrAzimuthal`` from iterable of ``HvsrTraditional`` objects.
 
         Parameters
@@ -81,15 +80,6 @@ class HvsrAzimuthal():
         azimuths : float
             Rotation angles in degrees measured clockwise positive from
             north (i.e., 0 degrees), one per ``HvsrTraditional``.
-        search_range_in_hz : tuple, optional
-            Frequency range to be searched for peaks.
-            Half open ranges can be specified with ``None``, default is
-            ``(None, None)`` indicating the full frequency range will be
-            searched.
-        find_peaks_kwargs : dict
-            Keyword arguments for the ``scipy`` function
-            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details.
         meta : dict, optional
             Meta information about the object, default is ``None``.
 
@@ -109,17 +99,20 @@ class HvsrAzimuthal():
                 msg += f"is not similar to hvsrs[{_idx}]"
                 raise ValueError(msg)
             self.hvsrs.append(HvsrTraditional(hvsr.frequency, hvsr.amplitude,
-                                              search_range_in_hz=search_range_in_hz,
-                                              find_peaks_kwargs=find_peaks_kwargs,
                                               meta=hvsr.meta))
             self.azimuths.append(azimuth)
         self.meta = dict(meta) if isinstance(meta, dict) else dict()
 
-    def _update_peaks_bounded(self, search_range_in_hz=(None, None), find_peaks_kwargs=None):
-        """Update peaks associated with each HVSR curve, can be over bounded range.
+    @property
+    def _search_range_in_hz(self):
+        return self.hvsrs[0]._search_range_in_hz
+    
+    @property
+    def _find_peaks_kwargs(self):
+        return self.hvsrs[0]._find_peaks_kwargs
 
-        .. warning::
-            Private methods are subject to change without warning.
+    def update_peaks_bounded(self, search_range_in_hz=(None, None), find_peaks_kwargs=None):
+        """Update peaks associated with each HVSR curve, can be over bounded range.
 
         Parameters
         ----------
@@ -140,8 +133,8 @@ class HvsrAzimuthal():
 
         """
         for hvsr in self.hvsrs:
-            hvsr._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
-                                       find_peaks_kwargs=find_peaks_kwargs)
+            hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
+                                      find_peaks_kwargs=find_peaks_kwargs)
 
     @property
     def peak_frequencies(self):
@@ -334,24 +327,13 @@ class HvsrAzimuthal():
             array[_idx, :] = hvsr.mean_curve(distribution=distribution)
         return array
 
-    def mean_curve_peak_by_azimuth(self, distribution="lognormal",
-                                   search_range_in_hz=(None, None),
-                                   find_peaks_kwargs=None):
+    def mean_curve_peak_by_azimuth(self, distribution="lognormal"):
         """Peak from each mean curve, one per azimuth.
 
         Parameters
         ----------
         distribution : {"normal", "lognormal"}, optional
             Assumed distribution of mean curve, default is ``"lognormal"``.
-        search_range_in_hz : tuple, optional
-            Frequency range to be searched for peaks.
-            Half open ranges can be specified with ``None``, default is
-            ``(None, None)`` indicating the full frequency range will be
-            searched.
-        find_peaks_kwargs : dict
-            Keyword arguments for the ``scipy`` function
-            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details.
 
         Returns
         -------
@@ -364,9 +346,7 @@ class HvsrAzimuthal():
         peak_frequencies = np.empty(self.n_azimuths)
         peak_amplitudes = np.empty(self.n_azimuths)
         for _idx, hvsr in enumerate(self.hvsrs):
-            f_peak, a_peak = hvsr.mean_curve_peak(distribution=distribution,
-                                                  search_range_in_hz=search_range_in_hz,
-                                                  find_peaks_kwargs=find_peaks_kwargs)
+            f_peak, a_peak = hvsr.mean_curve_peak(distribution=distribution)
             peak_frequencies[_idx] = f_peak
             peak_amplitudes[_idx] = a_peak
         return (peak_frequencies, peak_amplitudes)
@@ -461,29 +441,17 @@ class HvsrAzimuthal():
         """nth standard deviation on amplitude of ``fn`` considering all
         valid windows across all azimuths."""
         return _nth_std_factory(n=n,
-                               distribution=distribution,
-                               mean=self.mean_fn_amplitude(distribution=distribution),
-                               std=self.std_fn_amplitude(distribution=distribution))
+                                distribution=distribution,
+                                mean=self.mean_fn_amplitude(distribution=distribution),
+                                std=self.std_fn_amplitude(distribution=distribution))
 
-    def mean_curve_peak(self,
-                        distribution="lognormal",
-                        search_range_in_hz=(None, None),
-                        find_peaks_kwargs=None):
+    def mean_curve_peak(self, distribution="lognormal"):
         """Frequency and amplitude of the peak of the mean HVSR curve.
 
         Parameters
         ----------
         distribution : {"normal", "lognormal"}, optional
             Assumed distribution of HVSR curve, default is ``"lognormal"``.
-        search_range_in_hz : tuple, optional
-            Frequency range to be searched for peaks.
-            Half open ranges can be specified with ``None``, default is
-            ``(None, None)`` indicating the full frequency range will be
-            searched.
-        find_peaks_kwargs : dict
-            Keyword arguments for the ``scipy`` function
-            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details.    
 
         Returns
         -------
@@ -496,8 +464,8 @@ class HvsrAzimuthal():
         amplitude = self.mean_curve(distribution)
         f_peak, a_peak = HvsrCurve._find_peak_bounded(self.frequency,
                                                       amplitude,
-                                                      search_range_in_hz=search_range_in_hz,
-                                                      find_peaks_kwargs=find_peaks_kwargs)
+                                                      search_range_in_hz=self._search_range_in_hz,
+                                                      find_peaks_kwargs=self._find_peaks_kwargs)
 
         if f_peak is None or a_peak is None: # pragma: no cover
             msg = "Mean curve does not have a peak in the specified range."

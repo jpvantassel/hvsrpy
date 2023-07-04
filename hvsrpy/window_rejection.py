@@ -217,7 +217,7 @@ def frequency_domain_window_rejection(hvsr,
 
     max_performed_iterations = 0
     for hvsr in hvsrs:
-        hvsr._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
+        hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
                                    find_peaks_kwargs=find_peaks_kwargs)
         iterations = _frequency_domain_window_rejection(hvsr=hvsr,
                                                         n=n,
@@ -355,7 +355,7 @@ def manual_window_rejection(hvsr,
     if find_peaks_kwargs is None:
         find_peaks_kwargs = {}
 
-    hvsr._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
+    hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
                                find_peaks_kwargs=find_peaks_kwargs)
 
     # plot hvsr.
@@ -385,8 +385,8 @@ def manual_window_rejection(hvsr,
                 if np.any(np.logical_and(amplitude > min(ys), amplitude < max(ys))):
                     was_empty = False
                     hvsr.valid_window_boolean_mask[idx] = False
-        hvsr._update_peaks_bounded(search_range_in_hz=search_range_in_hz,
-                                   find_peaks_kwargs=find_peaks_kwargs)
+        hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
+                                  find_peaks_kwargs=find_peaks_kwargs)
 
         # Clear, set axis limits, and lock axis.
         ax.clear()
