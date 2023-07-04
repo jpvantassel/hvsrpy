@@ -176,39 +176,46 @@ def prepare_records_with_inconsistent_dt(records, settings):
 
     elif settings.handle_dissimilar_time_steps_by == "keeping_smallest_time_step":
         smallest_dt = min(dt_with_count.keys())
-        _records = []
+        abbr_records = []
         count = 0
         for record in records:
             if record.ns.dt_in_seconds == smallest_dt:
-                _records.append(record)
+                abbr_records.append(record)
                 count += 1
                 if count == dt_with_count[smallest_dt]:
                     break
-        msg = "Keeping the smallest time step resulting in the removal of "
-        msg += f"{len(records) - len(_records)} of {len(records)} records. "
-        msg += f"{len(_records)} records remain."
-        warnings.warn(msg)
-        return records, {smallest_dt: count}
+
+        if (len(records) - len(abbr_records)) > 0:
+            msg = "Keeping the smallest time step resulting in the removal of "
+            msg += f"{len(records) - len(abbr_records)} of {len(records)} records. "
+            msg += f"{len(abbr_records)} records remain."
+            warnings.warn(msg)
+
+        return abbr_records, {smallest_dt: count}
 
     elif settings.handle_dissimilar_time_steps_by == "keeping_majority_time_step":
         majority_count = 0
-        for potential_dt, count in dt_with_count.items():
-            if count > majority_count:
+        for potential_dt, potential_count in dt_with_count.items():
+            if potential_count > majority_count:
                 majority_dt = potential_dt
-                majority_count = count
-        _records = []
+                majority_count = potential_count
+
+        abbr_records = []
         count = 0
         for record in records:
             if record.ns.dt_in_seconds == majority_dt:
-                _records.append(record)
+                abbr_records.append(record)
                 count += 1
-                if majority_count == dt_with_count[majority_dt]:
+                if count == majority_count:
                     break
-        msg = "Keeping the majority time step resulting in the removal of "
-        msg += f"{len(records) - len(_records)} of {len(records)} records. "
-        msg += f"{len(_records)} records remain."
-        warnings.warn(msg)
-        return records, {majority_dt, majority_count}
+
+        if (len(records) - len(abbr_records)) > 0:
+            msg = "Keeping the majority time step resulting in the removal of "
+            msg += f"{len(records) - len(abbr_records)} of {len(records)} records. "
+            msg += f"{len(abbr_records)} records remain."
+            warnings.warn(msg)
+
+        return abbr_records, {majority_dt: majority_count}
 
 def check_nyquist_frequency(dt, user_frq):
     # check resampling does not violate the Nyquist.
