@@ -38,68 +38,68 @@ class TestProcessing(TestCase):
         cls.earthquake_record = hvsrpy.SeismicRecording3C.load(fname)
         cls.earthquake_records = [cls.earthquake_record]*2
 
-    # def test_preprocess_w_ambient_noise(self):
-    #     settings = hvsr_settings.HvsrPreProcessingSettings()
-    #     settings.window_length_in_seconds = 60
-    #     preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
-    #     self.assertAlmostEqual(preprocessed_records[0].vt.time()[-1], 60.)
-    #     self.assertTrue(len(preprocessed_records) == 60)
+    def test_preprocess_w_ambient_noise(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 60
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        self.assertAlmostEqual(preprocessed_records[0].vt.time()[-1], 60.)
+        self.assertTrue(len(preprocessed_records) == 60)
 
-    # def test_preprocess_w_earthquake_records(self):
-    #     settings = hvsr_settings.HvsrPreProcessingSettings()
-    #     settings.window_length_in_seconds = None
-    #     preprocessed_records = hvsrpy.preprocess(self.earthquake_records, settings)
-    #     self.assertTrue(len(preprocessed_records) == 2)
+    def test_preprocess_w_earthquake_records(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = None
+        preprocessed_records = hvsrpy.preprocess(self.earthquake_records, settings)
+        self.assertTrue(len(preprocessed_records) == 2)
 
-    # def test_process_traditional_default(self):
-    #     settings = hvsr_settings.HvsrPreProcessingSettings()
-    #     settings.window_length_in_seconds = 360
-    #     preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
-    #     settings = hvsr_settings.HvsrTraditionalProcessingSettings()
-    #     results = hvsrpy.process(preprocessed_records, settings)
-    #     self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
+    def test_process_traditional_default(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 360
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrTraditionalProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
 
-    # def test_process_traditional_w_custom_horizontals(self):
-    #     settings = hvsr_settings.HvsrPreProcessingSettings()
-    #     settings.window_length_in_seconds = 360
-    #     preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
-    #     settings = hvsr_settings.HvsrTraditionalProcessingSettings()
-    #     for key in COMBINE_HORIZONTAL_REGISTER:
-    #         settings.method_to_combine_horizontals = key
-    #         results = hvsrpy.process(preprocessed_records, settings)
-    #         self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
+    def test_process_traditional_w_custom_horizontals(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 360
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrTraditionalProcessingSettings()
+        for key in COMBINE_HORIZONTAL_REGISTER:
+            settings.method_to_combine_horizontals = key
+            results = hvsrpy.process(preprocessed_records, settings)
+            self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
 
-    # def test_process_traditional_single_azimuth(self):
-    #     settings = hvsr_settings.HvsrPreProcessingSettings()
-    #     settings.window_length_in_seconds = 360
-    #     preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
-    #     settings = hvsr_settings.HvsrTraditionalSingleAzimuthProcessingSettings()
-    #     results = hvsrpy.process(preprocessed_records, settings)
-    #     self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
+    def test_process_traditional_single_azimuth(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 360
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrTraditionalSingleAzimuthProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
 
-    # def test_process_traditional_rotdpp(self):
-    #     settings = hvsr_settings.HvsrPreProcessingSettings()
-    #     settings.window_length_in_seconds = 120
-    #     preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
-    #     settings = hvsr_settings.HvsrTraditionalRotDppProcessingSettings()
-    #     results = hvsrpy.process(preprocessed_records, settings)
-    #     self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
+    def test_process_traditional_rotdpp(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 120
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrTraditionalRotDppProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrTraditional))
 
-    # def test_process_azimuthal(self):
-    #     settings = hvsr_settings.HvsrPreProcessingSettings()
-    #     settings.window_length_in_seconds = 120
-    #     preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
-    #     settings = hvsr_settings.HvsrAzimuthalProcessingSettings()
-    #     results = hvsrpy.process(preprocessed_records, settings)
-    #     self.assertTrue(isinstance(results, hvsrpy.HvsrAzimuthal))
+    def test_process_azimuthal(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 120
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrAzimuthalProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrAzimuthal))
 
-    # def test_process_diffuse_field(self):
-    #     settings = hvsr_settings.HvsrPreProcessingSettings()
-    #     settings.window_length_in_seconds = 120
-    #     preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
-    #     settings = hvsr_settings.HvsrDiffuseFieldProcessingSettings()
-    #     results = hvsrpy.process(preprocessed_records, settings)
-    #     self.assertTrue(isinstance(results, hvsrpy.HvsrDiffuseField))
+    def test_process_diffuse_field(self):
+        settings = hvsr_settings.HvsrPreProcessingSettings()
+        settings.window_length_in_seconds = 120
+        preprocessed_records = hvsrpy.preprocess(self.ambient_noise_records, settings)
+        settings = hvsr_settings.HvsrDiffuseFieldProcessingSettings()
+        results = hvsrpy.process(preprocessed_records, settings)
+        self.assertTrue(isinstance(results, hvsrpy.HvsrDiffuseField))
 
     def test_process_compare_single_azimuth_and_azimithal(self):
         settings = hvsr_settings.HvsrPreProcessingSettings()
