@@ -330,7 +330,7 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
 
             # window time series to mitigate frequency-domain artifacts.
             h.window(*settings.window_type_and_width)
-            v = record.vt
+            v = TimeSeries.from_timeseries(record.vt)
             v.window(*settings.window_type_and_width)
 
             # compute fourier transform.
@@ -341,8 +341,7 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
 
         # smooth each dt group at once to boost performance.
         smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-        smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](
-            fft_frq, raw_spectra, user_frq, bandwidth)
+        smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, raw_spectra, user_frq, bandwidth)
 
         # compute hvsr.
         hvsr_spectra[hvsr_idx:hvsr_idx+count] = smooth_spectra[:count] / smooth_spectra[count:]
@@ -383,7 +382,7 @@ def traditional_rotdpp_hvsr_processing(records, settings):
             cur_idx += 1
 
             # prepare vertical component only once per record.
-            v = record.vt
+            v = TimeSeries.from_timeseries(record.vt)
             v.window(*settings.window_type_and_width)
             fft_v = np.abs(rfft(v.amplitude, **settings.fft_settings))
             raw_spectra_per_record[-1] = fft_v
@@ -434,10 +433,9 @@ TRADITIONAL_PROCESSING_REGISTER = {
 
 
 def traditional_hvsr_processing_base(records, settings):
-    # need to handle this seperately b/c time domain technique
+    # need to handle this separately b/c time domain technique
     method = TRADITIONAL_PROCESSING_REGISTER[settings.method_to_combine_horizontals]
     return method(records, settings)
-
 
 def azimuthal_hvsr_processing(records, settings):
     prepare_fft_setttings(records, settings)
