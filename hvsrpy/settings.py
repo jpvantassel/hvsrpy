@@ -99,6 +99,17 @@ class Settings(ABC):
         with open(fname, "r") as f:
             attr_dict = json.load(f)
         return cls(**attr_dict)
+    
+    def psummary(self):
+        for key, value in self.attr_dict.items():
+            if isinstance(value, dict):
+                print(f"{key: <40} :")
+                for key, value in value.items():
+                    if len(str(value)) > 40:
+                        value = f"{str(value)[0:20]} ... {str(value)[-20:]}"
+                    print(f"     {key: <35} : {value}")
+            else:
+                print(f"{key: <40} : {value}")
 
     def __str__(self):
         """String representation of ``Settings`` object."""
@@ -110,7 +121,7 @@ class Settings(ABC):
         return f"{type(self).__name__}({kwargs})"
 
 
-class HvsrPreProcessingSettings(Settings):
+class PreProcessingSettings(Settings):
 
     def __init__(self,
                  hvsrpy_version=__version__,
@@ -118,10 +129,9 @@ class HvsrPreProcessingSettings(Settings):
                  filter_corner_frequencies_in_hz=(None, None),
                  window_length_in_seconds=60.,
                  detrend="linear",
-                 ignore_dissimilar_time_step_warning=False
+                 ignore_dissimilar_time_step_warning=False,
                  ):
-
-        """Initialize ``HvsrPreProcessingSettings`` object.
+        """Initialize ``PreProcessingSettings`` object.
 
         Parameters
         ----------
@@ -149,7 +159,7 @@ class HvsrPreProcessingSettings(Settings):
             result of a linear least-squares fit to data is subtracted
             from data. If ``detrend == "constant"``, only the mean of data
             is subtracted. If ``detrend == "none"``, no detrend is
-            performed.
+            performed. Detrend is done on a window-by-window basis.
         ignore_dissimilar_time_step_warning : bool, optional
             If ``True`` will not raise a warning if records have
             different time steps, default is False (i.e., a warning will
@@ -157,10 +167,10 @@ class HvsrPreProcessingSettings(Settings):
 
         Returns
         -------
-        HvsrPreProcessingSettings
+        PreProcessingSettings
             Object contains all user-defined settings to control
             preprocessing of microtremor or earthquake recordings
-            in preparation for HVSR processing.
+            in preparation for processing.
 
         """
         super().__init__(hvsrpy_version=hvsrpy_version)
@@ -168,25 +178,146 @@ class HvsrPreProcessingSettings(Settings):
                            "filter_corner_frequencies_in_hz",
                            "window_length_in_seconds",
                            "detrend",
-                           "ignore_dissimilar_time_step_warning"])
+                           "ignore_dissimilar_time_step_warning",
+                           ])
         self.orient_to_degrees_from_north = orient_to_degrees_from_north
         self.filter_corner_frequencies_in_hz = filter_corner_frequencies_in_hz
         self.window_length_in_seconds = window_length_in_seconds
         self.detrend = detrend
         self.ignore_dissimilar_time_step_warning = ignore_dissimilar_time_step_warning
 
+class HvsrPreProcessingSettings(PreProcessingSettings):
+    def __init__(self,
+                 hvsrpy_version=__version__,
+                 orient_to_degrees_from_north=0.,
+                 filter_corner_frequencies_in_hz=(None, None),
+                 window_length_in_seconds=60.,
+                 detrend="linear",
+                 ignore_dissimilar_time_step_warning=False,
+                 preprocessing_method="hvsr",
+                 ):
+        super().__init__(hvsrpy_version=hvsrpy_version,
+                         orient_to_degrees_from_north=orient_to_degrees_from_north,
+                         filter_corner_frequencies_in_hz=filter_corner_frequencies_in_hz,
+                         window_length_in_seconds=window_length_in_seconds,
+                         detrend=detrend,
+                         ignore_dissimilar_time_step_warning=ignore_dissimilar_time_step_warning)
+        self.attrs.extend(["preprocessing_method"])
+        self.preprocessing_method = preprocessing_method
+
+
+class PsdPreProcessingSettings(PreProcessingSettings):
+    def __init__(self,
+                 hvsrpy_version=__version__,
+                 orient_to_degrees_from_north=0.,
+                 filter_corner_frequencies_in_hz=(None, None),
+                 window_length_in_seconds=60.,
+                 detrend="linear",
+                 ignore_dissimilar_time_step_warning=False,
+                 window_type_and_width=("tukey", 0.1),
+                 fft_settings=None,
+                 instrument_transfer_function=False,
+                 differentiate=False,
+                 preprocessing_method="psd",
+                 ):
+        """Initialize ``PsdPreProcessing`` object.
+
+        Parameters
+        ----------
+
+
+        instrument_transfer_function : InstrumentTransferFunction, optional
+            If the sensor's frequency response is provided it will be
+            removed, default is ``None`` meaning no instrument
+            correction is performed.
+        differentiate : bool, optional
+            If ``True`` the provided signal will be differentiated,
+            default is ``False``.
+
+        Returns
+        -------
+        PsdPreProcessingSettings
+            Object contains all user-defined settings to control
+            preprocessing of microtremor or earthquake recordings
+            in preparation for processing.
+
+        """
+        super().__init__(hvsrpy_version=hvsrpy_version,
+                         orient_to_degrees_from_north=orient_to_degrees_from_north,
+                         filter_corner_frequencies_in_hz=filter_corner_frequencies_in_hz,
+                         window_length_in_seconds=window_length_in_seconds,
+                         detrend=detrend,
+                         ignore_dissimilar_time_step_warning=ignore_dissimilar_time_step_warning)
+        self.attrs.extend(["window_type_and_width",
+                           "fft_settings",
+                           "instrument_transfer_function",
+                           "differentiate",
+                           "preprocessing_method",
+                           ])
+        self.window_type_and_width = window_type_and_width,
+        self.fft_settings = fft_settings
+        self.instrument_transfer_function = instrument_transfer_function
+        self.differentiate = differentiate
+        self.preprocessing_method = preprocessing_method
+
+
+class PsdProcessingSettings(Settings):
+
+    def __init__(self,
+                 hvsrpy_version=__version__,
+                 window_type_and_width=("tukey", 0.1),
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                 fft_settings=None,
+                 handle_dissimilar_time_steps_by="keeping_majority_time_step",
+                 processing_method="psd",
+                 ):
+        """Initialize ``PsdProcessingSettings`` object.
+
+        Parameters
+        ----------
+        hvsrpy_version : str
+            Denotes the version of ``hvsrpy`` used to create the
+            ``Settings`` object.
+        window_type_and_width : tuple, optional
+            A tuple with entries like ``("tukey", 0.1)``.
+        smoothing : dict, optional
+            Smoothing information like ``dict(operator="konno_and_ohmachi",
+            bandwidth=40, center_frequency_in_hz=np.geomspace(0.1, 50, 200))``.
+        fft_settings : dict or None, optional
+            Custom settings for ``np.fft.rfft`` default is ``None``.
+        handle_dissimilar_time_steps_by : {"frequency_domain_resampling", "keeping_smallest_time_step", "keeping_majority_time_step"}, optional
+            Method to resolve multiple records with a different
+            time step, default is ``"keeping_majority_time_step"``.
+
+        """
+        super().__init__(hvsrpy_version=hvsrpy_version)
+        self.attrs.extend(["window_type_and_width",
+                           "smoothing",
+                           "fft_settings",
+                           "handle_dissimilar_time_steps_by",
+                           "processing_method"
+                           ])
+        self.window_type_and_width = window_type_and_width
+        self.fft_settings = fft_settings
+        self.smoothing = dict(smoothing)
+        self.handle_dissimilar_time_steps_by = handle_dissimilar_time_steps_by
+        self.processing_method = processing_method
 
 # TODO(jpv): Finish documenting settings module.
+
 class HvsrProcessingSettings(Settings):
 
     def __init__(self,
                  hvsrpy_version=__version__,
                  window_type_and_width=("tukey", 0.1),
-                 smoothing_operator_and_bandwidth=("konno_and_ohmachi", 40,),
-                 frequency_resampling_in_hz=np.geomspace(0.1, 50, 200),
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
                  fft_settings=None,
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
-                ):
+                 ):
         """Initialize ``HvsrProcessingSettings`` object.
 
         Parameters
@@ -196,10 +327,9 @@ class HvsrProcessingSettings(Settings):
             ``Settings`` object.
         window_type_and_width : tuple, optional
             A tuple with entries like ``("tukey", 0.1)``.
-        smoothing_operator_and_bandwidth : tuple, optional
-            A tuple with entries like ``("konno_and_ohmachi", 40,)``.
-        frequency_resampling_in_hz : ndarray, optional
-            An array of frequencies like ``np.geomspace(0.1, 50, 200)``.
+        smoothing : dict, optional
+            Smoothing information like ``dict(operator="konno_and_ohmachi",
+            bandwidth=40, center_frequency_in_hz=np.geomspace(0.1, 50, 200))``.
         fft_settings : dict or None, optional
             Custom settings for ``np.fft.rfft`` default is ``None``.
         handle_dissimilar_time_steps_by : {"frequency_domain_resampling", "keeping_smallest_time_step", "keeping_majority_time_step"}, optional
@@ -209,23 +339,24 @@ class HvsrProcessingSettings(Settings):
         """
         super().__init__(hvsrpy_version=hvsrpy_version)
         self.attrs.extend(["window_type_and_width",
-                           "smoothing_operator_and_bandwidth",
+                           "smoothing",
                            "frequency_resampling_in_hz",
                            "fft_settings",
                            "handle_dissimilar_time_steps_by",
                            ])
         self.window_type_and_width = window_type_and_width
-        self.smoothing_operator_and_bandwidth = smoothing_operator_and_bandwidth
-        self.frequency_resampling_in_hz = np.array(frequency_resampling_in_hz)
+        self.smoothing = dict(smoothing)
         self.fft_settings = fft_settings
         self.handle_dissimilar_time_steps_by = handle_dissimilar_time_steps_by
+
 
 class HvsrTraditionalProcessingSettingsBase(HvsrProcessingSettings):
 
     def __init__(self, hvsrpy_version=__version__,
                  window_type_and_width=("tukey", 0.1),
-                 smoothing_operator_and_bandwidth=("konno_and_ohmachi", 40,),
-                 frequency_resampling_in_hz=np.geomspace(0.1, 50, 200),
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="traditional",
@@ -233,8 +364,7 @@ class HvsrTraditionalProcessingSettingsBase(HvsrProcessingSettings):
 
         super().__init__(hvsrpy_version=hvsrpy_version,
                          window_type_and_width=window_type_and_width,
-                         smoothing_operator_and_bandwidth=smoothing_operator_and_bandwidth,
-                         frequency_resampling_in_hz=frequency_resampling_in_hz,
+                         smoothing=smoothing,
                          handle_dissimilar_time_steps_by=handle_dissimilar_time_steps_by,
                          fft_settings=fft_settings)
         self.attrs.extend(["processing_method"])
@@ -245,8 +375,9 @@ class HvsrTraditionalProcessingSettings(HvsrTraditionalProcessingSettingsBase):
 
     def __init__(self, hvsrpy_version=__version__,
                  window_type_and_width=("tukey", 0.1),
-                 smoothing_operator_and_bandwidth=("konno_and_ohmachi", 40,),
-                 frequency_resampling_in_hz=np.geomspace(0.1, 50, 200),
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="traditional",
@@ -255,8 +386,7 @@ class HvsrTraditionalProcessingSettings(HvsrTraditionalProcessingSettingsBase):
 
         super().__init__(hvsrpy_version=hvsrpy_version,
                          window_type_and_width=window_type_and_width,
-                         smoothing_operator_and_bandwidth=smoothing_operator_and_bandwidth,
-                         frequency_resampling_in_hz=frequency_resampling_in_hz,
+                         smoothing=smoothing,
                          handle_dissimilar_time_steps_by=handle_dissimilar_time_steps_by,
                          fft_settings=fft_settings,
                          processing_method=processing_method)
@@ -268,24 +398,24 @@ class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSe
 
     def __init__(self, hvsrpy_version=__version__,
                  window_type_and_width=("tukey", 0.1),
-                 smoothing_operator_and_bandwidth=("konno_and_ohmachi", 40,),
-                 frequency_resampling_in_hz=np.geomspace(0.1, 50, 200),
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="traditional",
                  method_to_combine_horizontals="single_azimuth",
                  azimuth_in_degrees=20.,
-                ):
+                 ):
         super().__init__(hvsrpy_version=hvsrpy_version,
                          window_type_and_width=window_type_and_width,
-                         smoothing_operator_and_bandwidth=smoothing_operator_and_bandwidth,
-                         frequency_resampling_in_hz=frequency_resampling_in_hz,
+                         smoothing=smoothing,
                          handle_dissimilar_time_steps_by=handle_dissimilar_time_steps_by,
                          fft_settings=fft_settings,
                          processing_method=processing_method)
         self.attrs.extend(["method_to_combine_horizontals",
                            "azimuth_in_degrees",
-                         ])
+                           ])
         self.method_to_combine_horizontals = method_to_combine_horizontals
         self.azimuth_in_degrees = azimuth_in_degrees
 
@@ -294,8 +424,9 @@ class HvsrTraditionalRotDppProcessingSettings(HvsrTraditionalProcessingSettingsB
 
     def __init__(self, hvsrpy_version=__version__,
                  window_type_and_width=("tukey", 0.1),
-                 smoothing_operator_and_bandwidth=("konno_and_ohmachi", 40,),
-                 frequency_resampling_in_hz=np.geomspace(0.1, 50, 200),
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="traditional",
@@ -305,12 +436,11 @@ class HvsrTraditionalRotDppProcessingSettings(HvsrTraditionalProcessingSettingsB
                  ):
         super().__init__(hvsrpy_version=hvsrpy_version,
                          window_type_and_width=window_type_and_width,
-                         smoothing_operator_and_bandwidth=smoothing_operator_and_bandwidth,
-                         frequency_resampling_in_hz=frequency_resampling_in_hz,
+                         smoothing=smoothing,
                          handle_dissimilar_time_steps_by=handle_dissimilar_time_steps_by,
                          fft_settings=fft_settings,
                          processing_method=processing_method,
-                        )
+                         )
         self.attrs.extend(["method_to_combine_horizontals",
                            "ppth_percentile_for_rotdpp_computation",
                            "azimuths_in_degrees"])
@@ -323,19 +453,19 @@ class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
 
     def __init__(self, hvsrpy_version=__version__,
                  window_type_and_width=("tukey", 0.1),
-                 smoothing_operator_and_bandwidth=("konno_and_ohmachi", 40,),
-                 frequency_resampling_in_hz=np.geomspace(0.1, 50, 200),
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="azimuthal",
                  azimuths_in_degrees=np.arange(0, 180, 5)):
         super().__init__(hvsrpy_version=hvsrpy_version,
                          window_type_and_width=window_type_and_width,
-                         smoothing_operator_and_bandwidth=smoothing_operator_and_bandwidth,
-                         frequency_resampling_in_hz=frequency_resampling_in_hz,
+                         smoothing=smoothing,
                          fft_settings=fft_settings,
                          handle_dissimilar_time_steps_by=handle_dissimilar_time_steps_by,
-                        )
+                         )
         self.attrs.extend(["processing_method",
                            "azimuths_in_degrees"])
         self.processing_method = processing_method
@@ -346,18 +476,18 @@ class HvsrDiffuseFieldProcessingSettings(HvsrProcessingSettings):
 
     def __init__(self, hvsrpy_version=__version__,
                  window_type_and_width=("tukey", 0.1),
-                 smoothing_operator_and_bandwidth=("konno_and_ohmachi", 40,),
-                 frequency_resampling_in_hz=np.geomspace(0.1, 50, 200),
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="keeping_majority_time_step",
                  fft_settings=None,
                  processing_method="diffuse_field"):
 
         super().__init__(hvsrpy_version=hvsrpy_version,
                          window_type_and_width=window_type_and_width,
-                         smoothing_operator_and_bandwidth=smoothing_operator_and_bandwidth,
-                         frequency_resampling_in_hz=frequency_resampling_in_hz,
+                         smoothing=smoothing,
                          fft_settings=fft_settings,
                          handle_dissimilar_time_steps_by=handle_dissimilar_time_steps_by,
-                        )
+                         )
         self.attrs.extend(["processing_method"])
         self.processing_method = processing_method

@@ -22,7 +22,7 @@ import logging
 
 import numpy as np
 from scipy.signal.windows import tukey
-from scipy.signal import butter, filtfilt, detrend
+from scipy.signal import butter, sosfiltfilt, detrend
 
 logger = logging.getLogger(__name__)
 
@@ -49,18 +49,18 @@ class TimeSeries():
         Raises
         ------
         TypeError
-            If `amplitude` is not castable to `ndarray`, refer to error
-            message(s) for specific details.
+            If ``amplitude`` is not castable to ``ndarray``, refer to
+            error message(s) for specific details.
 
         """
         try:
             self.amplitude = np.array(amplitude, dtype=np.double)
         except ValueError:
-            msg = "`amplitude` must be convertable to numeric `ndarray`."
+            msg = "``amplitude`` must be convertable to numeric ``ndarray``."
             raise TypeError(msg)
 
         if self.amplitude.ndim != 1:
-            msg = f"`amplitude` must be 1-D, not {self.amplitude.ndim}-D."
+            msg = f"``amplitude`` must be 1-D, not {self.amplitude.ndim}-D."
             raise TypeError(msg)
 
         self.dt_in_seconds = float(dt_in_seconds)
@@ -108,23 +108,23 @@ class TimeSeries():
         """
         current_time = self.time()
         start = 0
-        end = max(current_time)
+        end = current_time[-1]
 
         if start_time < start:
             msg = "Illogical start_time for trim; "
-            msg += f"a start_time of {start_time} is before start of record."
+            msg += f"a start_time of {start_time:.2f} is before start of record."
             raise IndexError(msg)
 
         if start_time >= end_time:
             msg = "Illogical start_time for trim; "
-            msg += f"start_time of {start_time} is greater than "
-            msg += f"end_time of {end_time}."
+            msg += f"start_time of {start_time:.2f} is greater than "
+            msg += f"end_time of {end_time:.2f}."
             raise IndexError(msg)
 
         if end_time > end:
             msg = "Illogical end_time for trim; "
-            msg += f"end_time of {end_time} must be less than "
-            msg += f"duration of the the timeseries of `{end:.2f}"
+            msg += f"end_time of {end_time:.2f} must be less than "
+            msg += f"duration of the the time series of {end:.2f}"
             raise IndexError(msg)
 
         start_index = np.argmin(np.absolute(current_time - start_time))
@@ -138,7 +138,7 @@ class TimeSeries():
         Parameters
         ----------
         type = {"constant", "linear"}, optional
-            Type of detrending. If ``type == "linear"`` (default), the
+            Type of detrend. If ``type == "linear"`` (default), the
             result of a linear least-squares fit to data is subtracted
             from data. If ``type == "constant"``, only the mean of data
             is subtracted.
@@ -250,8 +250,8 @@ class TimeSeries():
             warnings.warn(msg)
             return None
 
-        b, a = butter(order, wn, btype, fs=self.fs)
-        self.amplitude = filtfilt(b, a, self.amplitude)
+        sos = butter(order, wn, btype, fs=self.fs, output='sos')
+        self.amplitude = sosfiltfilt(sos, self.amplitude)
 
     @classmethod
     def from_trace(cls, trace):

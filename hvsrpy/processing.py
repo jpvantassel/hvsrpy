@@ -18,6 +18,7 @@
 import warnings
 
 import numpy as np
+from numpy.fft import rfft
 
 from .smoothing import SMOOTHING_OPERATORS
 from .hvsr_traditional import HvsrTraditional
@@ -25,67 +26,7 @@ from .hvsr_azimuthal import HvsrAzimuthal
 from .hvsr_diffuse_field import HvsrDiffuseField
 from .timeseries import TimeSeries
 from .settings import HvsrTraditionalSingleAzimuthProcessingSettings
-from .seismic_recording_3c import SeismicRecording3C
-
-
-def preprocess(records, settings):
-    """Preprocess time domain data before performing HVSR calculations.
-
-    records: SeismicRecording3C or iterable of SeismicRecording3C
-        Time-domain data as an ``SeismicRecording3C`` object or iterable
-        object containing ``SeismicRecording3C`` objects. This is the
-        data that will be preprocessed.
-    settings : HvsrPreProcessingSettings
-        ``HvsrPreProcessingSettings`` object that controls how the
-        time-domain data will be preprocessed.
-
-    Returns
-    -------
-    List of SeismicRecording3C
-        Seismic records that have been preprocessed and are ready for
-        HVSR processing. 
-
-    """
-    preprocessed_records = []
-
-    if isinstance(records, SeismicRecording3C):
-        records = [records]
-
-    ex_dt = records[0].vt.dt_in_seconds
-    for idx, srecord3c in enumerate(records):
-
-        # check if all records have same dt.
-        if np.abs(srecord3c.vt.dt_in_seconds - ex_dt) > 1E-5 and not settings.ignore_dissimilar_time_step_warning:  # pragma: no cover
-            msg = f"The dt_in_seconds of all records are not equal, "
-            msg += f"dt_in_seconds of record {idx} is "
-            msg += f"{srecord3c.vt.dt_in_seconds} which does not match "
-            msg += f"dt_in_seconds of record 0 of {ex_dt}."
-            warnings.warn(msg)
-
-        # orient receiver to north.
-        if settings.orient_to_degrees_from_north is not None:
-            srecord3c.orient_sensor_to(settings.orient_to_degrees_from_north)
-
-        # time-domain filter raw signal.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            srecord3c.butterworth_filter(settings.filter_corner_frequencies_in_hz)
-
-        # divide raw signal into time windows.
-        if settings.window_length_in_seconds is not None:
-            windows = srecord3c.split(settings.window_length_in_seconds)
-        else:
-            windows = [srecord3c]
-
-        for window in windows:
-
-            # detrend each time window individually.
-            if settings.detrend is not None or settings.detrend != "none":
-                window.detrend(type=settings.detrend)
-
-        preprocessed_records.extend(windows)
-
-    return preprocessed_records
+from .psd import Psd
 
 
 def arithmetic_mean(ns, ew, settings=None):
@@ -130,11 +71,11 @@ COMBINE_HORIZONTAL_REGISTER = {
 }
 
 
-def rfft(amplitude, **kwargs):
-    n = kwargs.get("n", len(amplitude))
-    rfft = np.fft.rfft(amplitude, **kwargs)
-    rfft *= 2/min(len(amplitude), n)
-    return rfft
+# def rfft(amplitude, **kwargs):
+#     # n = kwargs.get("n", len(amplitude))
+#     rfft = np.fft.rfft(amplitude, **kwargs)
+#     # rfft *= 2/min(len(amplitude), n)
+#     return rfft
 
 
 def nextpow2(n, minimum_power_of_two=2**15):  # 2**15 = 32768
@@ -145,7 +86,7 @@ def nextpow2(n, minimum_power_of_two=2**15):  # 2**15 = 32768
         power_of_two *= 2
 
 
-def prepare_fft_setttings(records, settings):
+def prepare_fft_settings(records, settings):
     # to accelerate smoothing, need consistent value of n.
     # will round to nearest power of 2 to accelerate FFT.
     max_n_samples = 0
@@ -217,6 +158,7 @@ def prepare_records_with_inconsistent_dt(records, settings):
 
         return abbr_records, {majority_dt: majority_count}
 
+
 def check_nyquist_frequency(dt, user_frq):
     # check resampling does not violate the Nyquist.
     fnyq = 1/(2*dt)
@@ -227,7 +169,7 @@ def check_nyquist_frequency(dt, user_frq):
 
 
 def traditional_hvsr_processing(records, settings):
-    prepare_fft_setttings(records, settings)
+    prepare_fft_settings(records, settings)
 
     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
@@ -274,9 +216,8 @@ def traditional_hvsr_processing(records, settings):
             ver_idx += 1
 
         # smooth each dt group at once to boost performance.
-        smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-        smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](
-            fft_frq, raw_spectra, user_frq, bandwidth)
+        operator, bandwidth, fcs = settings.smoothing.values()
+        smooth_spectra = SMOOTHING_OPERATORS[operator](fft_frq, raw_spectra, fcs, bandwidth)
 
         # compute hvsr.
         hvsr_spectra[hvsr_idx:hvsr_idx+count] = smooth_spectra[:count] / smooth_spectra[count:]
@@ -294,7 +235,7 @@ def traditional_hvsr_processing(records, settings):
 
 
 def traditional_single_azimuth_hvsr_processing(records, settings):
-    prepare_fft_setttings(records, settings)
+    prepare_fft_settings(records, settings)
 
     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
@@ -340,8 +281,8 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
             ver_idx += 1
 
         # smooth each dt group at once to boost performance.
-        smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-        smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, raw_spectra, user_frq, bandwidth)
+        operator, bandwidth, fcs = settings.smoothing.values()
+        smooth_spectra = SMOOTHING_OPERATORS[operator](fft_frq, raw_spectra, fcs, bandwidth)
 
         # compute hvsr.
         hvsr_spectra[hvsr_idx:hvsr_idx+count] = smooth_spectra[:count] / smooth_spectra[count:]
@@ -354,7 +295,7 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
 
 
 def traditional_rotdpp_hvsr_processing(records, settings):
-    prepare_fft_setttings(records, settings)
+    prepare_fft_settings(records, settings)
 
     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
@@ -392,15 +333,15 @@ def traditional_rotdpp_hvsr_processing(records, settings):
                 h = single_azimuth(record.ns.amplitude,
                                    record.ew.amplitude,
                                    azimuth
-                                  )
+                                   )
                 h = TimeSeries(h, dt_in_seconds=record.ns.dt_in_seconds)
                 h.window(*settings.window_type_and_width)
                 fft_h = np.abs(rfft(h.amplitude, **settings.fft_settings))
                 raw_spectra_per_record[idx] = fft_h
 
             # smooth.
-            smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-            smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, raw_spectra_per_record, user_frq, bandwidth)
+            operator, bandwidth, fcs = settings.smoothing.values()
+            smooth_spectra = SMOOTHING_OPERATORS[operator](fft_frq, raw_spectra_per_record, fcs, bandwidth)
 
             # select ppth percentile.
             smooth_h = np.percentile(smooth_spectra[:-1],
@@ -437,11 +378,12 @@ def traditional_hvsr_processing_base(records, settings):
     method = TRADITIONAL_PROCESSING_REGISTER[settings.method_to_combine_horizontals]
     return method(records, settings)
 
+
 def azimuthal_hvsr_processing(records, settings):
-    prepare_fft_setttings(records, settings)
+    prepare_fft_settings(records, settings)
     single_azimuth_settings = HvsrTraditionalSingleAzimuthProcessingSettings(
         window_type_and_width=settings.window_type_and_width,
-        smoothing_operator_and_bandwidth=settings.smoothing_operator_and_bandwidth,
+        smoothing=settings.smoothing,
         frequency_resampling_in_hz=settings.frequency_resampling_in_hz,
         handle_dissimilar_time_steps_by=settings.handle_dissimilar_time_steps_by,
         fft_settings=settings.fft_settings,
@@ -455,8 +397,107 @@ def azimuthal_hvsr_processing(records, settings):
     return HvsrAzimuthal(hvsr_per_azimuth, settings.azimuths_in_degrees, meta={**records[0].meta, **settings.attr_dict})
 
 
+def _rpds_single_component(timeseries, settings):
+    """Compute power spectral density of real-valued, time-domain data.
+
+    timeseries : iterable of TimeSeries
+        Time-domain data in the form of iterable object containing
+        ``TimeSeries`` objects. These data are assumed to have already
+        been preprocessed. This is the data that will be processed.
+    settings : PsdProcessingSettings
+        ``PsdProcessingSettings`` object that controls how the
+        time-domain data will be processed.
+
+    Returns
+    -------
+    Psd
+        Instantiated PSD object according to the processing settings
+        selected.
+
+    """
+    n = settings.fft_settings.get("n", timeseries[0].n_samples)
+    psd = np.zeros(n/2 if n % 2 else int(n/2)+1)
+    for tseries in timeseries:
+
+        # window time series to mitigate frequency-domain artifacts.
+        tseries.window(*settings.window_type_and_width)
+
+        # compute fourier transform.
+        fft = rfft(tseries.amplitude, **settings.fft_settings)
+
+        # compute square of fourier transform
+        # (not quite the psd; need the normalizations).
+        psd += np.real(np.conjugate(fft) * fft)
+
+    # scale according to window; see Welch (1967)
+    window = TimeSeries(amplitude=np.ones_like(tseries.amplitude),
+                        dt_in_seconds=tseries.dt_in_seconds)
+    window.window(*settings.window_type_and_width)
+    window_scaling_factor = np.mean(window.amplitude**2)
+    psd /= window_scaling_factor
+
+    # scale by number of samples;
+    # Welch (1967) shows (1/L)**2 * L scaling for I_{k} simplify to 1/L.
+    psd /= tseries.n_samples
+
+    # scaly by number of samples; (add for power spectrum).
+    # psd /= tseries.n_samples * tseries.n_samples
+
+    # compute power spectrum density (remove for power spectrum).
+    psd /= tseries.fs
+
+    # scale by two b/c only looking at positive frequencies.
+    psd *= 2
+
+    # compute average psd over all records (i.e., windows).
+    psd /= len(timeseries)
+
+    return psd
+
+
+def rpsd(records, settings):
+    """Compute power spectral density of real-valued, time-domain data.
+
+    records : iterable of SeismicRecording3C
+        Time-domain data in the form of iterable object containing
+        ``SeismicRecording3C`` objects. This is the data that will be
+        processed.
+    settings : PsdProcessingSettings
+        ``PsdProcessingSettings`` object that controls how the
+        time-domain data will be processed.
+
+    Returns
+    -------
+    Psd
+        Instantiated PSD object according to the processing settings
+        selected.
+
+    """
+    prepare_fft_settings(records, settings)
+    fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], records[0].vt.dt_in_seconds)
+    psd_ns = _rpds_single_component([record.ns for record in records], settings)
+    psd_ew = _rpds_single_component([record.ew for record in records], settings)
+    psd_vt = _rpds_single_component([record.vt for record in records], settings)
+
+    if settings.smoothing is not None:
+        operator, bandwidth, fcs = settings.smoothing.values()
+        spectra = np.empty((3, len(fft_frq)))
+        spectra[0] = psd_ns 
+        spectra[1] = psd_ew 
+        spectra[2] = psd_vt 
+        smooth_spectra = SMOOTHING_OPERATORS[operator](fft_frq, spectra, fcs, bandwidth)
+        fft_frq = fcs
+        psd_ns = smooth_spectra[0]
+        psd_ew = smooth_spectra[1]
+        psd_vt = smooth_spectra[2]
+
+    return dict(ns=Psd(fft_frq, psd_ns),
+                ew=Psd(fft_frq, psd_ew),
+                vt=Psd(fft_frq, psd_vt))
+
+
 def diffuse_field_hvsr_processing(records, settings):
-    prepare_fft_setttings(records, settings)
+    prepare_fft_settings(records, settings)
 
     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
@@ -470,42 +511,19 @@ def diffuse_field_hvsr_processing(records, settings):
 
     # allocate array for hvsr results.
     user_frq = settings.frequency_resampling_in_hz
-    hvsr_spectra = np.empty((len(records), len(user_frq)))
     check_nyquist_frequency(max(dt_with_count.keys()), user_frq)
 
+    # compute psd.
     fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], records[0].vt.dt_in_seconds)
-    psd_ns = np.zeros(len(fft_frq))
-    psd_ew = np.zeros(len(fft_frq))
-    psd_vt = np.zeros(len(fft_frq))
-    df = (1/records[0].ns.dt_in_seconds) / settings.fft_settings["n"]
-    for record in records:
-        # window time series to mitigate frequency-domain artifacts.
-        record.window(*settings.window_type_and_width)
-
-        # TODO(jpv): Double check PSD calculation.
-
-        # compute fourier transform.
-        fft_ns = np.abs(rfft(record.ns.amplitude, **settings.fft_settings))
-        fft_ew = np.abs(rfft(record.ew.amplitude, **settings.fft_settings))
-        fft_vt = np.abs(rfft(record.vt.amplitude, **settings.fft_settings))
-
-        # compute psd with appropriate normalization for completeness;
-        # note normalization is not required for hvsr.
-        psd_ns += (fft_ns * fft_ns) / (2*df)
-        psd_ew += (fft_ew * fft_ew) / (2*df)
-        psd_vt += (fft_vt * fft_vt) / (2*df)
-
-    # compute average psd over all records (i.e., windows).
-    psd_ns /= len(records)
-    psd_ew /= len(records)
-    psd_vt /= len(records)
+    psd_ns = _rpds_single_component([record.ns for record in records], settings)
+    psd_ew = _rpds_single_component([record.ew for record in records], settings)
+    psd_vt = _rpds_single_component([record.vt for record in records], settings)
 
     # smooth.
-    smoothing_operator, bandwidth = settings.smoothing_operator_and_bandwidth
-    user_frq = settings.frequency_resampling_in_hz
+    operator, bandwidth, fcs = settings.smoothing.values()
 
     spectra = np.array([psd_ns + psd_ew, psd_vt])
-    smooth_spectra = SMOOTHING_OPERATORS[smoothing_operator](fft_frq, spectra, user_frq, bandwidth)
+    smooth_spectra = SMOOTHING_OPERATORS[operator](fft_frq, spectra, fcs, bandwidth)
     hor = smooth_spectra[0]
     ver = smooth_spectra[1]
 
@@ -516,25 +534,26 @@ def diffuse_field_hvsr_processing(records, settings):
 PROCESSING_METHODS = {
     "traditional": traditional_hvsr_processing_base,
     "azimuthal": azimuthal_hvsr_processing,
-    "diffuse_field": diffuse_field_hvsr_processing
+    "diffuse_field": diffuse_field_hvsr_processing,
+    "psd": rpsd,
 }
-
+# TODO(jpv): Add PSD to PROCESSING_METHODS.
 
 def process(records, settings):
-    """Process time domain domain data.
+    """Process time domain data.
 
-    records: iterable of SeismicRecording3C
+    records : iterable of SeismicRecording3C
         Time-domain data in the form of iterable object containing
         SeismicRecording3C objects. This is the data that will be
         processed.
-    settings : HvsrProcessingSettings
-        HvsrProcessingSettings object that controls how the
-        time-domain data will be processed.
+    settings : ProcessingSettings
+        ``ProcessingSettings`` object that controls how the
+        time-domain data will be preprocessed.
 
     Returns
     -------
-    HvsrTraditional, HvsrAzimuthal, HvsrDiffuseField
-        Instantiated HVSR object according to the processing settings
+    HvsrTraditional, HvsrAzimuthal, HvsrDiffuseField, Psds
+        Instantiated object according to the processing settings
         selected.
 
     """
