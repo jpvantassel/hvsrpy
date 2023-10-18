@@ -17,4 +17,4 @@
 
 """Metadata for hvsrpy."""
 
-__version__ = "2.0.0rc4"
+__version__ = "2.0.0rc6"
