@@ -340,7 +340,6 @@ class HvsrProcessingSettings(Settings):
         super().__init__(hvsrpy_version=hvsrpy_version)
         self.attrs.extend(["window_type_and_width",
                            "smoothing",
-                           "frequency_resampling_in_hz",
                            "fft_settings",
                            "handle_dissimilar_time_steps_by",
                            ])
