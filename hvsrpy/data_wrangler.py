@@ -508,14 +508,18 @@ def _read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     try:
         vt_id = component_keys.index("UP")
         orientation_is_numeric = True
-    except:
-        for vt_id, _key in enumerate(component_keys):
-            if _key[-1].lower() == "z":
-                break
-        else:
-            msg = f"Components {component_keys} in header are not recognized. "
-            msg += "If you believe this is an error please contact the developer."
-            raise ValueError(msg)
+    except ValueError:
+        try:
+            vt_id = component_keys.index("VER")
+            orientation_is_numeric = True
+        except ValueError:
+            for vt_id, _key in enumerate(component_keys):
+                if _key[-1].lower() == "z":
+                    break
+            else:
+                msg = f"Components {component_keys} in header are not recognized. "
+                msg += "If you believe this is an error please contact the developer."
+                raise ValueError(msg)
     vt = component_list[vt_id]
     del component_list[vt_id], component_keys[vt_id]
 

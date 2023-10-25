@@ -60,7 +60,7 @@ mshark_row_exec = re.compile(mshark_row_expr)
 
 # DataWrangler | peer
 # -------------------
-peer_direction_expr = f", (UP|\d|\d\d|\d\d\d|[FGDCESHB][HLGMN][ENZ]){NEWLINE}" 
+peer_direction_expr = f", (UP|VER|\d|\d\d|\d\d\d|[FGDCESHB][HLGMN][ENZ]){NEWLINE}" 
 peer_npts_expr = "NPTS=\s*(\d+),"
 peer_dt_expr = f"DT=\s*(\d*\.\d+)\s"
 peer_sample_expr = "(-?\d*\.\d+[eE][+-]?\d*)"
