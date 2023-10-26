@@ -384,7 +384,6 @@ def azimuthal_hvsr_processing(records, settings):
     single_azimuth_settings = HvsrTraditionalSingleAzimuthProcessingSettings(
         window_type_and_width=settings.window_type_and_width,
         smoothing=settings.smoothing,
-        frequency_resampling_in_hz=settings.frequency_resampling_in_hz,
         handle_dissimilar_time_steps_by=settings.handle_dissimilar_time_steps_by,
         fft_settings=settings.fft_settings,
     )

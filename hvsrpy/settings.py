@@ -51,12 +51,22 @@ class Settings(ABC):
     def attr_dict(self):
         """Dictionary of ``Settings`` object's attributes."""
         attr_dict = {}
-        for name in self.attrs:
-            attr = getattr(self, name)
+
+        def to_serializable(entry):
             try:
-                attr = attr.tolist()
+                entry = entry.tolist()
             except:
                 pass
+            return entry
+
+        for name in self.attrs:
+            attr = getattr(self, name)
+
+            if isinstance(attr, dict):
+                attr = {k: to_serializable(v) for k, v in attr.items()}
+            else:
+                attr = to_serializable(attr)
+
             attr_dict[name] = attr
         return attr_dict
 
@@ -99,7 +109,7 @@ class Settings(ABC):
         with open(fname, "r") as f:
             attr_dict = json.load(f)
         return cls(**attr_dict)
-    
+
     def psummary(self):
         for key, value in self.attr_dict.items():
             if isinstance(value, dict):
@@ -186,6 +196,7 @@ class PreProcessingSettings(Settings):
         self.detrend = detrend
         self.ignore_dissimilar_time_step_warning = ignore_dissimilar_time_step_warning
 
+
 class HvsrPreProcessingSettings(PreProcessingSettings):
     def __init__(self,
                  hvsrpy_version=__version__,
@@ -268,7 +279,7 @@ class PsdProcessingSettings(Settings):
                  window_type_and_width=("tukey", 0.1),
                  smoothing=dict(operator="konno_and_ohmachi",
                                 bandwidth=40,
-                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
                  fft_settings=None,
                  handle_dissimilar_time_steps_by="keeping_majority_time_step",
                  processing_method="psd",
@@ -284,7 +295,7 @@ class PsdProcessingSettings(Settings):
             A tuple with entries like ``("tukey", 0.1)``.
         smoothing : dict, optional
             Smoothing information like ``dict(operator="konno_and_ohmachi",
-            bandwidth=40, center_frequency_in_hz=np.geomspace(0.1, 50, 200))``.
+            bandwidth=40, center_frequencies_in_hz=np.geomspace(0.1, 50, 200))``.
         fft_settings : dict or None, optional
             Custom settings for ``np.fft.rfft`` default is ``None``.
         handle_dissimilar_time_steps_by : {"frequency_domain_resampling", "keeping_smallest_time_step", "keeping_majority_time_step"}, optional
@@ -307,6 +318,7 @@ class PsdProcessingSettings(Settings):
 
 # TODO(jpv): Finish documenting settings module.
 
+
 class HvsrProcessingSettings(Settings):
 
     def __init__(self,
@@ -314,7 +326,7 @@ class HvsrProcessingSettings(Settings):
                  window_type_and_width=("tukey", 0.1),
                  smoothing=dict(operator="konno_and_ohmachi",
                                 bandwidth=40,
-                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
                  fft_settings=None,
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  ):
@@ -329,7 +341,7 @@ class HvsrProcessingSettings(Settings):
             A tuple with entries like ``("tukey", 0.1)``.
         smoothing : dict, optional
             Smoothing information like ``dict(operator="konno_and_ohmachi",
-            bandwidth=40, center_frequency_in_hz=np.geomspace(0.1, 50, 200))``.
+            bandwidth=40, center_frequencies_in_hz=np.geomspace(0.1, 50, 200))``.
         fft_settings : dict or None, optional
             Custom settings for ``np.fft.rfft`` default is ``None``.
         handle_dissimilar_time_steps_by : {"frequency_domain_resampling", "keeping_smallest_time_step", "keeping_majority_time_step"}, optional
@@ -355,7 +367,7 @@ class HvsrTraditionalProcessingSettingsBase(HvsrProcessingSettings):
                  window_type_and_width=("tukey", 0.1),
                  smoothing=dict(operator="konno_and_ohmachi",
                                 bandwidth=40,
-                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="traditional",
@@ -376,7 +388,7 @@ class HvsrTraditionalProcessingSettings(HvsrTraditionalProcessingSettingsBase):
                  window_type_and_width=("tukey", 0.1),
                  smoothing=dict(operator="konno_and_ohmachi",
                                 bandwidth=40,
-                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="traditional",
@@ -399,7 +411,7 @@ class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSe
                  window_type_and_width=("tukey", 0.1),
                  smoothing=dict(operator="konno_and_ohmachi",
                                 bandwidth=40,
-                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="traditional",
@@ -425,7 +437,7 @@ class HvsrTraditionalRotDppProcessingSettings(HvsrTraditionalProcessingSettingsB
                  window_type_and_width=("tukey", 0.1),
                  smoothing=dict(operator="konno_and_ohmachi",
                                 bandwidth=40,
-                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="traditional",
@@ -454,7 +466,7 @@ class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
                  window_type_and_width=("tukey", 0.1),
                  smoothing=dict(operator="konno_and_ohmachi",
                                 bandwidth=40,
-                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  fft_settings=None,
                  processing_method="azimuthal",
@@ -477,7 +489,7 @@ class HvsrDiffuseFieldProcessingSettings(HvsrProcessingSettings):
                  window_type_and_width=("tukey", 0.1),
                  smoothing=dict(operator="konno_and_ohmachi",
                                 bandwidth=40,
-                                center_frequency_in_hz=np.geomspace(0.1, 50, 200)),
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
                  handle_dissimilar_time_steps_by="keeping_majority_time_step",
                  fft_settings=None,
                  processing_method="diffuse_field"):
