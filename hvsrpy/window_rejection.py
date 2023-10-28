@@ -300,10 +300,15 @@ def manual_window_rejection(hvsr,
                             ylims=None,
                             distribution_fn="lognormal",
                             distribution_mc="lognormal",
+                            plot_mc=True,
+                            plot_fn=True,
                             search_range_in_hz=(None, None),
                             find_peaks_kwargs=None,
                             upper_right_corner_relative=(0.11, 0.98),
-                            box_size_relative=(0.1, 0.08)):  # pragma: no cover
+                            box_size_relative=(0.1, 0.08),
+                            fig=None,
+                            ax=None,
+                            ):  # pragma: no cover
     """Reject HVSR curves manually.
 
     Parameters
@@ -330,6 +335,7 @@ def manual_window_rejection(hvsr,
         `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
         see ``scipy`` documentation for details, default is ``None``
         indicating defaults will be used.
+    ax  TODO
 
     Returns
     -------
@@ -364,20 +370,23 @@ def manual_window_rejection(hvsr,
                               find_peaks_kwargs=find_peaks_kwargs)
 
     # plot hvsr.
-    fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
+    if fig is None or ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
     ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
                                        distribution_mc=distribution_mc,
                                        distribution_fn=distribution_fn,
+                                       plot_mc=plot_mc,
+                                       plot_fn=plot_fn,
                                        ax=ax)
+    if ylims is not None:
+        ax.set_ylim(ylims)
+    x_lim = ax.get_xlim()
+    y_lim = ax.get_ylim()
     ax.autoscale(enable=False)
     plot_continue_button(ax,
                          upper_right_corner_relative=upper_right_corner_relative,
                          box_size_relative=box_size_relative)
     fig.show()
-    if ylims is not None:
-        ax.set_ylim(ylims)
-    x_lim = ax.get_xlim()
-    y_lim = ax.get_ylim()
 
     while True:
         xs, ys = ginput_session(fig, ax, initial_adjustment=False,
@@ -405,6 +414,8 @@ def manual_window_rejection(hvsr,
         ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
                                            distribution_mc=distribution_mc,
                                            distribution_fn=distribution_fn,
+                                           plot_mc=plot_mc,
+                                           plot_fn=plot_fn,
                                            ax=ax)
         plot_continue_button(ax,
                              upper_right_corner_relative=upper_right_corner_relative,
