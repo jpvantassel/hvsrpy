@@ -24,7 +24,7 @@ import numpy as np
 from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
 from .interact import ginput_session, plot_continue_button, is_absolute_point_in_relative_box
-from .plot_tools import plot_single_panel_hvsr_curves
+from .plot_tools import plt, plot_single_panel_hvsr_curves
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,8 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
                 raise IndexError(msg)
             n_sta_in_window = int(timeseries.n_samples // npts_in_sta)
             short_timeseries = timeseries.amplitude[:npts_in_sta*n_sta_in_window]
-            sta_values = np.mean(np.abs(short_timeseries.reshape((n_sta_in_window, npts_in_sta))), axis=1)
+            sta_values = np.mean(np.abs(short_timeseries.reshape(
+                (n_sta_in_window, npts_in_sta))), axis=1)
 
             # compute lta.
             npts_in_lta = int(lta_seconds // timeseries.dt_in_seconds)
@@ -98,8 +99,10 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
     return passing_records
 
 # TODO(jpv): Write tests for maximum_value_window_rejection.
+
+
 def maximum_value_window_rejection(records, maximum_value_threshold,
-                                   normalized=True, components=("ns", "ew", "vt")): # pragma: no cover
+                                   normalized=True, components=("ns", "ew", "vt")):  # pragma: no cover
     """Performs window rejection based on maximum value of time series.
 
     Parameters
@@ -201,7 +204,7 @@ def frequency_domain_window_rejection(hvsr,
         hvsrs = [hvsr]
     elif isinstance(hvsr, HvsrAzimuthal):
         hvsrs = hvsr.hvsrs
-    else: # pragma: no cover
+    else:  # pragma: no cover
         msg = "The frequency domain window rejection algorithm can only "
         msg += "be applied to HvsrTraditional and HvsrAzimuthal objects, not "
         msg += f"{type(hvsr)} type objects."
@@ -218,7 +221,7 @@ def frequency_domain_window_rejection(hvsr,
     max_performed_iterations = 0
     for hvsr in hvsrs:
         hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
-                                   find_peaks_kwargs=find_peaks_kwargs)
+                                  find_peaks_kwargs=find_peaks_kwargs)
         iterations = _frequency_domain_window_rejection(hvsr=hvsr,
                                                         n=n,
                                                         max_iterations=max_iterations,
@@ -291,14 +294,16 @@ def _frequency_domain_window_rejection(hvsr,
             return c_iteration
 
 # TODO(jpv): Write tests for manual_window_rejection.
+
+
 def manual_window_rejection(hvsr,
                             ylims=None,
                             distribution_fn="lognormal",
                             distribution_mc="lognormal",
                             search_range_in_hz=(None, None),
                             find_peaks_kwargs=None,
-                            upper_right_corner_relative=(0.95, 0.95),
-                            box_size_relative=(0.1, 0.05)): # pragma: no cover
+                            upper_right_corner_relative=(0.11, 0.98),
+                            box_size_relative=(0.1, 0.08)):  # pragma: no cover
     """Reject HVSR curves manually.
 
     Parameters
@@ -356,12 +361,14 @@ def manual_window_rejection(hvsr,
         find_peaks_kwargs = {}
 
     hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
-                               find_peaks_kwargs=find_peaks_kwargs)
+                              find_peaks_kwargs=find_peaks_kwargs)
 
     # plot hvsr.
-    fig, ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
-                                            distribution_mc=distribution_mc,
-                                            distribution_fn=distribution_fn)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
+    ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
+                                       distribution_mc=distribution_mc,
+                                       distribution_fn=distribution_fn,
+                                       ax=ax)
     ax.autoscale(enable=False)
     plot_continue_button(ax,
                          upper_right_corner_relative=upper_right_corner_relative,
@@ -374,7 +381,8 @@ def manual_window_rejection(hvsr,
 
     while True:
         xs, ys = ginput_session(fig, ax, initial_adjustment=False,
-                                npts=2, ask_to_confirm_point=False, ask_to_continue=False)
+                                n_points=2, ask_to_confirm_point=False,
+                                ask_to_continue=False)
 
         # only look at frequencies in drawn box to accelerate search.
         selected_columns = np.logical_and(hvsr.frequency > min(xs),
@@ -388,16 +396,16 @@ def manual_window_rejection(hvsr,
         hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
                                   find_peaks_kwargs=find_peaks_kwargs)
 
-        # Clear, set axis limits, and lock axis.
+        # Clear and re-plot.
         ax.clear()
-        # Note: ax.clear() re-enables autoscale.
+        ax.set_xlim(x_lim)
+        ax.set_ylim(y_lim)
+        # b/c ax.clear() re-enables autoscale.
         ax.autoscale(enable=False)
         ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
                                            distribution_mc=distribution_mc,
                                            distribution_fn=distribution_fn,
                                            ax=ax)
-        ax.set_xlim(x_lim)
-        ax.set_ylim(y_lim)
         plot_continue_button(ax,
                              upper_right_corner_relative=upper_right_corner_relative,
                              box_size_relative=box_size_relative)
@@ -414,7 +422,7 @@ def manual_window_rejection(hvsr,
                     break
 
             if in_continue_box:
-                fig.close()
+                plt.close("all")
                 break
             else:
                 continue

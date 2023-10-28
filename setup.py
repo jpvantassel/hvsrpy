@@ -47,7 +47,8 @@ setup(
     packages=find_packages(),
     python_requires='>=3.8',
     install_requires=['numpy>=1.22,<=1.23', 'scipy', 'obspy',
-                      'pandas', 'shapely', 'termcolor', 'matplotlib', 'click>8.0.0', 'numba'],
+                      'pandas', 'shapely', 'termcolor', 'matplotlib',
+                      'click>8.0.0', 'numba', 'PyQt5'],
     extras_require={
         'dev': ['tox', 'jupyterlab', 'coverage', 'sphinx', 'sphinx_rtd_theme', 'sphinx-click', 'autopep8'],
     },

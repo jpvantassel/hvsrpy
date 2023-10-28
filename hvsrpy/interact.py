@@ -128,7 +128,7 @@ def ginput_session(fig, ax,
     return (xs, ys)
 
 
-def _relative_to_absolute(relative, range_absolute, scale="linear"): # pragma: no cover
+def _relative_to_absolute(relative, range_absolute, scale="linear"):
     """Convert relative value (between 0 and 1) to absolute value.
 
     .. warning::
@@ -141,7 +141,7 @@ def _relative_to_absolute(relative, range_absolute, scale="linear"): # pragma: n
     elif scale == "log":
         value = np.log10(abs_min) + relative*(np.log10(abs_max/abs_min))
         return np.power(10, value)
-    else:
+    else: # pragma: no cover
         raise NotImplementedError
 
 
@@ -156,9 +156,8 @@ def _absolute_to_relative(absolute, range_absolute, scale="linear"): # pragma: n
     if scale == "linear":
         return (absolute - abs_min) / (abs_max - abs_min)
     elif scale == "log":
-        value = np.log10(absolute/abs_min) / (np.log10(abs_max/abs_min))
-        return np.power(10, value)
-    else:
+        return np.log10(absolute/abs_min) / (np.log10(abs_max/abs_min))
+    else: # pragma: no cover
         raise NotImplementedError
 
 
@@ -196,8 +195,8 @@ def _absolute_box_coordinates(x_range_absolute,
     # scale box to absolute coordinates.
     x_box_lower_abs = _relative_to_absolute(x_lower_rel, x_range_absolute, scale=x_scale)
     x_box_upper_abs = _relative_to_absolute(x_upper_rel, x_range_absolute, scale=x_scale)
-    y_box_lower_abs = _relative_to_absolute(x_lower_rel, y_range_absolute, scale=y_scale)
-    y_box_upper_abs = _relative_to_absolute(x_upper_rel, y_range_absolute, scale=y_scale)
+    y_box_lower_abs = _relative_to_absolute(y_lower_rel, y_range_absolute, scale=y_scale)
+    y_box_upper_abs = _relative_to_absolute(y_upper_rel, y_range_absolute, scale=y_scale)
     return (x_box_lower_abs, x_box_upper_abs, y_box_lower_abs, y_box_upper_abs)
 
 
