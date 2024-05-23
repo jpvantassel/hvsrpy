@@ -23,7 +23,7 @@ from numba import njit
 
 @njit(cache=True)
 def konno_and_ohmachi(frequencies, spectrum, fcs, bandwidth=40.): # pragma: no cover
-    """Fast Konno and Ohmachi smoothing.
+    """Fast Konno and Ohmachi (1998) smoothing.
 
     Parameters
     ----------
@@ -44,8 +44,14 @@ def konno_and_ohmachi(frequencies, spectrum, fcs, bandwidth=40.): # pragma: no c
     ndarray
         Spectrum smoothed at the specified center frequencies (`fcs`).
 
+    Reference
+    ---------
+    .. [1] Konno, K. and Ohmachi, T. (1998), "Ground-Motion
+       Characteristics Estimated from Spectral Ratio between Horizontal
+       and Vertical Components of Microtremor" Bull. Seism. Soc. Am. 88,
+       228-241.
+
     """
-    # TODO(jpv): Add reference.
     n = 3
     upper_limit = np.power(10, +n/bandwidth)
     lower_limit = np.power(10, -n/bandwidth)
@@ -110,9 +116,14 @@ def parzen(frequencies, spectrum, fcs, bandwidth=0.5): # pragma: no cover
     ndarray
         Spectrum smoothed at the specified center frequencies (`fcs`).
 
+    Reference
+    ---------
+    .. [1] Konno, K. and Ohmachi, T. (1995), "A smoothing function
+       suitable for estimation of amplification factor of the surface
+       ground from microtremor and its application" Doboku Gakkai
+       Ronbunshu. 525, 247-259 (in Japanese).
+
     """
-    # TODO(jpv): Add reference.
-    # after Konno & Ohmachi (1995) in Japanese.
     a = (np.pi*280) / (2*151)
     upper_limit = np.sqrt(6) * a/bandwidth
     lower_limit = -1 * upper_limit
@@ -176,8 +187,13 @@ def savitzky_and_golay(frequencies, spectrum, fcs, bandwidth=9): # pragma: no co
     ndarray
         Spectrum smoothed at the specified center frequencies (`fcs`).
 
+    Reference
+    ---------
+    .. [1] Savitzky, A. and Golay, M.J.E. (1964), "Smoothing and
+       Differentiation of Data by Simplified Least Squares Procedures"
+       Anal. Chem. 36, 1627-1639.
+
     """
-    # TODO(jpv): Add reference.
     m = int(bandwidth)
     if m % 2 != 1:
         raise ValueError("bandwidth for savitzky_and_golay must be an odd integer.")
@@ -190,8 +206,8 @@ def savitzky_and_golay(frequencies, spectrum, fcs, bandwidth=9): # pragma: no co
 
     diff = np.diff(frequencies)
     if np.abs(np.min(diff) - np.max(diff)) > 1E-6:
-        msg = "For savitzky_and_golay smoothing frequencies must be "
-        msg += "linearly spaces."
+        msg = "For savitzky_and_golay frequency samples of input data "
+        msg += "must be linearly spaced."
         raise ValueError(msg)
 
     df = diff[0]
