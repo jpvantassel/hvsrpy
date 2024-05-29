@@ -57,13 +57,13 @@ class HvsrTraditional():
 
         Parameters
         ----------
+        frequency : ndarray
+            Vector of frequencies, corresponding to each column of
+            ``amplitude``.
         amplitude : ndarray
             Array of HVSR amplitudes. Each row represents an individual
             curve (e.g., from a time window or earthquake record) and
             each column a frequency.
-        frequency : ndarray
-            Vector of frequencies, corresponding to each column of
-            ``amplitude``.
         meta : dict, optional
             Meta information about the object, default is ``None``.
 
@@ -158,6 +158,8 @@ class HvsrTraditional():
         else:
             self._search_range_in_hz = tuple(search_range_in_hz)
             self._find_peaks_kwargs = {} if find_peaks_kwargs is None else dict(find_peaks_kwargs)
+            self.meta["search_range_in_hz"] = self._search_range_in_hz
+            self.meta["find_peaks_kwargs"] = None if find_peaks_kwargs is None else dict(find_peaks_kwargs) 
 
         all_curves_flat = True
         for _idx, _amplitude in enumerate(self.amplitude):
@@ -481,12 +483,10 @@ class HvsrTraditional():
         if not np.allclose(self.amplitude, other.amplitude):
             return False
 
-        if not np.allclose(self.valid_window_boolean_mask,
-                           other.valid_window_boolean_mask):
+        if not np.all(self.valid_window_boolean_mask == other.valid_window_boolean_mask):
             return False
 
-        if not np.allclose(self.valid_peak_boolean_mask,
-                           other.valid_peak_boolean_mask):
+        if not np.all(self.valid_peak_boolean_mask == other.valid_peak_boolean_mask):
             return False
 
         return True
