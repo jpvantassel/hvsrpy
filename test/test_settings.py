@@ -37,17 +37,63 @@ class TestSettings(TestCase):
         self.assertTrue(isinstance(settings.__str__(), str))
         self.assertTrue(isinstance(settings.__repr__(), str))
 
-    def test_settings_save_and_load(self):
-        settings_a = hvsrpy.HvsrTraditionalProcessingSettings()
-        settings_a.window_length_in_seconds = 120.
-        fname = "temp_settings.json"
-        settings_a.save(fname)
+    def _test_save_and_load_boiler_plate(self, cls, customizations, fname):
+        setting_to_save = cls()
+        # must modify something from the default to ensure load()
+        # does not just create a new default object.
+        for key, value in customizations.items():
+            setattr(setting_to_save, key, value)
+        setting_to_save.save(fname)
 
-        settings_b = hvsrpy.HvsrTraditionalProcessingSettings()
-        settings_b.load(fname)
+        setting_to_load = cls()
+        setting_to_load.load(fname)
         os.remove(fname)
-        
-        self.assertDictEqual(settings_a.attr_dict, settings_b.attr_dict)
+
+        self.assertDictEqual(setting_to_save.attr_dict,
+                             setting_to_load.attr_dict)
+
+    def test_hvsrpreprocessingsettings_save_and_load(self):
+        self._test_save_and_load_boiler_plate(hvsrpy.HvsrPreProcessingSettings,
+                                              dict(detrend="constant"),
+                                              "temp_hvsrpreprocessingsettings.json")
+
+    def test_psdpreprocessingsettings_save_and_load(self):
+        self._test_save_and_load_boiler_plate(hvsrpy.PsdPreProcessingSettings,
+                                              dict(differentiate=True),
+                                              "temp_psdpreprocessingsettings.json")
+
+    def test_psdprocessingsettings_save_and_load(self):
+        self._test_save_and_load_boiler_plate(hvsrpy.PsdProcessingSettings,
+                                              dict(window_type_and_width=["tukey", 0.2]),
+                                              "temp_psdprocessingsettings.json")
+
+    def test_hvsrtraditionalprocessingsettings_save_and_load(self):
+        self._test_save_and_load_boiler_plate(hvsrpy.HvsrTraditionalProcessingSettings,
+                                              dict(method_to_combine_horizontals="squared_average"),
+                                              "temp_hvsrtraditionalprocessingsettings.json")
+
+    def test_hvsrtraditionalsingleazimuthprocessingsettings_save_and_load(self):
+        self._test_save_and_load_boiler_plate(hvsrpy.HvsrTraditionalSingleAzimuthProcessingSettings,
+                                              dict(azimuth_in_degrees=10.),
+                                              "temp_hvsrtraditionalsingleazimuthprocessingsettings.json")
+
+    def test_hvsrtraditionalrotdppprocessingsettings_save_and_load(self):
+        self._test_save_and_load_boiler_plate(hvsrpy.HvsrTraditionalRotDppProcessingSettings,
+                                              dict(azimuths_in_degrees=np.arange(0, 180, 20)),
+                                              "temp_hvsrtraditionalrotdppprocessingsettings.json")
+
+    def test_hvsrazimuthalprocessingsettings_save_and_load(self):
+        self._test_save_and_load_boiler_plate(hvsrpy.HvsrAzimuthalProcessingSettings,
+                                              dict(azimuths_in_degrees=np.arange(0, 180, 20)),
+                                              "temp_hvsrazimuthalprocessingsettings.json")
+
+    def test_hvsrdiffusefieldprocessingsettings_save_and_load(self):
+        self._test_save_and_load_boiler_plate(hvsrpy.HvsrDiffuseFieldProcessingSettings,
+                                              dict(smoothing=dict(operator="konno_and_ohmachi",
+                                                                  bandwidth=20,
+                                                                  center_frequencies_in_hz=np.geomspace(0.1, 50, 128))),
+                                              "temp_hvsrdiffusefieldprocessingsettings.json")
+
 
 if __name__ == "__main__":
     unittest.main()
