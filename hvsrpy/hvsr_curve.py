@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2024 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -139,7 +139,7 @@ class HvsrCurve():
     def _find_peak_bounded(frequency, amplitude, search_range_in_hz=(None, None), find_peaks_kwargs=None):
         """Finds frequency and amplitude associated with highest peak over a bounded range.
 
-        .. warning:: 
+        .. warning::
             Private methods are subject to change without warning.
 
         """
@@ -150,9 +150,7 @@ class HvsrCurve():
                                                                 find_peaks_kwargs=find_peaks_kwargs)
         return (frequency, amplitude)
 
-    #TODO(jpv): Harmonize when and when not search_range_in_hz and find_peaks_kwargs should be provided.
-    def __init__(self, frequency, amplitude, search_range_in_hz=(None, None),
-                 find_peaks_kwargs=None, meta=None):
+    def __init__(self, frequency, amplitude, meta=None):
         """Create ``HvsrCurve`` from iterables of frequency and amplitude.
 
         Parameters
@@ -161,15 +159,6 @@ class HvsrCurve():
             Vector of frequencies, one per ``amplitude``.
         amplitude : ndarray
             Vector of HVSR amplitudes, one per ``frequency``.
-        search_range_in_hz : tuple, optional
-            Frequency range to be searched for peaks.
-            Half open ranges can be specified with ``None``, default is
-            ``(None, None)`` indicating the full frequency range will be
-            searched.
-        find_peaks_kwargs : dict
-            Keyword arguments for the ``scipy`` function
-            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
-            see ``scipy`` documentation for details.
         meta : dict, optional
             Meta information about the object, default is `None`.
 
@@ -189,10 +178,55 @@ class HvsrCurve():
 
         self.meta = dict(meta) if isinstance(meta, dict) else dict()
 
-        peak = HvsrCurve._find_peak_bounded(self.frequency, self.amplitude,
-                                            search_range_in_hz=search_range_in_hz,
-                                            find_peaks_kwargs=find_peaks_kwargs)
-        self.peak_frequency, self.peak_amplitude = peak
+        self._search_range_in_hz = None
+        self._find_peaks_kwargs = None
+        self.peak_frequency = None
+        self.peak_amplitude = None
+        self.update_peaks_bounded()
+
+    def update_peaks_bounded(self, search_range_in_hz=(None, None), find_peaks_kwargs=None):
+        """Update peak associated with HVSR curve, can be over bounded range.
+
+        Parameters
+        ----------
+        search_range_in_hz : tuple, optional
+            Frequency range to be searched for peaks.
+            Half open ranges can be specified with ``None``, default is
+            ``(None, None)`` indicating the full frequency range will be
+            searched.
+        find_peaks_kwargs : dict
+            Keyword arguments for the ``scipy`` function
+            `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
+            see ``scipy`` documentation for details.
+
+        Returns
+        -------
+        None
+            Updates internal peak-related attributes.
+
+        """
+        if (search_range_in_hz == self._search_range_in_hz) and (find_peaks_kwargs == self._find_peaks_kwargs):
+            return
+        else:
+            self._search_range_in_hz = tuple(search_range_in_hz)
+            self.meta["search_range_in_hz"] = self._search_range_in_hz
+            if find_peaks_kwargs is None:
+                self._find_peaks_kwargs = {}
+                self.meta["find_peaks_kwargs"] = None
+            else:
+                self._find_peaks_kwargs = dict(find_peaks_kwargs)
+                self.meta["find_peaks_kwargs"] = dict(find_peaks_kwargs)
+                
+        frq, amp = self._find_peak_bounded(self.frequency,
+                                           self.amplitude,
+                                           search_range_in_hz=search_range_in_hz,
+                                           find_peaks_kwargs=find_peaks_kwargs)
+
+        if frq is None:
+            logger.info("No peak found in HVSR curve.")
+            frq, amp = np.nan, np.nan
+
+        self.peak_frequency, self.peak_amplitude = frq, amp
 
     def is_similar(self, other, atol=1E-9, rtol=0.):
         """Check if ``other`` is similar to ``self``."""
@@ -204,5 +238,18 @@ class HvsrCurve():
 
         if not np.allclose(self.frequency, other.frequency, atol=atol, rtol=rtol):
             return False
+
+        return True
+
+    def __eq__(self, other: object) -> bool:
+        if not self.is_similar(other):
+            return False
+
+        if not np.allclose(self.amplitude, other.amplitude):
+            return False
+
+        for attr in ["peak_frequency", "peak_amplitude"]:
+            if not np.isclose(getattr(self, attr), getattr(self, attr)):
+                return False
 
         return True

@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
-# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2024 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -60,27 +60,27 @@ class TestHvsrCurve(TestCase):
         self.assertEqual(self.hvsr.peak_amplitude, 6)
 
     def test_hvsrcurve_find_peak_bounded(self):
-        hvsr = hvsrpy.HvsrCurve(self.frequency, self.amplitude,
-                                search_range_in_hz=(0.9, 4.1))
+        hvsr = hvsrpy.HvsrCurve(self.frequency, self.amplitude)
+        hvsr.update_peaks_bounded(search_range_in_hz=(0.9, 4.1))
         self.assertEqual(hvsr.peak_frequency, 2)
         self.assertEqual(hvsr.peak_amplitude, 3)
 
     def test_hvsrcurve_find_peak_half_bounded_lower(self):
-        hvsr = hvsrpy.HvsrCurve(self.frequency, self.amplitude,
-                                search_range_in_hz=(None, 4))
+        hvsr = hvsrpy.HvsrCurve(self.frequency, self.amplitude)
+        hvsr.update_peaks_bounded(search_range_in_hz=(None, 4))
         self.assertEqual(hvsr.peak_frequency, 2)
         self.assertEqual(hvsr.peak_amplitude, 3)
 
     def test_hvsrcurve_find_peak_half_bounded_upper(self):
-        hvsr = hvsrpy.HvsrCurve(self.frequency, self.amplitude,
-                                search_range_in_hz=(4, None))
+        hvsr = hvsrpy.HvsrCurve(self.frequency, self.amplitude)
+        hvsr.update_peaks_bounded(search_range_in_hz=(4, None))
         self.assertEqual(hvsr.peak_frequency, 5)
         self.assertEqual(hvsr.peak_amplitude, 6)
 
     def test_hvsrcurve_find_peak_flat(self):
         hvsr = hvsrpy.HvsrCurve([1, 2, 3, 4, 5], [1, 1, 1, 1, 1])
-        self.assertTrue(hvsr.peak_frequency is None)
-        self.assertTrue(hvsr.peak_amplitude is None)
+        self.assertTrue(np.isnan(hvsr.peak_frequency))
+        self.assertTrue(np.isnan(hvsr.peak_amplitude))
 
     def test_is_similar(self):
         a = hvsrpy.HvsrCurve([1, 2, 3], [1, 2, 1])
