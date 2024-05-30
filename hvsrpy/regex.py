@@ -69,3 +69,9 @@ peer_direction_exec = re.compile(peer_direction_expr)
 peer_npts_exec = re.compile(peer_npts_expr)
 peer_dt_exec = re.compile(peer_dt_expr)
 peer_sample_exec = re.compile(peer_sample_expr)
+
+# ObjectIO
+# --------
+azimuth_expr = "azimuth (\d+\.\d+) deg | hvsr curve \d+"
+
+azimuth_exec = re.compile(azimuth_expr)

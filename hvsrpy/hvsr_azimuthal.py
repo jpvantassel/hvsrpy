@@ -102,6 +102,7 @@ class HvsrAzimuthal():
                                               meta=hvsr.meta))
             self.azimuths.append(azimuth)
         self.meta = dict(meta) if isinstance(meta, dict) else dict()
+        self.update_peaks_bounded()
 
     @property
     def _search_range_in_hz(self):
@@ -132,6 +133,8 @@ class HvsrAzimuthal():
             Updates internal peak-related attributes.
 
         """
+        self.meta["search_range_in_hz"] = tuple(search_range_in_hz)
+        self.meta["find_peaks_kwargs"] = None if find_peaks_kwargs is None else dict(find_peaks_kwargs) 
         for hvsr in self.hvsrs:
             hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
                                       find_peaks_kwargs=find_peaks_kwargs)

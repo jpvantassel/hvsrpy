@@ -84,6 +84,47 @@ class TestObjectIO(TestCase):
                                               distribution_fn="lognormal"
                                               )
 
+    def test_hvsr_azimuthal(self):
+        srecord_fname = self.full_path/"data/a2/UT.STN11.A2_C150.miniseed"
+        srecord = hvsrpy.read([[srecord_fname]])
+        srecord = hvsrpy.preprocess(
+            srecord,
+            hvsrpy.HvsrPreProcessingSettings()
+        )
+        hvsr = hvsrpy.process(
+            srecord,
+            hvsrpy.HvsrAzimuthalProcessingSettings()
+        )
+        self._test_save_and_load_boiler_plate(hvsr,
+                                              "temp_save_and_load_azimuthal.csv",
+                                              distribution_mc="lognormal",
+                                              distribution_fn="lognormal"
+                                              )
+
+    def test_hvsr_azimuthal_with_rejected_windows(self):
+        srecord_fname = self.full_path/"data/a2/UT.STN11.A2_C150.miniseed"
+        srecord = hvsrpy.read([[srecord_fname]])
+        srecord = hvsrpy.preprocess(
+            srecord,
+            hvsrpy.HvsrPreProcessingSettings()
+        )
+        hvsr = hvsrpy.process(
+            srecord,
+            hvsrpy.HvsrAzimuthalProcessingSettings()
+        )
+        hvsr.hvsrs[5].valid_window_boolean_mask[5:10] = False
+        hvsr.hvsrs[5].valid_peak_boolean_mask[5:10] = False
+        hvsr.hvsrs[7].valid_window_boolean_mask[:10] = False
+        hvsr.hvsrs[7].valid_peak_boolean_mask[:10] = False
+        hvsr.hvsrs[9].valid_window_boolean_mask[10:20] = False
+        hvsr.hvsrs[9].valid_peak_boolean_mask[10:20] = False
+        self._test_save_and_load_boiler_plate(hvsr,
+                                              "temp_save_and_load_azimuthal_with_rejected_windows.csv",
+                                              distribution_mc="lognormal",
+                                              distribution_fn="lognormal"
+                                              )
+
+
 if __name__ == "__main__":
     unittest.main()
 

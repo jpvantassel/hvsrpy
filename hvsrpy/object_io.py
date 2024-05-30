@@ -25,6 +25,7 @@ import numpy as np
 from .hvsr_diffuse_field import HvsrDiffuseField
 from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
+from .regex import azimuth_exec
 
 
 def write_hvsr_to_file(hvsr,
@@ -54,6 +55,7 @@ def write_hvsr_to_file(hvsr,
     meta = deepcopy(hvsr.meta)
 
     if isinstance(hvsr, HvsrTraditional):
+        # valid peaks and windows
         meta["valid_peak_boolean_mask"] = hvsr.valid_peak_boolean_mask.tolist()
         meta["valid_window_boolean_mask"] = hvsr.valid_window_boolean_mask.tolist()
 
@@ -72,25 +74,40 @@ def write_hvsr_to_file(hvsr,
         array[:, -2] = hvsr.mean_curve(distribution=distribution_mc)
         array[:, -1] = hvsr.std_curve(distribution=distribution_mc)
 
-    # elif isinstance(hvsr, HvsrAzimuthal):
-    #     categories = ["frequency (Hz)"]
-    #     # Note: HvsrAzimuthal does not require each HvsrTraditional to have the same number of curves.
-    #     _categories = []
-    #     for azimuth, _hvsr in zip(hvsr.azimuths, hvsr.hvsrs):
-    #         for curve_idx in range(1, _hvsr.n_curves+1):
-    #             _categories.append(f"azimuth {azimuth}| hvsr curve {curve_idx}")
-    #     categories.extend(_categories)
-    #     categories.extend([f"mean curve ({distribution_mc})", f"mean curve std ({distribution_mc})"])
-    #     last_header_line = ",".join(categories)
-    #     array = np.empty((len(hvsr.frequency), len(categories)))
-    #     array[:, 0] = hvsr.frequency
-    #     start_index = 1
-    #     for hvsr in hvsr.hvsrs:
-    #         stop_index = start_index + hvsr.n_curves
-    #         array[:, start_index:stop_index] = hvsr.amplitude.T
-    #         start_index = stop_index
-    #     array[:, -2] = hvsr.mean_curve(distribution=distribution_mc)
-    #     array[:, -1] = hvsr.std_curve(distribution=distribution_mc)
+    elif isinstance(hvsr, HvsrAzimuthal):
+        # Note: HvsrAzimuthal does not require each HvsrTraditional to have the same number of curves.
+
+        # valid peaks and windows
+        valid_window_boolean_masks = []
+        valid_peak_boolean_masks = []
+        for _hvsr in hvsr.hvsrs:
+            valid_window_boolean_masks.append(
+                _hvsr.valid_window_boolean_mask.tolist())
+            valid_peak_boolean_masks.append(
+                _hvsr.valid_peak_boolean_mask.tolist())
+        meta["valid_window_boolean_masks"] = valid_window_boolean_masks
+        meta["valid_peak_boolean_masks"] = valid_peak_boolean_masks
+
+        # data headers
+        data_headers_line = ["frequency (Hz)"]
+        for azimuth, _hvsr in zip(hvsr.azimuths, hvsr.hvsrs):
+            for curve_idx in range(1, _hvsr.n_curves+1):
+                data_headers_line.append(
+                    f"azimuth {azimuth} deg | hvsr curve {curve_idx}")
+        data_headers_line.extend(
+            [f"mean curve ({distribution_mc})", f"mean curve std ({distribution_mc})"])
+        header_line = ",".join(data_headers_line)
+
+        # curve data
+        array = np.empty((len(hvsr.frequency), len(data_headers_line)))
+        array[:, 0] = hvsr.frequency
+        start_index = 1
+        for hvsr in hvsr.hvsrs:
+            stop_index = start_index + hvsr.n_curves
+            array[:, start_index:stop_index] = hvsr.amplitude.T
+            start_index = stop_index
+        array[:, -2] = hvsr.mean_curve(distribution=distribution_mc)
+        array[:, -1] = hvsr.std_curve(distribution=distribution_mc)
 
     # elif isinstance(hvsr, HvsrDiffuseField):
     #     categories = ["frequency (Hz)", "hvsr curve 1", f"mean curve", f"mean curve std"]
@@ -132,11 +149,11 @@ def read_hvsr_from_file(fname):
     header_lines = []
     for line in lines:
         if line.startswith("#"):
-            header_lines.append(line[2:]) # remove "# "
+            header_lines.append(line[2:])  # remove "# "
         else:
             break
     meta = json.loads("\n".join(header_lines[:-1]))
-    header_line = header_lines[-1]
+    header_line = header_lines[-1].split(",")
 
     if meta["processing_method"] == "traditional":
         array = np.loadtxt(fname, comments="#", delimiter=",")
@@ -148,10 +165,45 @@ def read_hvsr_from_file(fname):
         )
         hvsr.valid_window_boolean_mask = np.array(
             meta.pop("valid_window_boolean_mask")
-            )
+        )
         hvsr.valid_peak_boolean_mask = np.array(
             meta.pop("valid_peak_boolean_mask")
-            )
+        )
+
+    elif meta["processing_method"] == "azimuthal":
+        array = np.loadtxt(fname, comments="#", delimiter=",")
+        prev_azimuth = azimuth_exec.search(header_line[1]).groups()[0]
+        hvsrs = []
+        start_idx = 1
+        azimuths = []
+        for idx, header in enumerate(header_line[1:-2], start=1):
+            curr_azimuth = azimuth_exec.search(header).groups()[0]
+            if curr_azimuth != prev_azimuth:
+                azimuths.append(float(prev_azimuth))
+                hvsrs.append(HvsrTraditional(array[:, 0],
+                                             array[:, start_idx:idx].T,
+                                             meta={})
+                             )
+                start_idx = idx
+                prev_azimuth = curr_azimuth
+        azimuths.append(float(curr_azimuth))
+        hvsrs.append(HvsrTraditional(array[:, 0],
+                                     array[:, start_idx:idx+1].T,
+                                     meta={})
+                     )
+
+        hvsr = HvsrAzimuthal(hvsrs=hvsrs, azimuths=azimuths, meta=meta)
+        hvsr.meta = meta
+        hvsr.update_peaks_bounded(
+            search_range_in_hz=tuple(meta["search_range_in_hz"]),
+            find_peaks_kwargs=meta["find_peaks_kwargs"]
+        )
+
+        for _hvsr, _vwbm, _vpbm in zip(hvsr.hvsrs,
+                                       meta.pop("valid_window_boolean_masks"),
+                                       meta.pop("valid_peak_boolean_masks")):
+            _hvsr.valid_window_boolean_mask = np.array(_vwbm)
+            _hvsr.valid_peak_boolean_mask = np.array(_vpbm)
 
     return hvsr
 
