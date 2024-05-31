@@ -214,36 +214,6 @@ def read_hvsr_from_file(fname):
 
     return hvsr
 
-#     # def print_stats(self, distribution_f0, places=2):  # pragma: no cover
-#     #     """Print basic statistics of `Hvsr` instance."""
-#     #     display(self._stats(distribution_f0=distribution_f0).round(places))
-
-
-#     def _stats(self, distribution_f0):
-#         distribution_f0 = self.correct_distribution(distribution_f0)
-
-#         if distribution_f0 == "lognormal":
-#             columns = ["Lognormal Median", "Lognormal Standard Deviation"]
-#             data = np.array([[self.mean_f0_frq(distribution_f0),
-#                               self.std_f0_frq(distribution_f0)],
-#                              [1/self.mean_f0_frq(distribution_f0),
-#                               self.std_f0_frq(distribution_f0)]])
-
-#         elif distribution_f0 == "normal":
-#             columns = ["Mean", "Standard Deviation"]
-#             data = np.array([[self.mean_f0_frq(distribution_f0),
-#                               self.std_f0_frq(distribution_f0)],
-#                              [np.nan, np.nan]])
-#         else:
-#             msg = f"`distribution_f0` of {distribution_f0} is not implemented."
-#             raise NotImplementedError(msg)
-
-#         df = DataFrame(data=data, columns=columns,
-#                        index=["Fundamental Site Frequency, f0",
-#                               "Fundamental Site Period, T0"])
-#         return df
-
-
 # ### HvsrAzimuthal
 
 #     def _stats(self, distribution_f0):
