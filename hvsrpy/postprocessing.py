@@ -83,9 +83,20 @@ DEFAULT_KWARGS = {
         "zorder": 4,
         "label": r"$f_{n,mc}$",
     },
+    "peak_mean_hvsr_curve_azimuthal": {
+        "linestyle": "",
+        "marker": "D",
+        "markersize": 4,
+        "markerfacecolor": "lightgreen",
+        "markeredgewidth": 1,
+        "markeredgecolor": "black",
+        "zorder": 4,
+        "label": r"$f_{n,mc,az}$",
+    },
     "peak_mean_hvsr_curve_azimuthal_2d": {
         "linestyle": "",
-        "marker": "D",  # pre-v2.0.0
+        # "marker": "D",  # pre-v2.0.0
+        "marker": "s",
         "markersize": 4,
         "markerfacecolor": "lightgreen",
         "markeredgewidth": 1,
@@ -94,8 +105,9 @@ DEFAULT_KWARGS = {
         "label": r"$f_{n,mc,\alpha}$",
     },
     "peak_mean_hvsr_curve_azimuthal_3d": {
-        "marker": "D",  # pre-v2.0.0
-        "s" : 16,
+        # "marker": "D",  # pre-v2.0.0
+        "marker": "s",
+        "s": 16,
         "c": "lightgreen",
         "edgecolors": "black",
         "zorder": 4,
@@ -186,11 +198,10 @@ def _plot_peak_individual_hvsr_curve(ax, hvsr, valid=True, plot_kwargs=None):  #
     for hvsr in hvsrs:
         to_plot = hvsr.valid_peak_boolean_mask if valid else ~hvsr.valid_peak_boolean_mask
         frequency, amplitude = hvsr._main_peak_frq[to_plot], hvsr._main_peak_amp[to_plot]
-        ax.plot(frequency, amplitude, **plot_kwargs)
         # could be a case where first azimuth was completely rejected.
         if len(frequency) > 0:
+            ax.plot(frequency, amplitude, **plot_kwargs)
             plot_kwargs["label"] = None
-
 
 def _plot_peak_mean_hvsr_curve(ax, hvsr, distribution="lognormal", plot_kwargs=None):  # pragma: no cover
     """Plot peak of mean HVSR curve.
@@ -199,9 +210,17 @@ def _plot_peak_mean_hvsr_curve(ax, hvsr, distribution="lognormal", plot_kwargs=N
         Private methods are subject to change without warning.
 
     """
-    default_kwargs = DEFAULT_KWARGS["peak_mean_hvsr_curve"].copy()
-    plot_kwargs = default_kwargs if plot_kwargs is None else {
-        **default_kwargs, **plot_kwargs}
+    if isinstance(hvsr, HvsrAzimuthal):
+        default_kwargs = DEFAULT_KWARGS["peak_mean_hvsr_curve_azimuthal"].copy(
+        )
+    else:
+        default_kwargs = DEFAULT_KWARGS["peak_mean_hvsr_curve"].copy()
+
+    if plot_kwargs is None:
+        plot_kwargs = default_kwargs
+    else:
+        plot_kwargs = {**default_kwargs, **plot_kwargs}
+
     ax.plot(*hvsr.mean_curve_peak(distribution=distribution), **plot_kwargs)
 
 
@@ -307,8 +326,8 @@ def plot_single_panel_hvsr_curves(hvsr,
                                   plot_invalid_curves=True,
                                   plot_mean_curve=True,
                                   plot_frequency_std=True,
-                                  plot_peak_mean_curve=False,
-                                  plot_peak_individual_valid_curves=False,
+                                  plot_peak_mean_curve=True,
+                                  plot_peak_individual_valid_curves=True,
                                   plot_peak_individual_invalid_curves=False,
                                   ax=None,
                                   subplots_kwargs=None,
@@ -685,8 +704,11 @@ def plot_azimuthal_contour_3d(hvsr,
                               ax=None,
                               plot_mean_curve_peak_by_azimuth=True,
                               subplots_kwargs=None,
-                              contourf_kwargs=None):
-
+                              contourf_kwargs=None,
+                              camera_elevation=35,
+                              camera_azimuth=250,
+                              camera_distance=13
+                              ):
     # layout
     ax_was_none = False
     if ax is None:
@@ -706,8 +728,8 @@ def plot_azimuthal_contour_3d(hvsr,
     ax.set_xticks(np.log10(np.array([0.01, 0.1, 1, 10, 100])))
     ax.set_xticklabels(["$10^{"+str(x)+"}$" for x in range(-2, 3)])
     ax.set_xlim(np.log10((hvsr.frequency[0], hvsr.frequency[-1])))
-    ax.view_init(elev=30, azim=245)
-    ax.dist = 12
+    ax.view_init(elev=camera_elevation, azim=camera_azimuth)
+    ax.dist = camera_distance
     ax.set_yticks(np.arange(0, 180+45, 45))
     ax.set_ylim(0, 180)
     ax.set_xlabel("Frequency (Hz)")
@@ -716,9 +738,10 @@ def plot_azimuthal_contour_3d(hvsr,
 
     if plot_mean_curve_peak_by_azimuth:
         # mean curve peaks
-        fpeak, apeak = hvsr.mean_curve_peak_by_azimuth(distribution=distribution_mc)
+        fpeak, apeak = hvsr.mean_curve_peak_by_azimuth(
+            distribution=distribution_mc)
         fpeak = np.array([*fpeak, fpeak[0]])
-        azimuths = np.array([*hvsr.azimuths, hvsr.azimuths[0]])
+        azimuths = np.array([*hvsr.azimuths, 180.])
         apeak = np.array([*apeak, apeak[0]])
         ax.scatter(np.log10(fpeak), azimuths, apeak*1.05,
                    **DEFAULT_KWARGS["peak_mean_hvsr_curve_azimuthal_3d"])
@@ -732,41 +755,73 @@ def plot_azimuthal_summary(hvsr,
                            distribution_mc="lognormal",
                            distribution_fn="lognormal",
                            plot_mean_curve_peak_by_azimuth=True,
-                           subplots_kwargs=None,
-                           contourf_kwargs=None):
+                           plot_valid_curves=True,
+                           plot_invalid_curves=False,
+                           plot_mean_curve=True,
+                           plot_frequency_std=True,
+                           plot_peak_mean_curve=True,
+                           plot_peak_individual_valid_curves=True,
+                           plot_peak_individual_invalid_curves=False,
+                           ):  # pragma: no cover
+
     fig = plt.figure(figsize=(6, 5), dpi=150)
-    gs = fig.add_gridspec(nrows=2, ncols=2, wspace=0.3,
-                          hspace=0.1, width_ratios=(1.2, 0.8))
-    ax0 = fig.add_subplot(gs[0:2, 0:1], projection='3d')
-    ax1 = fig.add_subplot(gs[0:1, 1:2])
-    ax2 = fig.add_subplot(gs[1:2, 1:2])
+    gs = fig.add_gridspec(nrows=4, ncols=2, wspace=0.3,
+                          hspace=0.2, width_ratios=(1.2, 0.8))
+    ax0 = fig.add_subplot(gs[0:3, 0:1], projection='3d')
+    ax1 = fig.add_subplot(gs[0:2, 1:2])
+    ax2 = fig.add_subplot(gs[2:4, 1:2])
     fig.subplots_adjust(bottom=0.21)
 
     # plot 3d contour
-    ax=ax0
-    plot_azimuthal_contour_3d(hvsr,
-                              distribution_mc=distribution_mc,
-                              ax=ax,
-                              plot_mean_curve_peak_by_azimuth=True)
-    
+    ax = ax0
+    plot_azimuthal_contour_3d(
+        hvsr,
+        distribution_mc=distribution_mc,
+        ax=ax,
+        plot_mean_curve_peak_by_azimuth=plot_mean_curve_peak_by_azimuth
+    )
+
     # plot 2d contour
-    ax=ax1
-    plot_azimuthal_contour_2d(hvsr,
-                              distribution_mc=distribution_mc,
-                              ax=ax)
+    ax = ax1
+    plot_azimuthal_contour_2d(
+        hvsr,
+        distribution_mc=distribution_mc,
+        plot_mean_curve_peak_by_azimuth=plot_mean_curve_peak_by_azimuth,
+        ax=ax
+    )
     ax.set_xlabel("")
     ax.set_xticks([])
 
     # plot traditional
     ax = ax2
-    plot_single_panel_hvsr_curves(hvsr,
-                                  distribution_mc=distribution_mc,
-                                  distribution_fn=distribution_fn,
-                                  ax=ax,
-                                  plot_mean_curve=True,
-                                  plot_frequency_std=True,
-                                  plot_invalid_curves=False)
-    
+    plot_single_panel_hvsr_curves(
+        hvsr,
+        distribution_mc=distribution_mc,
+        distribution_fn=distribution_fn,
+        plot_valid_curves=plot_valid_curves,
+        plot_invalid_curves=plot_invalid_curves,
+        plot_mean_curve=plot_mean_curve,
+        plot_frequency_std=plot_frequency_std,
+        plot_peak_mean_curve=plot_mean_curve,
+        plot_peak_individual_valid_curves=plot_peak_individual_valid_curves,
+        plot_peak_individual_invalid_curves=plot_peak_individual_invalid_curves,
+        ax=ax
+    )
+    ax.get_legend().remove()
+    ax.legend(loc="lower left", bbox_to_anchor=(-1.9, -0.1), ncols=2)
+
+    if plot_peak_mean_curve:
+        _plot_peak_mean_hvsr_curve(ax=ax,
+                                   hvsr=hvsr,
+                                   distribution=distribution_mc)
+
+    # lettering
+    xs, ys = [0.15, 0.64, 0.64], [0.83, 0.83, 0.50]
+    for x, y, letter in zip(xs, ys, list("abc")):
+        text = fig.text(x, y, f"({letter})")
+        text.set_bbox(dict(facecolor='white', edgecolor='none',
+                           boxstyle='round', pad=0.15))
+
     return (fig, (ax0, ax1, ax2))
 
 # def voronoi_plot(points, vertice_set, boundary, ax=None,

@@ -10,7 +10,7 @@ font.family : serif
 font.size : 8
 
 # legend
-legend.handlelength : 0.7
+legend.handlelength : 1.5
 legend.columnspacing : 0.5
 legend.labelspacing : 0.1
 legend.handletextpad : 0.2

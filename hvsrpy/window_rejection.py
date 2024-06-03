@@ -24,7 +24,7 @@ import numpy as np
 from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
 from .interact import ginput_session, plot_continue_button, is_absolute_point_in_relative_box
-from .plot_tools import plt, plot_single_panel_hvsr_curves
+from .postprocessing import plt, plot_single_panel_hvsr_curves
 
 logger = logging.getLogger(__name__)
 
