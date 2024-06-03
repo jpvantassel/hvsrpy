@@ -4,6 +4,7 @@
 *.tmp_profiler_run
 .vscode
 html
+/examples/data/example_mhvsr_io.csv
 
 # Folders
 .ipynb_checkpoints
