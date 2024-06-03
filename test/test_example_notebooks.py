@@ -46,20 +46,28 @@ class TestExampleNotebooks(TestCase):
                 self.assertTrue(False)
         self.assertTrue(True)
 
-    def test_notebook_example_effect_of_smoothing(self):
-            notebook = "example_effect_of_smoothing.ipynb"
-            self._test_notebook_boiler_plate(notebook)
-
     def test_notebook_example_ehvsr_traditional(self):
             notebook = "example_ehvsr_traditional.ipynb"
             self._test_notebook_boiler_plate(notebook)
 
-    def test_notebook_example_mhvsr_diffuse(self):
-            notebook = "example_mhvsr_diffuse.ipynb"
+    def test_notebook_example_hvsr_io(self):
+            notebook = "example_hvsr_io.ipynb"
             self._test_notebook_boiler_plate(notebook)
 
-    def test_notebook_example_mhvsr_preprocessing(self):
-            notebook = "example_mhvsr_preprocessing.ipynb"
+    def test_notebook_example_hvsr_smoothing(self):
+            notebook = "example_hvsr_smoothing.ipynb"
+            self._test_notebook_boiler_plate(notebook)
+
+    def test_notebook_example_mhvsr_azimuthal(self):
+            notebook = "example_mhvsr_azimuthal.ipynb"
+            self._test_notebook_boiler_plate(notebook)
+
+    def test_notebook_example_mhvsr_diffuse_field(self):
+            notebook = "example_mhvsr_diffuse_field.ipynb"
+            self._test_notebook_boiler_plate(notebook)
+
+    def test_notebook_example_mhvsr_traditional_sesame(self):
+            notebook = "example_mhvsr_traditional_sesame.ipynb"
             self._test_notebook_boiler_plate(notebook)
     
     def test_notebook_example_mhvsr_traditional_window_rejection(self):
@@ -70,10 +78,17 @@ class TestExampleNotebooks(TestCase):
             notebook = "example_mhvsr_traditional.ipynb"
             self._test_notebook_boiler_plate(notebook)
 
-    # TODO(jpv): Replace dataset for psd computation.
-    # def test_notebook_example_psd_and_self_noise(self):
-    #         notebook = "example_psd_and_self_noise.ipynb"
-    #         self._test_notebook_boiler_plate(notebook)
+    def test_notebook_example_microtremor_preprocessing(self):
+            notebook = "example_microtremor_preprocessing.ipynb"
+            self._test_notebook_boiler_plate(notebook)
+
+    def test_notebook_example_psd_and_self_noise(self):
+            notebook = "example_psd_and_self_noise.ipynb"
+            self._test_notebook_boiler_plate(notebook)
+
+    def test_notebook_example_spatial_hvsr(self):
+            notebook = "example_spatial_hvsr.ipynb"
+            self._test_notebook_boiler_plate(notebook)
 
 if __name__ == "__main__":
     unittest.main()

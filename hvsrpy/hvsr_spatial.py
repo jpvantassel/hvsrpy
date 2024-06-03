@@ -81,6 +81,7 @@ def montecarlo_fn(generator_means,
                   distribution_generators="lognormal",
                   distribution_spatial="lognormal",
                   n_realizations=1000,
+                  rng=None
                   ):
     """MonteCarlo simulation for spatial distribution of ``fn``.
 
@@ -107,6 +108,9 @@ def montecarlo_fn(generator_means,
     distribution_spatial : {'lognormal', 'normal'}, optional
         Assumed distribution of spatial statistics on fn, default is
         ``lognormal``.
+    rng : None, optional
+        User-defined randon number generator (RNG), default is ``None``
+        indicating ``default_rng()`` will be used.
 
     Returns
     -------
@@ -114,7 +118,8 @@ def montecarlo_fn(generator_means,
         Of the form `(f0_mean, f0_stddev, f0_realizations)`.
 
     """
-    rng = default_rng()
+    if rng is None:
+        rng = default_rng()
 
     if distribution_generators not in ["normal", "lognormal"]:
         msg = f"dist_generators = {distribution_generators} not recognized."
