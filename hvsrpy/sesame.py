@@ -19,7 +19,7 @@
 
 from termcolor import colored
 
-from hvsrpy import HvsrTraditional
+from hvsrpy import HvsrCurve
 import numpy as np
 
 
@@ -37,17 +37,14 @@ def is_isnot(value):
 
 def peak_index(curve):
     """Find index to the peak of the provided curve."""
-    curve = curve.reshape((1, curve.size))
-    pot_peak_indices, _ = HvsrTraditional.find_peaks(curve)
-    pot_peak_indices = pot_peak_indices[0]
-    pot_peak_amp = curve[0, pot_peak_indices]
-    pot_peak_index = np.argwhere(pot_peak_amp == np.max(pot_peak_amp))[0][0]
-    return pot_peak_indices[pot_peak_index]
+    peak_index, _ = HvsrCurve._find_peak_unbounded(np.arange(len(curve)),
+                                                   curve)
+    return peak_index
 
 
 def reliability(windowlength, passing_window_count,
-                       frequency, mean_curve, std_curve,
-                       search_limits=(None, None), verbose=1):
+                frequency, mean_curve, std_curve,
+                search_range_in_hz=(None, None), verbose=1):
     """Check SESAME (2004) reliability criteria.
 
     Parameters
@@ -64,11 +61,11 @@ def reliability(windowlength, passing_window_count,
     std_curve : ndarray
         Standard deviation of HVSR curve
         (assumes lognormal distribution).
-    f0_std : float
-        Standard deviation of f0 peak from time windows
+    fn_std : float
+        Standard deviation of fn peak from time windows
         (assumes normal distribution).
-    search_limits : tuple
-        Limits about which to search for f0, default is `(None, None)`
+    search_range_in_hz : tuple
+        Limits about which to search for fn, default is `(None, None)`
         indicating the full range will be considered.
     verbose : {0, 1, 2}, optional
         Level of verbose logging for SESAME criteria, amount of logging
@@ -82,15 +79,15 @@ def reliability(windowlength, passing_window_count,
     """
     limits = []
     limits_were_both_none = True
-    for limit, default in zip(search_limits, [min(frequency), max(frequency)]):
+    for limit, default in zip(search_range_in_hz, [min(frequency), max(frequency)]):
         if limit is None:
             limits.append(default)
         else:
             limits.append(float(limit))
             limits_were_both_none = False
-    search_limits = tuple(limits)
+    search_range_in_hz = tuple(limits)
     if not limits_were_both_none:
-        frequency, mean_curve, std_curve = trim_curve(search_limits, frequency,
+        frequency, mean_curve, std_curve = trim_curve(search_range_in_hz, frequency,
                                                       mean_curve, std_curve,
                                                       verbose=verbose)
 
@@ -113,7 +110,7 @@ def reliability(windowlength, passing_window_count,
         print(msg)
 
     if verbose > 1:
-        msg = f"    f0mc={clean(mc_peak_frq)} {is_isnot(criteria[0])} > 10/windowlength={clean(10/windowlength)}"
+        msg = f"    fnmc={clean(mc_peak_frq)} {is_isnot(criteria[0])} > 10/windowlength={clean(10/windowlength)}"
         print(msg)
 
     # Criteria ii)
@@ -126,7 +123,7 @@ def reliability(windowlength, passing_window_count,
         print(msg)
 
     if verbose > 1:
-        msg = f"    nc(f0mc)={clean(nc)} {is_isnot(criteria[1])} > 200"
+        msg = f"    nc(fnmc)={clean(nc)} {is_isnot(criteria[1])} > 200"
         print(msg)
 
     # Criteria iii)
@@ -159,8 +156,8 @@ def reliability(windowlength, passing_window_count,
     return criteria
 
 
-def trim_curve(search_limits, frequency, mean_curve, std_curve, verbose=0):
-    low_limit, upp_limit = min(search_limits), max(search_limits)
+def trim_curve(search_range_in_hz, frequency, mean_curve, std_curve, verbose=0):
+    low_limit, upp_limit = min(search_range_in_hz), max(search_range_in_hz)
     rel_frq_low = np.abs(frequency - low_limit)
     lower_index = np.where(rel_frq_low == np.min(rel_frq_low))[0][0]
     rel_frq_upp = np.abs(frequency - upp_limit)
@@ -183,8 +180,8 @@ def trim_curve(search_limits, frequency, mean_curve, std_curve, verbose=0):
     return (frequency, mean_curve, std_curve)
 
 
-def clarity(frequency, mean_curve, std_curve, f0_std,
-                   search_limits=(None, None), verbose=1):
+def clarity(frequency, mean_curve, std_curve, fn_std,
+            search_range_in_hz=(None, None), verbose=1):
     """Check SESAME (2004) clarity criteria.
 
     Parameters
@@ -197,11 +194,11 @@ def clarity(frequency, mean_curve, std_curve, f0_std,
     std_curve : ndarray
         Standard deviation of HVSR curve
         (assumes lognormal distribution).
-    f0_std : float
-        Standard deviation of f0 peak from time windows
+    fn_std : float
+        Standard deviation of fn peak from time windows
         (assumes normal distribution).
-    search_limits : tuple
-        Limits about which to search for f0, default is `(None, None)`
+    search_range_in_hz : tuple
+        Limits about which to search for fn, default is `(None, None)`
         indicating the full range will be considered.
     verbose : {0, 1, 2}, optional
         Level of verbose logging for SESAME criteria, amount of logging
@@ -221,15 +218,15 @@ def clarity(frequency, mean_curve, std_curve, f0_std,
 
     limits = []
     limits_were_both_none = True
-    for limit, default in zip(search_limits, [min(frequency), max(frequency)]):
+    for limit, default in zip(search_range_in_hz, [min(frequency), max(frequency)]):
         if limit is None:
             limits.append(default)
         else:
             limits.append(float(limit))
             limits_were_both_none = False
-    search_limits = tuple(limits)
+    search_range_in_hz = tuple(limits)
     if not limits_were_both_none:
-        frequency, mean_curve, std_curve = trim_curve(search_limits, frequency,
+        frequency, mean_curve, std_curve = trim_curve(search_range_in_hz, frequency,
                                                       mean_curve, std_curve,
                                                       verbose=verbose)
 
@@ -249,7 +246,7 @@ def clarity(frequency, mean_curve, std_curve, f0_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    min(A[f0mc/4,f0mc])={clean(np.min(a_low))} {is_isnot(criteria[0])} < A0[f0mc]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
+        msg = f"    min(A[fnmc/4,fnmc])={clean(np.min(a_low))} {is_isnot(criteria[0])} < A0[fnmc]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
         print(msg)
 
     # Criteria ii)
@@ -264,7 +261,7 @@ def clarity(frequency, mean_curve, std_curve, f0_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    min(A[f0mc,f0mc*4])={clean(np.min(a_high))} {is_isnot(criteria[1])} < A0[f0mc]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
+        msg = f"    min(A[fnmc,fnmc*4])={clean(np.min(a_high))} {is_isnot(criteria[1])} < A0[fnmc]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
         print(msg)
 
     # Criteria iii)
@@ -276,7 +273,7 @@ def clarity(frequency, mean_curve, std_curve, f0_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    A0[f0mc]={clean(mc_peak_amp)} {is_isnot(criteria[2])} > 2.0"
+        msg = f"    A0[fnmc]={clean(mc_peak_amp)} {is_isnot(criteria[2])} > 2.0"
         print(msg)
 
     # Criteria iv)
@@ -300,8 +297,8 @@ def clarity(frequency, mean_curve, std_curve, f0_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    f0_upper={clean(f_plus)} {is_isnot(cond_1)} within 5% of f0mc={clean(mc_peak_frq)}.\n"
-        msg += f"    f0_lower={clean(f_minus)} {is_isnot(cond_2)} within 5% of f0mc={clean(mc_peak_frq)}."
+        msg = f"    fn_upper={clean(f_plus)} {is_isnot(cond_1)} within 5% of fnmc={clean(mc_peak_frq)}.\n"
+        msg += f"    fn_lower={clean(f_minus)} {is_isnot(cond_2)} within 5% of fnmc={clean(mc_peak_frq)}."
         print(msg)
 
     # Table for conditions v) and vi)
@@ -322,7 +319,7 @@ def clarity(frequency, mean_curve, std_curve, f0_std,
         theta = 1.58
 
     # Criteria v)
-    if f0_std < epsilon*mc_peak_frq:
+    if fn_std < epsilon*mc_peak_frq:
         criteria[4] = 1
 
     if verbose > 0:
@@ -330,7 +327,7 @@ def clarity(frequency, mean_curve, std_curve, f0_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    f0_std={f0_std} {is_isnot(criteria[4])} less than "
+        msg = f"    fn_std={fn_std} {is_isnot(criteria[4])} less than "
         msg += f"epsilon*mc_peak_frq={clean(epsilon)}*{clean(mc_peak_frq)}={clean(epsilon*mc_peak_frq)}."
         print(msg)
 

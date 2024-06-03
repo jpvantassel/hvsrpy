@@ -18,6 +18,7 @@
 """File for organizing some useful plotting functions."""
 
 from matplotlib import cm
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -40,6 +41,8 @@ __all__ = [
     "plot_azimuthal_contour_2d",
     "plot_azimuthal_contour_3d",
     "plot_azimuthal_summary",
+    "plot_voronoi",
+    "summarize_spatial_statistics",
 ]
 
 DEFAULT_KWARGS = {
@@ -202,6 +205,7 @@ def _plot_peak_individual_hvsr_curve(ax, hvsr, valid=True, plot_kwargs=None):  #
         if len(frequency) > 0:
             ax.plot(frequency, amplitude, **plot_kwargs)
             plot_kwargs["label"] = None
+
 
 def _plot_peak_mean_hvsr_curve(ax, hvsr, distribution="lognormal", plot_kwargs=None):  # pragma: no cover
     """Plot peak of mean HVSR curve.
@@ -703,8 +707,6 @@ def plot_azimuthal_contour_3d(hvsr,
                               distribution_mc="lognormal",
                               ax=None,
                               plot_mean_curve_peak_by_azimuth=True,
-                              subplots_kwargs=None,
-                              contourf_kwargs=None,
                               camera_elevation=35,
                               camera_azimuth=250,
                               camera_distance=13
@@ -824,29 +826,116 @@ def plot_azimuthal_summary(hvsr,
 
     return (fig, (ax0, ax1, ax2))
 
-# def voronoi_plot(points, vertice_set, boundary, ax=None,
-#                  fig_kwargs=None):  # pragma: no cover
-#     """Plot Voronoi regions with boundary."""
 
-#     ax_was_none = False
-#     if ax is None:
-#         ax_was_none = True
+def plot_voronoi(valid_sensor_coordinates,
+                 valid_mean_fn,
+                 tesselation_vertices,
+                 boundary,
+                 ax=None,
+                 fig_kwargs=None):  # pragma: no cover
+    """Plot Voronoi regions with boundary."""
 
-#         default_fig_kwargs = dict(figsize=(4, 4), dpi=150)
-#         if fig_kwargs is None:
-#             fig_kwargs = {}
-#         fig_kwargs = {**default_fig_kwargs, **fig_kwargs}
+    ax_was_none = False
+    if ax is None:
+        ax_was_none = True
 
-#         fig, ax = plt.subplots(**fig_kwargs)
+        default_fig_kwargs = dict(figsize=(3.5, 3.5), dpi=150)
+        if fig_kwargs is None:
+            fig_kwargs = {}
+        fig_kwargs = {**default_fig_kwargs, **fig_kwargs}
 
-#     for vertices in vertice_set:
-#         ax.fill(vertices[:, 0], vertices[:, 1], alpha=0.4)
+        fig, ax = plt.subplots(**fig_kwargs)
 
-#     ax.plot(points[:, 0], points[:, 1], 'ko')
-#     ax.plot(boundary[:, 0], boundary[:, 1], color="k")
+    # fn colorbar
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    norm = cm.colors.Normalize(vmin=np.min(valid_mean_fn),
+                               vmax=np.max(valid_mean_fn))
+    cmap = cm.autumn
+    mpl.colorbar.ColorbarBase(cax, cmap=cmap, norm=norm,
+                              label="Resonant Frequency (Hz)")
 
-#     ax.set_xlabel("Relative Northing (m)")
-#     ax.set_ylabel("Relative Easting (m)")
+    # plot tesselations
+    for _dat, vertices in zip(valid_mean_fn, tesselation_vertices):
+        ax.fill(vertices[:, 0], vertices[:, 1],
+                facecolor=mpl.colors.rgb2hex(cmap(norm(_dat))[:3]),
+                edgecolor="black", linewidth=0.5)
 
-#     if ax_was_none:
-#         return fig, ax
+    # plot valid sensor coordinates
+    ax.plot(valid_sensor_coordinates[:, 0], valid_sensor_coordinates[:, 1],
+            markerfacecolor="cornflowerblue",
+            marker="o",
+            linestyle="",
+            markeredgecolor="black",
+            label="Sensor Location")
+
+    # plot boundary
+    closed_boundary = np.vstack((boundary, boundary[0, :]))
+    ax.plot(closed_boundary[:, 0], closed_boundary[:, 1],
+            color="black", label="Boundary", linewidth=3)
+
+    ax.set_xlabel("Relative Easting (m)")
+    ax.set_ylabel("Relative Northing (m)")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=3)
+
+    if ax_was_none:
+        return fig, ax
+
+
+def summarize_spatial_statistics(spatial_mean,
+                                 spatial_stddev,
+                                 spatial_distribution,
+                                 ):
+
+    if spatial_distribution == "lognormal":
+        data = np.array([
+            [spatial_mean,
+             spatial_stddev,
+             np.exp(np.log(spatial_mean) - spatial_stddev),
+             np.exp(np.log(spatial_mean) + spatial_stddev),
+             ],
+            [1/spatial_mean,
+             spatial_stddev,
+             1/np.exp(np.log(spatial_mean) - spatial_stddev),
+             1/np.exp(np.log(spatial_mean) + spatial_stddev),
+             ],
+        ])
+        columns = [
+            "Exponentiated Lognormal Median (units)",
+            "Lognormal Standard Deviation (log units)",
+            "-1 Lognormal Standard Deviation (units)",
+            "+1 Lognormal Standard Deviation (units)",
+        ]
+    elif spatial_distribution == "normal":
+        data = np.array([
+            [spatial_mean,
+             spatial_stddev,
+             spatial_mean - spatial_stddev,
+             spatial_mean + spatial_stddev,
+             ],
+            [np.nan,
+             np.nan,
+             np.nan,
+             np.nan,
+             ]
+        ])
+        columns = [
+            "Mean (units)",
+            "Standard Deviation (units)",
+            "-1 Standard Deviation (units)",
+            "+1 Standard Deviation (units)",
+        ]
+    else:
+        msg = f"spatial_distribution={spatial_distribution} not recognized."
+        raise ValueError(msg)
+
+    df = pd.DataFrame(data=data,
+                      columns=columns,
+                      index=[
+                          "Resonant Site Frequency, fn (Hz)",
+                          "Resonant Site Period, Tn (s)",
+                      ])
+
+    s = df.style.format(precision=3)
+    with pd.option_context('display.max_colwidth', None):
+        display(s)
