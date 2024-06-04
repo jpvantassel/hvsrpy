@@ -50,6 +50,10 @@ class TestExampleNotebooks(TestCase):
             notebook = "example_ehvsr_traditional.ipynb"
             self._test_notebook_boiler_plate(notebook)
 
+    def test_notebook_example_hvsr_cli(self):
+            notebook = "example_hvsr_cli.ipynb"
+            self._test_notebook_boiler_plate(notebook)
+
     def test_notebook_example_hvsr_io(self):
             notebook = "example_hvsr_io.ipynb"
             self._test_notebook_boiler_plate(notebook)
