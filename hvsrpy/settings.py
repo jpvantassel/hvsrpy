@@ -1,6 +1,6 @@
 # This file is part of hvsrpy a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2024 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ class PreProcessingSettings(Settings):
                  ignore_dissimilar_time_step_warning=False,
                  ):
         """Base class for preprocessing.
-        
+
         Notes
         -----
         .. note::
@@ -183,7 +183,7 @@ class HvsrPreProcessingSettings(PreProcessingSettings):
                  preprocessing_method="hvsr",
                  ):
         """Initialize ``HvsrPreProcessingSettings`` object.
-        
+
         Parameters
         ----------
         hvsrpy_version : str
@@ -398,7 +398,7 @@ class HvsrProcessingSettings(Settings):
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  ):
         """Base class for HVSR processing settings.
-        
+
         Notes
         -----
         .. note::

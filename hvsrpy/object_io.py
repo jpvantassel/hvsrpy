@@ -25,6 +25,7 @@ import numpy as np
 from .hvsr_diffuse_field import HvsrDiffuseField
 from .hvsr_traditional import HvsrTraditional
 from .hvsr_azimuthal import HvsrAzimuthal
+from .settings import *
 from .regex import azimuth_exec
 
 
@@ -173,7 +174,7 @@ def read_hvsr_from_file(fname):
         )
 
     elif meta["processing_method"] == "azimuthal":
-        
+
         prev_azimuth = azimuth_exec.search(header_line[1]).groups()[0]
         hvsrs = []
         start_idx = 1
@@ -208,38 +209,80 @@ def read_hvsr_from_file(fname):
             _hvsr.valid_peak_boolean_mask = np.array(_vpbm)
 
     elif meta["processing_method"] == "diffuse_field":
-        hvsr = HvsrDiffuseField(array[:,0], array[:,1], meta=meta)
+        hvsr = HvsrDiffuseField(array[:, 0], array[:, 1], meta=meta)
         hvsr.update_peaks_bounded(search_range_in_hz=meta["search_range_in_hz"],
                                   find_peaks_kwargs=meta["find_peaks_kwargs"])
 
     return hvsr
 
-# ### HvsrAzimuthal
 
-#     def _stats(self, distribution_f0):
-#         distribution_f0 = Hvsr.correct_distribution(distribution_f0)
+def write_settings_object_to_file(settings_object, fname):
+    """Write HVSR settings object to text-based file.
 
-#         if distribution_f0 == "lognormal":
-#             columns = ["Lognormal Median", "Lognormal Standard Deviation"]
-#             data = np.array([[self.mean_f0_frq(distribution_f0),
-#                               self.std_f0_frq(distribution_f0)],
-#                              [1/self.mean_f0_frq(distribution_f0),
-#                               self.std_f0_frq(distribution_f0)]])
+    Parameters
+    ----------
+    settings_object : Settings
+        HVSR settings object that should be archived to a file on disk.
+    fname : str
+        Name of output file where the contents of the HVSR settings
+        object are to be stored. May be a relative or the full path.
 
-#         elif distribution_f0 == "normal":
-#             columns = ["Means", "Standard Deviation"]
-#             data = np.array([[self.mean_f0_frq(distribution_f0),
-#                               self.std_f0_frq(distribution_f0)],
-#                              [np.nan, np.nan]])
-#         else:
-#             msg = f"`distribution_f0` of {distribution_f0} is not implemented."
-#             raise NotImplementedError(msg)
+    Returns
+    -------
+    None
+        Instead writes HVSR settings object to disk in text-based format.
 
-#         df = DataFrame(data=data, columns=columns,
-#                        index=["Fundamental Site Frequency, f0,AZ",
-#                               "Fundamental Site Period, T0,AZ"])
-#         return df
+    """
+    settings_object.save(fname)
 
-#     # def print_stats(self, distribution_f0, places=2):  # pragma: no cover
-#     #     """Print basic statistics of `Hvsr` instance."""
-#     #     display(self._stats(distribution_f0=distribution_f0).round(places))
+
+def read_settings_object_from_file(fname):
+    """Create HVSR settings object from text-based file.
+
+    Parameters
+    ----------
+    fname : str
+        Name of output file where the HVSR settings will be
+        stored. May be a relative or the full path.
+
+    Returns
+    -------
+    hvsr : Settings
+        HVSR settings object that was archived in a file on disk.
+
+    """
+
+    with open(fname, "r") as f:
+        attr_dict = json.load(f)
+
+    # preprocessing settings
+    if "preprocessing_method" in attr_dict.keys():
+        if attr_dict["preprocessing_method"] == "psd":
+            settings_object = PsdPreProcessingSettings()
+        elif attr_dict["preprocessing_method"] == "hvsr":
+            settings_object = HvsrPreProcessingSettings()
+        else:
+            raise NotImplementedError
+
+    elif "processing_method" in attr_dict.keys():
+        if attr_dict["processing_method"] == "psd":
+            settings_object = PsdProcessingSettings()
+        elif attr_dict["processing_method"] == "azimuthal":
+            settings_object = HvsrAzimuthalProcessingSettings()
+        elif attr_dict["processing_method"] == "diffuse_field":
+            settings_object = HvsrDiffuseFieldProcessingSettings()
+        elif attr_dict["processing_method"] == "traditional":
+            if attr_dict["method_to_combine_horizontals"] == "rotdpp":
+                settings_object = HvsrTraditionalRotDppProcessingSettings()
+            elif attr_dict["method_to_combine_horizontals"] == "single_azimuth":
+                settings_object = HvsrTraditionalSingleAzimuthProcessingSettings()
+            else:
+                settings_object = HvsrTraditionalProcessingSettings()
+        else:
+            raise NotImplementedError
+
+    else:
+        raise NotImplementedError
+
+    settings_object.load(fname)
+    return settings_object
