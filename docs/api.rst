@@ -15,5 +15,4 @@ order they would be used in a HVSR processing workflow.
    hvsr_processing_overview
    hvsr_objects
    window_rejection
-   statistics
    spatial

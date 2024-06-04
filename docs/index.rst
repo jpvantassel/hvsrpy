@@ -91,6 +91,11 @@ by `hvsrpy`. We ask you please cite them appropriately.
     General Directorate, 62, European Commission - Research General
     Directorate.
 
+    Welch, P., (1967). The use of fast Fourier transform for the
+    estimation of power spectra: a method based on time averaging over
+    short, modified periodograms. IEEE Transactions on audio and
+    electroacoustics, 15(2), pp.70-73.
+
 .. toctree::
    :maxdepth: 1
    :hidden:

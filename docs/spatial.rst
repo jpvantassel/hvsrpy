@@ -7,3 +7,6 @@ HvsrSpatial
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. autoclass:: hvsrpy.HvsrSpatial
+      :members:

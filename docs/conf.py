@@ -27,7 +27,7 @@ meta = parse_meta("../hvsrpy/metadata.py")
 # -- Project information -----------------------------------------------------
 
 project = 'hvsrpy'
-copyright = '2019-2023, Joseph P. Vantassel'
+copyright = '2019-2024, Joseph P. Vantassel'
 author = 'Joseph P. Vantassel'
 
 # The full version, including alpha/beta/rc tags
