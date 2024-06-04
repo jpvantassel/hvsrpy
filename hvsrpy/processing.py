@@ -174,7 +174,7 @@ def traditional_hvsr_processing(records, settings):
     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
     # allocate array for hvsr results.
-    fcs = settings.smoothing["center_frequencies_in_hz"]
+    fcs = np.array(settings.smoothing["center_frequencies_in_hz"])
     hvsr_spectra = np.empty((len(records), len(fcs)))
     check_nyquist_frequency(max(dt_with_count.keys()), fcs)
 
@@ -240,7 +240,7 @@ def traditional_single_azimuth_hvsr_processing(records, settings):
     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
     # allocate array for hvsr results.
-    fcs = settings.smoothing["center_frequencies_in_hz"]
+    fcs = np.array(settings.smoothing["center_frequencies_in_hz"])
     hvsr_spectra = np.empty((len(records), len(fcs)))
     check_nyquist_frequency(max(dt_with_count.keys()), fcs)
 
@@ -300,7 +300,7 @@ def traditional_rotdpp_hvsr_processing(records, settings):
     records, dt_with_count = prepare_records_with_inconsistent_dt(records, settings)
 
     # allocate array for hvsr results.
-    fcs = settings.smoothing["center_frequencies_in_hz"]
+    fcs = np.array(settings.smoothing["center_frequencies_in_hz"])
     hvsr_spectra = np.empty((len(records), len(fcs)))
     check_nyquist_frequency(max(dt_with_count.keys()), fcs)
 
@@ -480,7 +480,7 @@ def rpsd(records, settings):
 
     if settings.smoothing is not None:
         operator, bandwidth = settings.smoothing["operator"], settings.smoothing["bandwidth"]
-        fcs = settings.smoothing["center_frequencies_in_hz"]
+        fcs = np.array(settings.smoothing["center_frequencies_in_hz"])
         spectra = np.empty((3, len(fft_frq)))
         spectra[0] = psd_ns 
         spectra[1] = psd_ew 
@@ -510,7 +510,7 @@ def diffuse_field_hvsr_processing(records, settings):
         raise ValueError(msg)
 
     # allocate array for hvsr results.
-    fcs = settings.smoothing["center_frequencies_in_hz"]
+    fcs = np.array(settings.smoothing["center_frequencies_in_hz"])
     check_nyquist_frequency(max(dt_with_count.keys()), fcs)
 
     # compute psd.

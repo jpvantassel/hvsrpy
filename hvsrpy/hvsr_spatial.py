@@ -100,22 +100,22 @@ def montecarlo_fn(generator_means,
         +-----------+------------------+-----------------+
         | if dist is| mean must be     | stddev must be  |
         +===========+==================+=================+
-        | normal    |:math:`\\mu`       |:math:`\\sigma` |
+        | normal    |:math:`\\mu`       |:math:`\\sigma`   |
         +-----------+------------------+-----------------+
-        | lognormal |:math:`\\lambda`   |:math:`\\zeta`  |
+        | lognormal |:math:`\\lambda`   |:math:`\\zeta`    |
         +-----------+------------------+-----------------+
 
     distribution_spatial : {'lognormal', 'normal'}, optional
         Assumed distribution of spatial statistics on fn, default is
         ``lognormal``.
     rng : None, optional
-        User-defined randon number generator (RNG), default is ``None``
+        User-defined random number generator (RNG), default is ``None``
         indicating ``default_rng()`` will be used.
 
     Returns
     -------
     tuple
-        Of the form `(f0_mean, f0_stddev, f0_realizations)`.
+        Of the form `(fn_mean, fn_stddev, fn_realizations)`.
 
     """
     if rng is None:

@@ -43,6 +43,7 @@ __all__ = [
     "plot_azimuthal_summary",
     "plot_voronoi",
     "summarize_spatial_statistics",
+    "HVSRPY_MPL_STYLE",
 ]
 
 DEFAULT_KWARGS = {
@@ -136,6 +137,22 @@ DEFAULT_KWARGS = {
         "zorder": 2,
         "label": r"$f_{n,i,rejected}$",
     }
+}
+
+HVSRPY_MPL_STYLE = {
+    "axes.titlesize": 8,
+    "lines.linewidth": 0.75,
+    "xtick.labelsize": 8,
+    "ytick.labelsize": 8,
+    "font.family": "serif",
+    "font.size": 8,
+    "legend.handlelength": 1.5,
+    "legend.columnspacing": 0.5,
+    "legend.labelspacing": 0.1,
+    "legend.handletextpad": 0.2,
+    "legend.framealpha": 1,
+    "savefig.dpi": 300,
+    "savefig.bbox": "tight",
 }
 
 
