@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""Tests hvsrpy's exmaple Jupyter notebooks."""
+"""Tests hvsrpy's example Jupyter notebooks."""
 
 import logging
 import os

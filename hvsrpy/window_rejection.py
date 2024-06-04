@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2023 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
+# Copyright (C) 2019-2024 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -29,9 +29,13 @@ from .postprocessing import plt, plot_single_panel_hvsr_curves
 logger = logging.getLogger(__name__)
 
 
-def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
-                             min_sta_lta_ratio, max_sta_lta_ratio,
-                             components=("ns", "ew", "vt")):
+def sta_lta_window_rejection(records,
+                             sta_seconds=1,
+                             lta_seconds=30,
+                             min_sta_lta_ratio=0.2,
+                             max_sta_lta_ratio=2.5,
+                             components=("ns", "ew", "vt"),
+                             hvsr=None):
     """Performs window rejection using STA - LTA ratio.
 
     Parameters
@@ -40,21 +44,25 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
         Time-domain data in the form of an iterable object containing
         ``SeismicRecording3C`` objects. This data is assumed to have
         already been preprocessed using ``hvsrpy.preprocess``.
-    sta_seconds : float
+    sta_seconds : float, optional
         Length of time used to determine the short term average (STA)
-        in seconds.
-    lta_seconds : float
+        in seconds, default is 1 second.
+    lta_seconds : float, optional
         Length of time used to determine the long term average (LTA)
-        in seconds.
-    min_sta_lta_ratio : float
+        in seconds, default is 30 seconds, should be roughly the window
+        length.
+    min_sta_lta_ratio : float, optional
         Minimum allowable ratio of STA/LTA for a window; windows with
-        an STA/LTA below this value will be rejected.
-    max_sta_lta_ratio : float
+        an STA/LTA below this value will be rejected, default is 0.2.
+    max_sta_lta_ratio : float, optional
         Maximum allowable ratio of STA/LTA for a window; windows with
-        an STA/LTA above this value will be rejected.
+        an STA/LTA above this value will be rejected, default is 2.5.
     components : iterable, optional
         Components on which the STA/LTA filter will be evaluated,
         default is all components, that is, ``("ns", "ew", "vt")``.
+    hvsr : HvsrTraditional or HvsrAzimuthal, optional
+        HVSR object to be updated using results of time-domain
+        window rejection, default is ``None``.
 
     Returns
     -------
@@ -64,6 +72,7 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
 
     """
     passing_records = []
+    valid_window_boolean_mask = []
     for record in records:
         for component in components:
             timeseries = getattr(record, component)
@@ -78,8 +87,7 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
                 raise IndexError(msg)
             n_sta_in_window = int(timeseries.n_samples // npts_in_sta)
             short_timeseries = timeseries.amplitude[:npts_in_sta*n_sta_in_window]
-            sta_values = np.mean(np.abs(short_timeseries.reshape(
-                (n_sta_in_window, npts_in_sta))), axis=1)
+            sta_values = np.mean(np.abs(short_timeseries.reshape((n_sta_in_window, npts_in_sta))), axis=1)
 
             # compute lta.
             npts_in_lta = int(lta_seconds // timeseries.dt_in_seconds)
@@ -92,17 +100,34 @@ def sta_lta_window_rejection(records, sta_seconds, lta_seconds,
 
             # check mininum and maximum sta - lta ratio.
             if (np.max(sta_values/lta) > max_sta_lta_ratio) or (np.min(sta_values/lta) < min_sta_lta_ratio):
+                valid_window_boolean_mask.append(False)
                 break
         else:
+            valid_window_boolean_mask.append(True)
             passing_records.append(record)
 
-    return passing_records
+    if hvsr is None:
+        return passing_records
+    else:
+        if isinstance(hvsr, HvsrTraditional):
+            hvsr.valid_window_boolean_mask = np.array(valid_window_boolean_mask)
+            hvsr.valid_peak_boolean_mask = np.array(valid_window_boolean_mask)
+        elif isinstance(hvsr, HvsrAzimuthal):
+            for _hvsr in hvsr.hvsrs:
+                _hvsr.valid_window_boolean_mask = np.array(valid_window_boolean_mask)
+                _hvsr.valid_peak_boolean_mask = np.array(valid_window_boolean_mask)
+        else:
+            raise NotImplementedError
+        return (passing_records, hvsr)
 
 # TODO(jpv): Write tests for maximum_value_window_rejection.
 
 
-def maximum_value_window_rejection(records, maximum_value_threshold,
-                                   normalized=True, components=("ns", "ew", "vt")):  # pragma: no cover
+def maximum_value_window_rejection(records,
+                                   maximum_value_threshold=0.9,
+                                   normalized=True,
+                                   components=("ns", "ew", "vt"),
+                                   hvsr=None):  # pragma: no cover
     """Performs window rejection based on maximum value of time series.
 
     Parameters
@@ -124,6 +149,9 @@ def maximum_value_window_rejection(records, maximum_value_threshold,
     components : iterable, optional
         Components on which the maximum value filter will be evaluated,
         default is all components, that is, ``("ns", "ew", "vt")``.
+    hvsr : HvsrTraditional or HvsrAzimuthal, optional
+        HVSR object to be updated using results of time-domain
+        window rejection, default is ``None``.
 
     Returns
     -------
@@ -149,12 +177,27 @@ def maximum_value_window_rejection(records, maximum_value_threshold,
 
     # remove records that exceed threshold.
     passing_records = []
+    valid_window_boolean_mask = []
     for record, maximum_value in zip(records, maximum_values):
         if maximum_value < maximum_value_threshold:
             passing_records.append(record)
+            valid_window_boolean_mask.append(True)
+        else:
+            valid_window_boolean_mask.append(False)
 
-    return passing_records
-
+    if hvsr is None:
+        return passing_records
+    else:
+        if isinstance(hvsr, HvsrTraditional):
+            hvsr.valid_window_boolean_mask = np.array(valid_window_boolean_mask)
+            hvsr.valid_peak_boolean_mask = np.array(valid_window_boolean_mask)
+        elif isinstance(hvsr, HvsrAzimuthal):
+            for _hvsr in hvsr.hvsrs:
+                _hvsr.valid_window_boolean_mask = np.array(valid_window_boolean_mask)
+                _hvsr.valid_peak_boolean_mask = np.array(valid_window_boolean_mask)
+        else:
+            raise NotImplementedError
+        return (passing_records, hvsr)
 
 def frequency_domain_window_rejection(hvsr,
                                       n=2,
@@ -297,15 +340,15 @@ def _frequency_domain_window_rejection(hvsr,
 
 
 def manual_window_rejection(hvsr,
-                            ylims=None,
-                            distribution_fn="lognormal",
                             distribution_mc="lognormal",
-                            plot_mc=True,
-                            plot_fn=True,
+                            distribution_fn="lognormal",
+                            plot_mean_curve=True,
+                            plot_frequency_std=True,
                             search_range_in_hz=(None, None),
                             find_peaks_kwargs=None,
                             upper_right_corner_relative=(0.11, 0.98),
                             box_size_relative=(0.1, 0.08),
+                            ylims=None,
                             fig=None,
                             ax=None,
                             ):  # pragma: no cover
@@ -375,8 +418,8 @@ def manual_window_rejection(hvsr,
     ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
                                        distribution_mc=distribution_mc,
                                        distribution_fn=distribution_fn,
-                                       plot_mc=plot_mc,
-                                       plot_fn=plot_fn,
+                                       plot_mean_curve=plot_mean_curve,
+                                       plot_frequency_std=plot_frequency_std,
                                        ax=ax)
     if ylims is not None:
         ax.set_ylim(ylims)
@@ -402,6 +445,7 @@ def manual_window_rejection(hvsr,
                 if np.any(np.logical_and(amplitude > min(ys), amplitude < max(ys))):
                     was_empty = False
                     hvsr.valid_window_boolean_mask[idx] = False
+                    hvsr.valid_peak_boolean_mask[idx] = False
         hvsr.update_peaks_bounded(search_range_in_hz=search_range_in_hz,
                                   find_peaks_kwargs=find_peaks_kwargs)
 
@@ -414,8 +458,8 @@ def manual_window_rejection(hvsr,
         ax = plot_single_panel_hvsr_curves(hvsr=hvsr,
                                            distribution_mc=distribution_mc,
                                            distribution_fn=distribution_fn,
-                                           plot_mc=plot_mc,
-                                           plot_fn=plot_fn,
+                                           plot_mean_curve=plot_mean_curve,
+                                           plot_frequency_std=plot_frequency_std,
                                            ax=ax)
         plot_continue_button(ax,
                              upper_right_corner_relative=upper_right_corner_relative,
@@ -437,3 +481,5 @@ def manual_window_rejection(hvsr,
                 break
             else:
                 continue
+
+    return hvsr
