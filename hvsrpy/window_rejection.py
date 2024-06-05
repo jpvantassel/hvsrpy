@@ -242,7 +242,8 @@ def frequency_domain_window_rejection(hvsr,
     Returns
     -------
     int
-        Number of iterations required for convergence.
+        Number of iterations required for convergence. Updates HVSR
+        object's internal state.
 
     """
     if isinstance(hvsr, HvsrTraditional):
@@ -394,8 +395,8 @@ def manual_window_rejection(hvsr,
 
     Returns
     -------
-    Hvsr
-        Returns HVSR object with modified internal state.
+    None
+        Updates HVSR object's internal state.
 
     """
     upper_right_corner_relative = (0.11, 0.98)
@@ -498,5 +499,3 @@ def manual_window_rejection(hvsr,
                 break
             else:
                 continue
-
-    return hvsr

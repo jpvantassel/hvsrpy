@@ -58,7 +58,7 @@ def hvsr_preprocess(records, settings):
             windows = [srecord3c]
 
         # detrend each time window individually.
-        if settings.detrend is not None or settings.detrend != "none":
+        if (settings.detrend is not None) and (settings.detrend != "none"):
             for window in windows:
                 window.detrend(type=settings.detrend)
 
@@ -127,7 +127,7 @@ def psd_preprocess(records, settings):
             windows = [srecord3c]
 
         # detrend each time window individually.
-        if settings.detrend is not None or settings.detrend != "none":
+        if (settings.detrend is not None) and (settings.detrend != "none"):
             for window in windows:
                 window.detrend(type=settings.detrend)
 

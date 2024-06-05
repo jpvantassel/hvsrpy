@@ -290,12 +290,12 @@ def _plot_nth_std_frequency_range(ax, hvsr, distribution="lognormal", n=1., fill
     )
     fill_kwargs = default_kwargs if fill_kwargs is None else {
         **default_kwargs, **fill_kwargs}
-    (y_min, y_max) = ax.get_ylim()
+    _, y_max = ax.get_ylim()
     f_min = hvsr.nth_std_fn_frequency(n=-n, distribution=distribution)
     f_max = hvsr.nth_std_fn_frequency(n=+n, distribution=distribution)
     ax.fill([f_min, f_min, f_max, f_max],
-            [y_min, y_max, y_max, y_min], **fill_kwargs)
-    ax.set_ylim((y_min, y_max))
+            [0, 100, 100, 0], **fill_kwargs)
+    ax.set_ylim((0, np.ceil(y_max)))
 
 
 def _plot_resonance_pdf(ax, hvsr, distribution="lognormal", contour_kwargs=None):  # pragma: no cover

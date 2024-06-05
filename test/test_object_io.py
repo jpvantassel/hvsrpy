@@ -51,7 +51,7 @@ class TestObjectIO(TestCase):
         self.assertDictEqual(hvsr.meta, nhvsr.meta)
 
     def test_hvsr_traditional(self):
-        srecord_fname = self.full_path/"data/a2/UT.STN11.A2_C150.miniseed"
+        srecord_fname = self.full_path/"data/input/mseed_combined/ut.stn11.a2_c50.mseed"
         srecord = hvsrpy.read([[srecord_fname]])
         srecord = hvsrpy.preprocess(
             srecord,
@@ -68,7 +68,7 @@ class TestObjectIO(TestCase):
                                               )
 
     def test_hvsr_traditional_with_rejected_windows(self):
-        srecord_fname = self.full_path/"data/a2/UT.STN11.A2_C150.miniseed"
+        srecord_fname = self.full_path/"data/input/mseed_combined/ut.stn11.a2_c50.mseed"
         srecord = hvsrpy.read([[srecord_fname]])
         srecord = hvsrpy.preprocess(
             srecord,
@@ -87,7 +87,7 @@ class TestObjectIO(TestCase):
                                               )
 
     def test_hvsr_azimuthal(self):
-        srecord_fname = self.full_path/"data/a2/UT.STN11.A2_C150.miniseed"
+        srecord_fname = self.full_path/"data/input/mseed_combined/ut.stn11.a2_c50.mseed"
         srecord = hvsrpy.read([[srecord_fname]])
         srecord = hvsrpy.preprocess(
             srecord,
@@ -104,7 +104,7 @@ class TestObjectIO(TestCase):
                                               )
 
     def test_hvsr_azimuthal_with_rejected_windows(self):
-        srecord_fname = self.full_path/"data/a2/UT.STN11.A2_C150.miniseed"
+        srecord_fname = self.full_path/"data/input/mseed_combined/ut.stn11.a2_c50.mseed"
         srecord = hvsrpy.read([[srecord_fname]])
         srecord = hvsrpy.preprocess(
             srecord,
@@ -127,7 +127,7 @@ class TestObjectIO(TestCase):
                                               )
 
     def test_hvsr_diffuse_field(self):
-        srecord_fname = self.full_path/"data/a2/UT.STN11.A2_C150.miniseed"
+        srecord_fname = self.full_path/"data/input/mseed_combined/ut.stn11.a2_c50.mseed"
         srecord = hvsrpy.read([[srecord_fname]])
         srecord = hvsrpy.preprocess(
             srecord,

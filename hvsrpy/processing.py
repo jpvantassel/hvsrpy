@@ -92,7 +92,10 @@ def prepare_fft_settings(records, settings):
         settings.fft_settings = dict(n=good_n)
     else:
         user_n = settings.fft_settings.get("n", max_n_samples)
-        settings.fft_settings["n"] = good_n if good_n > user_n else user_n
+        if user_n is None:
+            settings.fft_settings["n"] = max_n_samples
+        else:
+            settings.fft_settings["n"] = good_n if good_n > user_n else user_n
 
 
 def prepare_records_with_inconsistent_dt(records, settings):
@@ -551,8 +554,6 @@ PROCESSING_METHODS = {
     "diffuse_field": diffuse_field_hvsr_processing,
     "psd": rpsd,
 }
-# TODO(jpv): Add PSD to PROCESSING_METHODS.
-
 
 def process(records, settings):
     """Process time domain data.

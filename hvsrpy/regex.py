@@ -75,3 +75,9 @@ peer_sample_exec = re.compile(peer_sample_expr)
 azimuth_expr = "azimuth (\d+\.\d+) deg | hvsr curve \d+"
 
 azimuth_exec = re.compile(azimuth_expr)
+
+# HvsrGeopsy
+# ----------
+geopsy_line_expr = f"(\d+\.\d+)\t(\d+\.\d+)\t(\d+\.\d+)\t\d+\.\d+{NEWLINE}"
+
+geopsy_line_exec = re.compile(geopsy_line_expr)

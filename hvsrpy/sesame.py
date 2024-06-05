@@ -27,10 +27,6 @@ def pass_fail(value):
     return colored("Pass", "green") if value > 0 else colored("Fail", "red")
 
 
-def clean(number, decimals=3):
-    return str(np.round(number, decimals=decimals))
-
-
 def is_isnot(value):
     return colored("is" if value > 0 else "is not", attrs=["underline"])
 
@@ -110,7 +106,7 @@ def reliability(windowlength, passing_window_count,
         print(msg)
 
     if verbose > 1:
-        msg = f"    fnmc={clean(mc_peak_frq)} {is_isnot(criteria[0])} > 10/windowlength={clean(10/windowlength)}"
+        msg = f"    fnmc={mc_peak_frq:.3f} {is_isnot(criteria[0])} > 10/windowlength={10/windowlength:.3f}"
         print(msg)
 
     # Criteria ii)
@@ -123,7 +119,7 @@ def reliability(windowlength, passing_window_count,
         print(msg)
 
     if verbose > 1:
-        msg = f"    nc(fnmc)={clean(nc)} {is_isnot(criteria[1])} > 200"
+        msg = f"    nc(fnmc)={nc:.0f} {is_isnot(criteria[1])} > 200"
         print(msg)
 
     # Criteria iii)
@@ -144,7 +140,7 @@ def reliability(windowlength, passing_window_count,
         print(msg)
 
     if verbose > 1:
-        msg = f"    sigma_a(f)={clean(sigma_a_max)} {is_isnot(criteria[2])} < {2 if mc_peak_frq>0.5 else 3}"
+        msg = f"    sigma_a(f)={sigma_a_max:.03f} {is_isnot(criteria[2])} < {2 if mc_peak_frq>0.5 else 3}"
         print(msg)
 
     if verbose > 0:
@@ -164,13 +160,13 @@ def trim_curve(search_range_in_hz, frequency, mean_curve, std_curve, verbose=0):
     upper_index = np.where(rel_frq_upp == np.min(rel_frq_upp))[0][0]+1
 
     if verbose > 0:
-        msg = f"Considering only frequencies between {clean(low_limit)} and {clean(upp_limit)} Hz."
+        msg = f"Considering only frequencies between {low_limit:.03f} and {upp_limit:.03f} Hz."
         print(msg)
 
     if verbose > 1:
-        msg = f"    Lower frequency limit is {clean(frequency[lower_index])} Hz."
+        msg = f"    Lower frequency limit is {frequency[lower_index]:.03f} Hz."
         print(msg)
-        msg = f"    Upper frequency limit is {clean(frequency[upper_index-1])} Hz."
+        msg = f"    Upper frequency limit is {frequency[upper_index-1]:.03f} Hz."
         print(msg)
 
     frequency = frequency[lower_index:upper_index]
@@ -246,7 +242,7 @@ def clarity(frequency, mean_curve, std_curve, fn_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    min(A[fnmc/4,fnmc])={clean(np.min(a_low))} {is_isnot(criteria[0])} < A0[fnmc]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
+        msg = f"    min(A[fnmc/4,fnmc])={np.min(a_low):.03f} {is_isnot(criteria[0])} < A0[fnmc]/2={mc_peak_amp:.03f}/2={mc_peak_amp/2:.03f}"
         print(msg)
 
     # Criteria ii)
@@ -261,7 +257,7 @@ def clarity(frequency, mean_curve, std_curve, fn_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    min(A[fnmc,fnmc*4])={clean(np.min(a_high))} {is_isnot(criteria[1])} < A0[fnmc]/2={clean(mc_peak_amp)}/2={clean(mc_peak_amp/2)}"
+        msg = f"    min(A[fnmc,fnmc*4])={np.min(a_high):.03f} {is_isnot(criteria[1])} < A0[fnmc]/2={mc_peak_amp:.03f}/2={mc_peak_amp/2:.03f}"
         print(msg)
 
     # Criteria iii)
@@ -273,7 +269,7 @@ def clarity(frequency, mean_curve, std_curve, fn_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    A0[fnmc]={clean(mc_peak_amp)} {is_isnot(criteria[2])} > 2.0"
+        msg = f"    A0[fnmc]={mc_peak_amp:.03f} {is_isnot(criteria[2])} > 2.0"
         print(msg)
 
     # Criteria iv)
@@ -297,8 +293,8 @@ def clarity(frequency, mean_curve, std_curve, fn_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    fn_upper={clean(f_plus)} {is_isnot(cond_1)} within 5% of fnmc={clean(mc_peak_frq)}.\n"
-        msg += f"    fn_lower={clean(f_minus)} {is_isnot(cond_2)} within 5% of fnmc={clean(mc_peak_frq)}."
+        msg = f"    fn_upper={f_plus:.03f} {is_isnot(cond_1)} within 5% of fnmc={mc_peak_frq:.03f}.\n"
+        msg += f"    fn_lower={f_minus:.03f} {is_isnot(cond_2)} within 5% of fnmc={mc_peak_frq:.03f}."
         print(msg)
 
     # Table for conditions v) and vi)
@@ -327,8 +323,8 @@ def clarity(frequency, mean_curve, std_curve, fn_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    fn_std={fn_std} {is_isnot(criteria[4])} less than "
-        msg += f"epsilon*mc_peak_frq={clean(epsilon)}*{clean(mc_peak_frq)}={clean(epsilon*mc_peak_frq)}."
+        msg = f"    fn_std={fn_std:.3f} {is_isnot(criteria[4])} less than "
+        msg += f"epsilon*mc_peak_frq={epsilon:.03f}*{mc_peak_frq:.03f}={epsilon*mc_peak_frq:.03f}."
         print(msg)
 
     # Criteria vi)
@@ -343,7 +339,7 @@ def clarity(frequency, mean_curve, std_curve, fn_std,
         print(msg)
 
     if verbose > 1:
-        msg = f"    sigma_a_peak={clean(sigma_a_peak)} {is_isnot(criteria[5])} less than theta={clean(theta)}."
+        msg = f"    sigma_a_peak={sigma_a_peak:.03f} {is_isnot(criteria[5])} less than theta={theta:.03f}."
         print(msg)
 
     if verbose > 0:
