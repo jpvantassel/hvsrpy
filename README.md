@@ -125,7 +125,7 @@ using multiprocessing.
 
 ### Example output from `hvsrpy` when considering the geometric-mean of the horizontal components
 
-![Traditional HVSR processing with window rejection.](/figs/example_hvsr_figure.png)
+![Traditional HVSR processing with window rejection.](./figs/example_hvsr_figure.png)
 
 |                    | Lognormal Median | Lognormal Standard Deviation |
 |--------------------|------------------|------------------------------|
@@ -134,7 +134,7 @@ using multiprocessing.
 
 ### Example output from `hvsrpy` when considering azimuthal variability
 
-![Azimuthal HVSR processing.](/figs/example_hvsr_figure_az.png)
+![Azimuthal HVSR processing.](./figs/example_hvsr_figure_az.png)
 
 |                       | Lognormal Median | Lognormal Standard Deviation |
 |-----------------------|------------------|------------------------------|
@@ -143,7 +143,7 @@ using multiprocessing.
 
 ### Example output from `hvsrpy` when considering spatial variability
 
-![Spatial HVSR processing.](/figs/example_hvsr_figure_sp.png)
+![Spatial HVSR processing.](./figs/example_hvsr_figure_sp.png)
 
 |                       | Lognormal Median | Lognormal Standard Deviation |
 |-----------------------|------------------|------------------------------|
@@ -161,9 +161,9 @@ this document. Additional examples and the code to reproduce all of the
 examples shown are provided in the
 [gallery](https://github.com/jpvantassel/hvsrpy/tree/main/gallery).
 
-![Single window example a.](/figs/singlewindow_a.png)
+![Single window example a.](./figs/singlewindow_a.png)
 
-![Multi-window example STN11_c050.](/figs/multiwindow_STN11_c050.png)
+![Multi-window example STN11_c050.](./figs/multiwindow_STN11_c050.png)
 
 ## Getting Started
 
@@ -237,19 +237,19 @@ and also as part of a large published data set
 
 __File Name:__ _UT.STN11.A2_C50.miniseed_
 
-![Multi-window example STN11_c050.](/figs/multiwindow_STN11_c050.png)
+![Multi-window example STN11_c050.](./figs/multiwindow_STN11_c050.png)
 
 __File Name:__ _UT.STN11.A2_C150.miniseed_
 
-![Multi-window example STN11_c150.](/figs/multiwindow_STN11_c150.png)
+![Multi-window example STN11_c150.](./figs/multiwindow_STN11_c150.png)
 
 __File Name:__ _UT.STN12.A2_C50.miniseed_
 
-![Multi-window example STN12_c050.](/figs/multiwindow_STN12_c050.png)
+![Multi-window example STN12_c050.](./figs/multiwindow_STN12_c050.png)
 
 __File Name:__ _UT.STN12.A2_C150.miniseed_
 
-![Multi-window example STN12_c150.](/figs/multiwindow_STN12_c150.png)
+![Multi-window example STN12_c150.](./figs/multiwindow_STN12_c150.png)
 
 ### Single Window
 
@@ -277,32 +277,32 @@ these settings noted for each example.
 
 __Default Case:__ No variation from those settings listed above.
 
-![Single window example a.](/figs/singlewindow_a.png)
+![Single window example a.](./figs/singlewindow_a.png)
 
 __Window Length:__ 120 seconds.
 
-![Single window example b.](/figs/singlewindow_b.png)
+![Single window example b.](./figs/singlewindow_b.png)
 
 __Cosine Taper Width:__ 20 % (i.e., 10 % in Geopsy)
 
-![Single window example e.](/figs/singlewindow_e.png)
+![Single window example e.](./figs/singlewindow_e.png)
 
 __Cosine Taper Width:__ 0.2 % (i.e., 0.1 % in Geopsy)
 
-![Single window example f.](/figs/singlewindow_f.png)
+![Single window example f.](./figs/singlewindow_f.png)
 
 __Konno and Ohmachi Smoothing Coefficient:__ 10
 
-![Single window example c.](/figs/singlewindow_c.png)
+![Single window example c.](./figs/singlewindow_c.png)
 
 __Konno and Ohmachi Smoothing Coefficient:__ 80
 
-![Single window example d.](/figs/singlewindow_d.png)
+![Single window example d.](./figs/singlewindow_d.png)
 
 __Number of Points:__ 512
 
-![Single window example g.](/figs/singlewindow_g.png)
+![Single window example g.](./figs/singlewindow_g.png)
 
 __Number of Points:__ 4096
 
-![Single window example h.](/figs/singlewindow_h.png)
+![Single window example h.](./figs/singlewindow_h.png)
