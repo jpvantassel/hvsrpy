@@ -44,7 +44,7 @@ def _process_hvsr(fname, preprocessing_settings, processing_settings, settings):
         plt.close()
 
     if not settings["no_file"]:
-        hvsrpy.write_hvsr_to_file(hvsr,
+        hvsrpy.write_hvsr_object_to_file(hvsr,
                                   f"{pathlib.Path(fname).stem}.csv",
                                   distribution_mc=settings["distribution_mc"],
                                   distribution_fn=settings["distribution_fn"],

@@ -127,6 +127,11 @@ class Settings(ABC):
             else:
                 print(f"{key: <40} : {value}")
 
+    def __eq__(self, other):
+        if self.attr_dict == other.attr_dict:
+            return True
+        return False
+
     def __str__(self):
         """String representation of ``Settings`` object."""
         return f"{type(self).__name__} with {len(self.attrs)} attributes."

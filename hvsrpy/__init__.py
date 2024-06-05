@@ -32,7 +32,7 @@ from .preprocessing import preprocess
 from .processing import process, rpsd
 from .settings import *
 from .window_rejection import sta_lta_window_rejection, maximum_value_window_rejection, frequency_domain_window_rejection, manual_window_rejection
-from .object_io import write_hvsr_to_file, read_hvsr_from_file
+from .object_io import *
 from .postprocessing import *
 
 logging.getLogger("hvsrpy").addHandler(logging.NullHandler())

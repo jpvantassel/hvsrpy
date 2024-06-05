@@ -28,8 +28,14 @@ from .hvsr_azimuthal import HvsrAzimuthal
 from .settings import *
 from .regex import azimuth_exec
 
+__all__ = [
+    "write_hvsr_object_to_file",
+    "read_hvsr_object_from_file",
+    "write_settings_object_to_file",
+    "read_settings_object_from_file",
+]
 
-def write_hvsr_to_file(hvsr,
+def write_hvsr_object_to_file(hvsr,
                        fname,
                        distribution_mc="lognormal",
                        distribution_fn="lognormal"):
@@ -131,7 +137,7 @@ def write_hvsr_to_file(hvsr,
     np.savetxt(fname, array, delimiter=",", header=header, encoding="utf-8")
 
 
-def read_hvsr_from_file(fname):
+def read_hvsr_object_from_file(fname):
     """Reads HVSR object from text-based file.
 
     Parameters

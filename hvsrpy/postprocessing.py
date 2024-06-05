@@ -416,7 +416,7 @@ def plot_seismic_recordings_3c(srecords,
                                axs=None,
                                subplots_kwargs=None,
                                normalize=True
-                               ):
+                               ):  # pragma: no cover
     """Plot iterable of SeismicRecording3C objects in three panels."""
     axs_was_none = False
     if axs is None:
@@ -571,7 +571,7 @@ def plot_pre_and_post_rejection(srecords,
 def summarize_hvsr_statistics(hvsr,
                               distribution_mc="lognormal",
                               distribution_fn="lognormal"
-                              ):
+                              ):   # pragma: no cover
 
     if isinstance(hvsr, (HvsrTraditional, HvsrAzimuthal)):
         if distribution_fn == "lognormal":
@@ -658,7 +658,7 @@ def summarize_hvsr_statistics(hvsr,
         raise NotImplementedError
 
 
-def _azimuthal_mesh_from_hvsr(hvsr, distribution_mc="lognormal"):
+def _azimuthal_mesh_from_hvsr(hvsr, distribution_mc="lognormal"):  # pragma: no cover
     azimuths = [*hvsr.azimuths, 180.]
     mesh_frq, mesh_azi = np.meshgrid(hvsr.frequency, azimuths)
     mesh_amp = hvsr.mean_curve_by_azimuth(distribution=distribution_mc)
@@ -671,7 +671,7 @@ def plot_azimuthal_contour_2d(hvsr,
                               plot_mean_curve_peak_by_azimuth=True,
                               fig=None, ax=None,
                               subplots_kwargs=None,
-                              contourf_kwargs=None):
+                              contourf_kwargs=None):  # pragma: no cover
     if not isinstance(hvsr, HvsrAzimuthal):
         raise NotImplementedError("Can only plot HvsrAzimuthal results.")
 
@@ -728,7 +728,7 @@ def plot_azimuthal_contour_3d(hvsr,
                               camera_elevation=35,
                               camera_azimuth=250,
                               camera_distance=13
-                              ):
+                              ):  # pragma: no cover
     # layout
     ax_was_none = False
     if ax is None:
@@ -903,7 +903,7 @@ def plot_voronoi(valid_sensor_coordinates,
 def summarize_spatial_statistics(spatial_mean,
                                  spatial_stddev,
                                  spatial_distribution,
-                                 ):
+                                 ):  # pragma: no cover
 
     if spatial_distribution == "lognormal":
         data = np.array([
