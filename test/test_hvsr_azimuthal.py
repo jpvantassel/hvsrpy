@@ -22,7 +22,7 @@ import logging
 import numpy as np
 
 import hvsrpy
-from testtools import unittest, TestCase, get_full_path
+from testing_tools import unittest, TestCase, get_full_path
 
 logging.basicConfig(level=logging.WARNING)
 

@@ -20,7 +20,7 @@ import numpy as np
 import hvsrpy
 from hvsrpy import settings as hvsr_settings
 from hvsrpy.processing import COMBINE_HORIZONTAL_REGISTER
-from testtools import unittest, TestCase, get_full_path
+from testing_tools import unittest, TestCase, get_full_path
 
 class TestProcessing(TestCase):
 

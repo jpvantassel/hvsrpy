@@ -22,7 +22,7 @@ import logging
 import numpy as np
 
 import hvsrpy
-from testtools import unittest, TestCase
+from testing_tools import unittest, TestCase
 
 logger = logging.getLogger("hvsrpy")
 logger.setLevel(level=logging.CRITICAL)

@@ -22,7 +22,7 @@ import logging
 import numpy as np
 
 import hvsrpy.interact as interact
-from testtools import unittest, TestCase
+from testing_tools import unittest, TestCase
 
 logging.basicConfig(level=logging.ERROR)
 

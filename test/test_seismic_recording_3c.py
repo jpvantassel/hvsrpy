@@ -24,7 +24,7 @@ import pathlib
 import numpy as np
 
 import hvsrpy
-from testtools import unittest, TestCase, get_full_path
+from testing_tools import unittest, TestCase, get_full_path
 
 logger = logging.getLogger('hvsrpy')
 logger.setLevel(level=logging.CRITICAL)

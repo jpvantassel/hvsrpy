@@ -23,7 +23,7 @@ import numpy as np
 from numpy.random import PCG64
 
 import hvsrpy.hvsr_spatial as spatial
-from testtools import unittest, TestCase
+from testing_tools import unittest, TestCase
 
 logging.basicConfig(level=logging.WARNING)
 

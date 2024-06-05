@@ -23,7 +23,7 @@ import numpy as np
 
 import hvsrpy
 
-from testtools import TestCase, unittest
+from testing_tools import TestCase, unittest
 
 
 class TestSettings(TestCase):
