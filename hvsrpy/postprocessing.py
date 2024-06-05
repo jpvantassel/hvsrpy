@@ -669,7 +669,8 @@ def _azimuthal_mesh_from_hvsr(hvsr, distribution_mc="lognormal"):  # pragma: no 
 def plot_azimuthal_contour_2d(hvsr,
                               distribution_mc="lognormal",
                               plot_mean_curve_peak_by_azimuth=True,
-                              fig=None, ax=None,
+                              fig=None,
+                              ax=None,
                               subplots_kwargs=None,
                               contourf_kwargs=None):  # pragma: no cover
     if not isinstance(hvsr, HvsrAzimuthal):
@@ -705,7 +706,13 @@ def plot_azimuthal_contour_2d(hvsr,
     ax.set_ylim(0, 180)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("top", size="5%", pad=0.05)
-    plt.colorbar(contour, cax=cax, orientation="horizontal")
+    if np.max(mesh_amp) < 6.5:
+        ticks = np.arange(0, 7, 1)
+    elif np.max(mesh_amp) < 14:
+        ticks = np.arange(0, 16, 2)
+    else:
+        ticks = np.arange(0, (np.max(mesh_amp)//5+1)*5, 5)
+    plt.colorbar(contour, cax=cax, orientation="horizontal", ticks=ticks)
     cax.xaxis.set_ticks_position("top")
 
     if plot_mean_curve_peak_by_azimuth:

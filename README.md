@@ -1,6 +1,6 @@
 # _hvsrpy_ - A Python package for horizontal-to-vertical spectral ratio processing
 
-> Joseph P. Vantassel
+> Joseph P. Vantassel, [jpvantassel.com](https://www.jpvantassel.com/)
 
 [![DOI](https://zenodo.org/badge/219310971.svg)](https://zenodo.org/badge/latestdoi/219310971)
 [![PyPI - License](https://img.shields.io/pypi/l/hvsrpy)](https://github.com/jpvantassel/hvsrpy/blob/main/LICENSE.txt)
@@ -24,7 +24,7 @@
 
 `hvsrpy` is an open-source Python package for performing horizontal-to-vertical
 spectral ratio (HVSR) processing of microtremor and earthquake recordings.
-`hvsrpy` was developed by [Jospeh P. Vantassel](https://www.jpvantassel.com/)
+`hvsrpy` was developed by [Joseph P. Vantassel](https://www.jpvantassel.com/)
 with contributions from Dana M. Brannon under the supervision of Professor
 Brady R. Cox at The University of Texas at Austin. _hvsrpy_ continues to be
 developed and maintained by [Joseph P. Vantassel and his research group at Virginia Tech](https://geoimaging-research.org/).
@@ -125,47 +125,47 @@ using multiprocessing.
 
 ### Example output from `hvsrpy` when considering the geometric-mean of the horizontal components
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/example_hvsr_figure.png?raw=true" width="775">
+![Traditional HVSR processing with window rejection.](/figs/example_hvsr_figure.png)
 
-|                       | Lognormal Median | Lognormal Standard Deviation |
-|-----------------------|------------------|------------------------------|
-| Site Frequency, fn,GM | 0.72             | 0.11                         |
-| Site Period, Tn,GM    | 1.40             | 0.11                         |
+|                    | Lognormal Median | Lognormal Standard Deviation |
+|--------------------|------------------|------------------------------|
+| Site Frequency, fn | 0.67             | 0.09                         |
+| Site Period, Tn    | 1.50             | 0.09                         |
 
 ### Example output from `hvsrpy` when considering azimuthal variability
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/example_hvsr_figure_az.png?raw=true" width="775">
+![Azimuthal HVSR processing.](/figs/example_hvsr_figure_az.png)
 
 |                       | Lognormal Median | Lognormal Standard Deviation |
 |-----------------------|------------------|------------------------------|
-| Site Frequency, fn,AZ | 0.68             | 0.18                         |
-| Site Period, Tn,AZ    | 1.48             | 0.18                         |
+| Site Frequency, fn,az | 0.67             | 0.07                         |
+| Site Period, Tn,az    | 1.50             | 0.07                         |
 
 ### Example output from `hvsrpy` when considering spatial variability
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/example_hvsr_figure_sp.png?raw=true" width="775">
+![Spatial HVSR processing.](/figs/example_hvsr_figure_sp.png)
 
 |                       | Lognormal Median | Lognormal Standard Deviation |
 |-----------------------|------------------|------------------------------|
-| Site Frequency, fn,XY | 0.58             | 0.15                         |
-| Site Period, Tn,XY    | 1.74             | 0.15                         |
+| Site Frequency, fn,xy | 0.58             | 0.15                         |
+| Site Period, Tn,xy    | 1.74             | 0.15                         |
 
 ## A comparison of _hvsrpy_ with _Geopsy_
 
----
-
 Some of the functionality available in `hvsrpy` overlaps with the popular
-open-source software `Geopsy`. Therefore, to encourage standardization, wherever
+open-source software `geopsy`. Therefore, to encourage standardization, wherever
 their functionality coincides we have sought to ensure consistency. Two such
-comparisons are shown below. One for a single time window (left) and one for
-multiple time windows (right). Additional examples and the information
-necessary to reproduce them are provided at the end of this document.
+comparisons are shown below. One for a single time window (top) and one for
+multiple time windows (bottom). Additional examples are provided at the end of
+this document. Additional examples and the code to reproduce all of the
+examples shown are provided in the
+[gallery](https://github.com/jpvantassel/hvsrpy/tree/main/gallery).
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_a.png?raw=true" width="425"> <img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN11_c050.png?raw=true" width="425">
+![Single window example a.](/figs/singlewindow_a.png)
+
+![Multi-window example STN11_c050.](/figs/multiwindow_STN11_c050.png)
 
 ## Getting Started
-
----
 
 ### Installing or Upgrading _hvsrpy_
 
@@ -194,19 +194,19 @@ last few lines of the text displayed in the console.
 
 3.  Continue to explore the other example notebooks provided. Note that each
   example notebook seeks to highlight one or two key features of `hvsrpy` and
-  some may find it helpful to combine multiple components together to build
-  a workflow that works for them, this is highly encouraged.
+  it may be helpful to combine multiple components together to build
+  a custom workflow, this is highly encouraged.
 
 4.  Enjoy!
 
 ### Looking for more information
 
 More information regarding HVSR processing and `hvsrpy` can be found
-[here](https://github.com/jpvantassel/hvsrpy/blob/main/additional_information.md).
+[here](https://github.com/jpvantassel/hvsrpy/blob/main/additional_information.md)
+and in the softwares documentation
+[here](https://hvsrpy.readthedocs.io/en/latest/?badge=latest).
 
 ## Additional Comparisons between _hvsrpy_ and _Geopsy_
-
----
 
 ### Multiple Windows
 
@@ -220,36 +220,36 @@ and also as part of a large published data set
 
 #### Settings
 
--   __Window Length:__ 60 seconds
--   __Bandpass Filter Boolean:__ False
--   __Cosine Taper Width:__ 10% (i.e., 5% in Geopsy)
--   __Konno and Ohmachi Smoothing Coefficient:__ 40
--   __Resampling:__
-    -   __Minimum Frequency:__ 0.3 Hz
-    -   __Maximum Frequency:__ 40 Hz
-    -   __Number of Points:__ 2048
-    -   __Sampling Type:__ 'log'
--   __Method for Combining Horizontal Components:__ 'squared-average'
--   __Distribution for f0 from Time Windows:__ 'normal'
--   __Distribution for Mean Curve:__ 'log-normal'
+- __Window Length:__ 60 seconds
+- __Bandpass Filter:__ No
+- __Tukey Window Length:__ 10% (i.e., 5% in Geopsy)
+- __Konno and Ohmachi Smoothing Coefficient:__ 40
+- __Resampling Center Frequencies:__
+    - __Minimum:__ 0.3 Hz
+    - __Maximum:__ 40 Hz
+    - __Number:__ 2048
+    - __Type:__ 'log'
+- __Method for Combining Horizontal Components:__ 'squared-average'
+- __Distribution for f0 from Time Windows:__ 'normal'
+- __Distribution for Mean Curve:__ 'lognormal'
 
 #### Multiple Window Results
 
 __File Name:__ _UT.STN11.A2_C50.miniseed_
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN11_c050.png?raw=true" width="425">
+![Multi-window example STN11_c050.](/figs/multiwindow_STN11_c050.png)
 
 __File Name:__ _UT.STN11.A2_C150.miniseed_
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN11_c150.png?raw=true" width="425">
+![Multi-window example STN11_c150.](/figs/multiwindow_STN11_c150.png)
 
 __File Name:__ _UT.STN12.A2_C50.miniseed_
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN12_c050.png?raw=true" width="425">
+![Multi-window example STN12_c050.](/figs/multiwindow_STN12_c050.png)
 
 __File Name:__ _UT.STN12.A2_C150.miniseed_
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/multiwindow_STN12_c150.png?raw=true" width="425">
+![Multi-window example STN12_c150.](/figs/multiwindow_STN12_c150.png)
 
 ### Single Window
 
@@ -261,48 +261,48 @@ these settings noted for each example.
 #### Default Settings
 
 - __Window Length:__ 60 seconds
-- __Bandpass Filter Boolean:__ False
-- __Cosine Taper Width:__ 10% (i.e., 5% in Geopsy)
+- __Bandpass Filter:__ No
+- __Tukey Window Length:__ 10% (i.e., 5% in Geopsy)
 - __Konno and Ohmachi Smoothing Coefficient:__ 40
-- __Resampling:__
-    - __Minimum Frequency:__ 0.3 Hz
-    - __Maximum Frequency:__ 40 Hz
-    - __Number of Points:__ 2048
-    - __Sampling Type:__ 'log'
+- __Resampling Center Frequencies:__
+    - __Minimum:__ 0.3 Hz
+    - __Maximum:__ 40 Hz
+    - __Number:__ 2048
+    - __Type:__ 'log'
 - __Method for Combining Horizontal Components:__ 'squared-average'
 - __Distribution for f0 from Time Windows:__ 'normal'
-- __Distribution for Mean Curve:__ 'log-normal'
+- __Distribution for Mean Curve:__ 'lognormal'
 
 #### Single Window Results
 
 __Default Case:__ No variation from those settings listed above.
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_a.png?raw=true" width="425">
+![Single window example a.](/figs/singlewindow_a.png)
 
 __Window Length:__ 120 seconds.
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_b.png?raw=true" width="425">
+![Single window example b.](/figs/singlewindow_b.png)
 
 __Cosine Taper Width:__ 20 % (i.e., 10 % in Geopsy)
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_e.png?raw=true" width="425">
+![Single window example e.](/figs/singlewindow_e.png)
 
 __Cosine Taper Width:__ 0.2 % (i.e., 0.1 % in Geopsy)
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_f.png?raw=true" width="425">
+![Single window example f.](/figs/singlewindow_f.png)
 
 __Konno and Ohmachi Smoothing Coefficient:__ 10
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_c.png?raw=true" width="425">
+![Single window example c.](/figs/singlewindow_c.png)
 
 __Konno and Ohmachi Smoothing Coefficient:__ 80
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_d.png?raw=true" width="425">
+![Single window example d.](/figs/singlewindow_d.png)
 
 __Number of Points:__ 512
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_g.png?raw=true" width="425">
+![Single window example g.](/figs/singlewindow_g.png)
 
 __Number of Points:__ 4096
 
-<img src="https://github.com/jpvantassel/hvsrpy/blob/main/figs/singlewindow_h.png?raw=true" width="425">
+![Single window example h.](/figs/singlewindow_h.png)

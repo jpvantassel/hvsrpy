@@ -7,7 +7,7 @@ About `hvsrpy`
 `hvsrpy` is an open-source Python package for performing
 horizontal-to-vertical spectral ratio (HVSR) processing of microtremor
 and earthquake recordings. `hvsrpy` was developed by
-`Jospeh P. Vantassel <https://www.jpvantassel.com/>`_ with
+`Joseph P. Vantassel <https://www.jpvantassel.com/>`_ with
 contributions from Dana M. Brannon under the supervision of Professor
 Brady R. Cox at The University of Texas at Austin. `hvsrpy` continues to
 be developed and maintained by `Joseph P. Vantassel and his research
