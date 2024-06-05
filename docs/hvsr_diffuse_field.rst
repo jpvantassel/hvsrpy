@@ -3,7 +3,7 @@
 HvsrDiffuseField
 ================
 
-Subclass of ``HvsrCurve``, below are inherited public members.
+Subclass of ``HvsrCurve``.
 
 .. autoclass:: hvsrpy.HvsrDiffuseField
       :members:
