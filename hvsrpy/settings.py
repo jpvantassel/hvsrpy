@@ -116,7 +116,7 @@ class Settings(ABC):
             setattr(self, key, value)
 
     def psummary(self):
-        "Pretty summary of information in ``Summary`` object."
+        "Pretty summary of information in ``Settings`` object."
         for key, value in self.attr_dict.items():
             if isinstance(value, dict):
                 print(f"{key: <40} :")
@@ -468,7 +468,7 @@ class HvsrTraditionalProcessingSettings(HvsrTraditionalProcessingSettingsBase):
                  processing_method="traditional",
                  method_to_combine_horizontals="geometric_mean",
                  ):
-        """Initialize ``"HvsrTraditionalProcessingSettings"`` object.
+        """Initialize ``HvsrTraditionalProcessingSettings`` object.
 
         Parameters
         ----------
@@ -526,7 +526,7 @@ class HvsrTraditionalSingleAzimuthProcessingSettings(HvsrTraditionalProcessingSe
                  method_to_combine_horizontals="single_azimuth",
                  azimuth_in_degrees=20.,
                  ):
-        """Initialize ``"HvsrTraditionalSingleAzimuthProcessingSettings"`` object.
+        """Initialize ``HvsrTraditionalSingleAzimuthProcessingSettings`` object.
 
         Parameters
         ----------
@@ -589,7 +589,7 @@ class HvsrTraditionalRotDppProcessingSettings(HvsrTraditionalProcessingSettingsB
                  ppth_percentile_for_rotdpp_computation=50.,
                  azimuths_in_degrees=np.arange(0, 180, 5)
                  ):
-        """Initialize ``"HvsrTraditionalRotDppProcessingSettings"`` object.
+        """Initialize ``HvsrTraditionalRotDppProcessingSettings`` object.
 
         Parameters
         ----------
@@ -655,7 +655,7 @@ class HvsrAzimuthalProcessingSettings(HvsrProcessingSettings):
                  handle_dissimilar_time_steps_by="frequency_domain_resampling",
                  processing_method="azimuthal",
                  azimuths_in_degrees=np.arange(0, 180, 5)):
-        """Initialize ``"HvsrAzimuthalProcessingSettings"`` object.
+        """Initialize ``HvsrAzimuthalProcessingSettings`` object.
 
         Parameters
         ----------
@@ -710,7 +710,7 @@ class HvsrDiffuseFieldProcessingSettings(HvsrProcessingSettings):
                  fft_settings=None,
                  handle_dissimilar_time_steps_by="keeping_majority_time_step",
                  processing_method="diffuse_field"):
-        """Initialize ``"HvsrDiffuseFieldProcessingSettings"`` object.
+        """Initialize ``HvsrDiffuseFieldProcessingSettings`` object.
 
         Parameters
         ----------

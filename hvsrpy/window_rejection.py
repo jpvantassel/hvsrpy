@@ -67,8 +67,9 @@ def sta_lta_window_rejection(records,
     Returns
     -------
     list of SeismicRecordings3C
-        List of recordings with those that violate the STA/LTA ratio
-        limits removed.   
+        List of ``SeismicRecordings3C`` with those that violate the
+        STA/LTA ratio limits removed. If HVSR object is provided.
+        HVSR object will have updated internal state.  
 
     """
     passing_records = []
@@ -87,7 +88,8 @@ def sta_lta_window_rejection(records,
                 raise IndexError(msg)
             n_sta_in_window = int(timeseries.n_samples // npts_in_sta)
             short_timeseries = timeseries.amplitude[:npts_in_sta*n_sta_in_window]
-            sta_values = np.mean(np.abs(short_timeseries.reshape((n_sta_in_window, npts_in_sta))), axis=1)
+            sta_values = np.mean(np.abs(short_timeseries.reshape(
+                (n_sta_in_window, npts_in_sta))), axis=1)
 
             # compute lta.
             npts_in_lta = int(lta_seconds // timeseries.dt_in_seconds)
@@ -106,9 +108,7 @@ def sta_lta_window_rejection(records,
             valid_window_boolean_mask.append(True)
             passing_records.append(record)
 
-    if hvsr is None:
-        return passing_records
-    else:
+    if hvsr is not None:
         if isinstance(hvsr, HvsrTraditional):
             hvsr.valid_window_boolean_mask = np.array(valid_window_boolean_mask)
             hvsr.valid_peak_boolean_mask = np.array(valid_window_boolean_mask)
@@ -118,7 +118,8 @@ def sta_lta_window_rejection(records,
                 _hvsr.valid_peak_boolean_mask = np.array(valid_window_boolean_mask)
         else:
             raise NotImplementedError
-        return (passing_records, hvsr)
+
+    return passing_records
 
 # TODO(jpv): Write tests for maximum_value_window_rejection.
 
@@ -157,7 +158,8 @@ def maximum_value_window_rejection(records,
     -------
     list of SeismicRecordings3C
         List of ``SeismicRecording3C`` objects with those that exceed
-        the maximum value threshold removed.
+        the maximum value threshold removed. If HVSR object is provided.
+        HVSR object will have updated internal state.     
 
     """
     # determine the maximum value for each record, across all components.
@@ -185,9 +187,7 @@ def maximum_value_window_rejection(records,
         else:
             valid_window_boolean_mask.append(False)
 
-    if hvsr is None:
-        return passing_records
-    else:
+    if hvsr is not None:
         if isinstance(hvsr, HvsrTraditional):
             hvsr.valid_window_boolean_mask = np.array(valid_window_boolean_mask)
             hvsr.valid_peak_boolean_mask = np.array(valid_window_boolean_mask)
@@ -197,7 +197,9 @@ def maximum_value_window_rejection(records,
                 _hvsr.valid_peak_boolean_mask = np.array(valid_window_boolean_mask)
         else:
             raise NotImplementedError
-        return (passing_records, hvsr)
+
+    return passing_records
+
 
 def frequency_domain_window_rejection(hvsr,
                                       n=2,
@@ -283,8 +285,10 @@ def _frequency_domain_window_rejection(hvsr,
                                        distribution_mc="lognormal"):
     for c_iteration in range(1, max_iterations+1):
         logger.debug(f"c_iteration: {c_iteration}")
-        logger.debug(f"valid_window_boolean_mask: {hvsr.valid_window_boolean_mask}")
-        logger.debug(f"valid_peak_boolean_mask: {hvsr.valid_peak_boolean_mask}")
+        logger.debug(
+            f"valid_window_boolean_mask: {hvsr.valid_window_boolean_mask}")
+        logger.debug(
+            f"valid_peak_boolean_mask: {hvsr.valid_peak_boolean_mask}")
 
         mean_fn_before = hvsr.mean_fn_frequency(distribution_fn)
         std_fn_before = hvsr.std_fn_frequency(distribution_fn)
@@ -336,8 +340,6 @@ def _frequency_domain_window_rejection(hvsr,
             logger.info(msg)
             return c_iteration
 
-# TODO(jpv): Write tests for manual_window_rejection.
-
 
 def manual_window_rejection(hvsr,
                             distribution_mc="lognormal",
@@ -346,9 +348,7 @@ def manual_window_rejection(hvsr,
                             plot_frequency_std=True,
                             search_range_in_hz=(None, None),
                             find_peaks_kwargs=None,
-                            upper_right_corner_relative=(0.11, 0.98),
-                            box_size_relative=(0.1, 0.08),
-                            ylims=None,
+                            y_limit=None,
                             fig=None,
                             ax=None,
                             ):  # pragma: no cover
@@ -359,15 +359,17 @@ def manual_window_rejection(hvsr,
     hvsr : HvsrTraditional or HvsrAzimuthal
         HVSR object on which the window rejection algorithm will
         be applied.
-    ylims : tuple, optional
-        Upper and lower limits of plotted HVSR amplitude, default is
-        ``None`` indicating limits will automatically be selected.
     distribution_fn : {"lognormal", "normal"}, optional
         Assumed distribution of ``fn`` from HVSR curves, the
         default is ``"lognormal"``.
     distribution_mc : {"lognormal", "normal"}, optional
         Assumed distribution of mean curve, the default is
         ``"lognormal"``.
+    plot_mean_curve : bool, optional
+        Determines if mean curve should be plotted, default is ``True``.
+    plot_frequency_std : bool, optional
+        Determines if frequency standard deviation should be plotted,
+        default is ``True``.
     search_range_in_hz : tuple, optional
         Frequency range to be searched for peaks.
         Half open ranges can be specified with ``None``, default is
@@ -378,14 +380,27 @@ def manual_window_rejection(hvsr,
         `find_peaks <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html>`_
         see ``scipy`` documentation for details, default is ``None``
         indicating defaults will be used.
-    ax  TODO
+    y_limit : float, optional
+        Upper limit of plotted HVSR amplitude, default is ``None``
+        so default automatic scaling will be used.
+    fig : Figure, optional
+        Matplotlib ``Figure`` object, on which manual window rejection
+        will be performed, default is ``None`` so a ``Figure`` object
+        will be created on the fly.
+    ax : Axes, optional
+        Matplotlib ``Axes`` object, on which manual window rejection
+        will be performed, default is ``None`` so a ``Axes`` object
+        will be created on the fly.
 
     Returns
     -------
-    None
-        Modifies Hvsr object's internal state.
+    Hvsr
+        Returns HVSR object with modified internal state.
 
     """
+    upper_right_corner_relative = (0.11, 0.98)
+    box_size_relative = (0.1, 0.08)
+
     if isinstance(hvsr, HvsrTraditional):
         hvsrs = [hvsr]
     elif isinstance(hvsr, HvsrAzimuthal):
@@ -397,13 +412,13 @@ def manual_window_rejection(hvsr,
         raise NotImplementedError(msg)
 
     hvsr.meta["window rejection algorithm"] = "Manual after SESAME (2004)"
-    hvsr.meta["window rejection algorithm arguments"] = dict(ylims=ylims,
-                                                             distribution_fn=distribution_fn,
-                                                             distribution_mc=distribution_mc,
-                                                             search_range_in_hz=search_range_in_hz,
-                                                             find_peaks_kwargs=find_peaks_kwargs,
-                                                             upper_right_corner_relative=upper_right_corner_relative,
-                                                             box_size_relative=box_size_relative)
+    hvsr.meta["window rejection algorithm arguments"] = dict(
+        y_limit=y_limit,
+        distribution_fn=distribution_fn,
+        distribution_mc=distribution_mc,
+        search_range_in_hz=search_range_in_hz,
+        find_peaks_kwargs=find_peaks_kwargs,
+    )
 
     # update peaks of hvsr object.
     if find_peaks_kwargs is None:
@@ -421,8 +436,8 @@ def manual_window_rejection(hvsr,
                                        plot_mean_curve=plot_mean_curve,
                                        plot_frequency_std=plot_frequency_std,
                                        ax=ax)
-    if ylims is not None:
-        ax.set_ylim(ylims)
+    if y_limit is not None:
+        ax.set_ylim((0, y_limit))
     x_lim = ax.get_xlim()
     y_lim = ax.get_ylim()
     ax.autoscale(enable=False)
@@ -469,10 +484,12 @@ def manual_window_rejection(hvsr,
         if was_empty:
             in_continue_box = False
             for _x, _y in zip(xs, ys):
-                if is_absolute_point_in_relative_box(ax=ax,
-                                                     absolute_point=(_x, _y),
-                                                     upper_right_corner_relative=upper_right_corner_relative,
-                                                     box_size_relative=box_size_relative):
+                if is_absolute_point_in_relative_box(
+                    ax=ax,
+                    absolute_point=(_x, _y),
+                    upper_right_corner_relative=upper_right_corner_relative,
+                    box_size_relative=box_size_relative
+                ):
                     in_continue_box = True
                     break
 
