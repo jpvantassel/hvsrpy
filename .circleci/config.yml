@@ -34,17 +34,17 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create and activate virtual environment
+          name: Create and Activate Virtual Environment
           command: |
             virtualenv venv
             source venv/bin/activate
       - run:
-          name: Install hvsrpy and dependencies
+          name: Install hvsrpy and Dependencies
           command: |
             source venv/bin/activate
             python -m pip install -e .[dev]
       - run:
-          name: Run tests
+          name: Run Tests
           command: |
             source venv/bin/activate
             cd test
