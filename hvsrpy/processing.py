@@ -64,6 +64,8 @@ COMBINE_HORIZONTAL_REGISTER = {
     "arithmetic_mean": arithmetic_mean,
     "squared_average": squared_average,
     "quadratic_mean": squared_average,
+    "root_mean_square": squared_average,
+    "effective_amplitude_spectrum" : squared_average,
     "geometric_mean": geometric_mean,
     "total_horizontal_energy": total_horizontal_energy,
     "vector_summation": total_horizontal_energy,

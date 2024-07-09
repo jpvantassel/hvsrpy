@@ -37,7 +37,8 @@ def konno_and_ohmachi(frequencies, spectrum, fcs, bandwidth=40.): # pragma: no c
         1D array of center frequencies where smoothed spectrum is
         calculated.
     bandwidth : float, optional
-        Width of smoothing window, default is 40.
+        Value inversely related to the width of the smoothing
+        window, default is 40.
 
     Returns
     -------
