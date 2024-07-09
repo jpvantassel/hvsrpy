@@ -1,14 +1,13 @@
-# A to-do list
+# _hvsrpy_ todo list
 
-> Joseph P. Vantassel, The University of Texas at Austin
+> Joseph P. Vantassel
 
-## In-Progress for Upcoming Release
+## In-Progress for Upcoming Release (v2.0.0)
 
 ## Under Consideration for a Future Release
 
 - Automatic consideration of multiple peaks.
+- Anthropogenic peak pre-processing.
 
 ## Unassigned
 
-- Reject time windows based on LTA, STA in the time domain.
-- Reject time windows based on maximum amplitude in the time domain.

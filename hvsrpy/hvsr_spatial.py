@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for horizontal-to-vertical
 # spectral ratio processing.
-# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2024 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https: //www.gnu.org/licenses/>.
 
-"""HvsrVault class definition."""
+"""HvsrSpatial class definition."""
 
 import logging
 
@@ -24,30 +24,33 @@ from numpy.random import default_rng, PCG64, MT19937, BitGenerator
 from scipy.spatial import Voronoi
 from shapely.geometry import MultiPoint, Point, Polygon
 
-logger = logging.getLogger("swprocess.hvsr_rotated")
+logger = logging.getLogger(__name__)
 
-__all__ = ["montecarlo_f0", "HvsrVault"]
+__all__ = ["montecarlo_fn", "HvsrVault"]
 
 
 def _statistics(values, weights):
     """Calculate weighted mean and stddev.
 
+    .. warning::
+        Private methods are subject to change without warning.
+
     Parameters
     ----------
     values : ndarray
-        Of shape `(M, N)`, where the rows are the realizations at each
+        Of shape ``(M, N)``, where the rows are the realizations at each
         location and the columns are a given realization for the
         entire region.
     weights : ndarray
-        Of size `N`, where `N` is the number of generating locations.
-        `N`. Note that the weights will be normalized such that their
+        Of size ``N``, where ``N`` is the number of generating locations.
+        ``N``. Note that the weights will be normalized such that their
         sum is equal to 1.
 
     Returns
     -------
     tuple
-        Of the form `(mean, stddev)` where `mean` is the weighted
-        mean and `stddev` the weighted standard deviation.
+        Of the form ``(mean, stddev)`` where ``mean`` is the weighted
+        mean and ``stddev`` the weighted standard deviation.
 
     """
     norm_weights = weights/np.sum(weights)
@@ -72,23 +75,27 @@ def _statistics(values, weights):
     return (mean, stddev)
 
 
-# TODO (jpv): Update documentation.
-
-def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
-                  dist_spatial="lognormal", nrealizations=1000,
-                  generator="PCG64"):
-    """MonteCarlo simulation for spatial distribution of f0.
+def montecarlo_fn(generator_means,
+                  generator_stddevs,
+                  generator_weights,
+                  distribution_generators="lognormal",
+                  distribution_spatial="lognormal",
+                  n_realizations=1000,
+                  rng=None
+                  ):
+    """MonteCarlo simulation for spatial distribution of ``fn``.
 
     Parameters
     ----------
-    mean, stddev : ndarray
-        Mean and standard deviation of each generating point.
-        Meaning of these parameters is dictated by `dist_generators`.
-    weights : ndarray
+    generator_means, generator_stddevs : ndarray
+        Mean and standard deviations of each generating point.
+        Meaning of these parameters is dictated by
+        ``distribution_generators``.
+    generator_weights : ndarray
         Weights for each generating point.
-    dist_generators : {'lognormal', 'normal'}, optional
+    distribution_generators : {'lognormal', 'normal'}, optional
         Assumed distribution of each generating point, default is
-        `lognormal`.
+        ``lognormal``.
 
         +-----------+------------------+-----------------+
         | if dist is| mean must be     | stddev must be  |
@@ -98,103 +105,72 @@ def montecarlo_f0(mean, stddev, weights, dist_generators="lognormal",
         | lognormal |:math:`\\lambda`   |:math:`\\zeta`    |
         +-----------+------------------+-----------------+
 
-    dist_spatial : {'lognormal', 'normal'}, optional
-        Assumed distribution of spatial statistics on f0, default is
-        `lognormal`.
-    generator : {'PCG64', 'MT19937'}, optional
-        Bit generator, default is `PCG64`.
+    distribution_spatial : {'lognormal', 'normal'}, optional
+        Assumed distribution of spatial statistics on fn, default is
+        ``lognormal``.
+    rng : None, optional
+        User-defined random number generator (RNG), default is ``None``
+        indicating ``default_rng()`` will be used.
 
     Returns
     -------
     tuple
-        Of the form `(f0_mean, f0_stddev, f0_realizations)`.
+        Of the form `(fn_mean, fn_stddev, fn_realizations)`.
 
     """
-    if generator == "PCG64":
-        rng = default_rng(PCG64())
-    elif generator == "MT19937":
-        rng = default_rng(MT19937())
-    elif isinstance(generator, BitGenerator):
-        rng = default_rng(generator)
-    else:
-        raise ValueError(f"generator type {generator} not recognized.")
+    if rng is None:
+        rng = default_rng()
 
-    if dist_generators not in ["normal", "lognormal"]:
-        msg = f"dist_generators = {dist_generators} not recognized."
+    if distribution_generators not in ["normal", "lognormal"]:
+        msg = f"dist_generators = {distribution_generators} not recognized."
         raise NotImplementedError(msg)
 
-    if dist_spatial not in ["normal", "lognormal"]:
-        msg = f"dist_spatial = {dist_spatial} not recognized."
+    if distribution_spatial not in ["normal", "lognormal"]:
+        msg = f"dist_spatial = {distribution_spatial} not recognized."
         raise NotImplementedError(msg)
 
-    def realization(mean, stddev, nrealizations=nrealizations):
-        return rng.normal(mean, stddev, size=nrealizations)
+    def realization(mean, stddev, n_realizations=n_realizations):
+        return rng.normal(mean, stddev, size=n_realizations)
 
-    realizations = np.empty((len(mean), nrealizations))
-    for r, (_mean, _stddev) in enumerate(zip(mean, stddev)):
+    realizations = np.empty((len(generator_means), n_realizations))
+    for r, (_mean, _stddev) in enumerate(zip(generator_means, generator_stddevs)):
         realizations[r, :] = realization(_mean, _stddev)
 
-    if dist_generators == "lognormal" and dist_spatial == "normal":
+    if distribution_generators == "lognormal" and distribution_spatial == "normal":
         realizations = np.exp(realizations)
-    elif dist_generators == "normal" and dist_spatial == "lognormal":
+    elif distribution_generators == "normal" and distribution_spatial == "lognormal":
         realizations = np.log(realizations)
-    # elif dist_generators == "normal" and dist_spatial == "normal":
-    #     pass
-    # elif dist_generators == "lognormal" and dist_spatial == "lognormal":
-    #     pass
-    # else:
-    #     pass
+    else:
+        pass
 
-    f0_mean, f0_stddev = _statistics(realizations, weights)
+    fn_mean, fn_stddev = _statistics(realizations, generator_weights)
 
-    if dist_spatial == "lognormal":
-        f0_mean = np.exp(f0_mean)
+    if distribution_spatial == "lognormal":
+        fn_mean = np.exp(fn_mean)
         realizations = np.exp(realizations)
 
-    return (f0_mean, f0_stddev, realizations)
+    return (fn_mean, fn_stddev, realizations)
 
 
-class HvsrVault():  # pragma: no cover
-    """A container for Hvsr objects.
+class HvsrSpatial():  # pragma: no cover
+    """A container of HVSR results for spatial computations.
 
     Attributes
     ----------
     coordinates : ndarray
         Relative x and y coordinates of the sensors, where each row
         of the `ndarray` in an x, y pair.
-    means : ndarray
-        Mean f0 value for each location, meaning is determined by
-        `distribution` keyword argument.
-    stddevs : ndarray, optional
-        Standard deviation for each location, meaning is determined
-        by `distribution` keyword argument, default is `None`
-        indicating no uncertainty is defined.
 
     """
 
-    # TODO (jpv): Implement a converter from latitude and longitude, to x and y.
-    # @staticmethod
-    # def lat_lon_to_x_y(lat, lon):
-    #     raise NotImplementedError
-
-    def __init__(self, coordinates, means, stddevs=None):  # pragma: no cover
-        """Create a container for `Hvsr` statistics.
+    def __init__(self, coordinates):  # pragma: no cover
+        """Create a container for spatial distributed HVSR.
 
         Parameters
         ----------
         coordinates : ndarray
             Relative x and y coordinates of the sensors, where each row
-            of the `ndarray` in an x, y pair.
-        means : ndarray
-            Mean f0 value for each location, meaning is determined by
-            `distribution` keyword argument.
-        stddevs : ndarray, optional
-            Standard deviation for each location, meaning is determined
-            by `distribution` keyword argument, default is `None`
-            indicating no uncertainty is defined.
-        distribution : {'normal', 'lognormal'}, optional
-            Distribution to which the mean and stddev for each point
-            corresponds, default is 'lognormal'.
+            of the ``ndarray`` in an x, y pair.
 
         """
         coordinates = np.array(coordinates, dtype=np.double)
@@ -203,36 +179,32 @@ class HvsrVault():  # pragma: no cover
             msg = f"coordinates must have shape (N,2), not {coordinates.shape}."
             raise ValueError(msg)
         if npts < 3:
-            raise ValueError("Requires at least three coordinates")
+            raise ValueError("Requires at least three coordinates.")
 
         self.coordinates = coordinates
-        self.means = np.array(means, dtype=np.double)
 
-        if stddevs is None:
-            self.stddevs = np.zeros_like(self.means)
-        else:
-            self.stddevs = np.array(stddevs, dtype=np.double)
-
-    def spatial_weights(self, boundary, dc_method="voronoi"):  # pragma: no cover
+    def spatial_weights(self,
+                        boundary,
+                        declustering_method="voronoi"):  # pragma: no cover
         """Calculate the weights for each Voronoi region.
 
         Parameters
         ----------
         boundary: ndarray
             x, y coordinates defining the spatial boundary. Must be of
-            shape `(N, 2)`.
-        dc_method: {"voronoi"}, optional
-            Declustering method, default is 'voronoi'.
+            shape ``(N, 2)``.
+        declustering_method: {"voronoi"}, optional
+            Declustering method, default is ``'voronoi'``.
 
         Return
         ------
         tuple
-            Of the form `(weights, indices)` where `weights` are the
-            statistical weights and `indicates` the bounding box of
+            Of the form ``(weights, indices)`` where ``weights`` are the
+            statistical weights and ``indicates`` the bounding box of
             each cell.
 
         """
-        if dc_method == "voronoi":
+        if declustering_method == "voronoi":
             weights, indices = self._voronoi_weights(boundary)
         else:
             raise NotImplementedError
@@ -240,7 +212,12 @@ class HvsrVault():  # pragma: no cover
 
     @staticmethod
     def _boundary_to_mask(boundary):  # pragma: no cover
-        """Create mask from iterable of coordinate pairs."""
+        """Create mask from iterable of coordinate pairs.
+
+        .. warning::
+            Private methods are subject to change without warning.
+
+        """
         boundary = np.array(boundary)
         if boundary.shape[1] != 2:
             msg = f"boundary must have shape (N,2), not {boundary.shape}."
@@ -249,7 +226,12 @@ class HvsrVault():  # pragma: no cover
         return bounding_pts.convex_hull
 
     def _voronoi_weights(self, boundary):  # pragma: no cover
-        """Calculate the voronoi geometry weights."""
+        """Calculate the voronoi geometry weights.
+
+        .. warning::
+            Private methods are subject to change without warning.
+
+        """
         mask = self._boundary_to_mask(boundary)
         total_area = mask.area
 
@@ -263,7 +245,12 @@ class HvsrVault():  # pragma: no cover
         return (areas/total_area, indices)
 
     def _cull_points(self, mask):  # pragma: no cover
-        """Remove points not within bounding region."""
+        """Remove points not within bounding region.
+
+        .. warning::
+            Private methods are subject to change without warning.
+
+        """
         passing_points, passing_indices = [], []
         for index, (x, y) in enumerate(self.coordinates):
             p = Point(x, y)
@@ -281,22 +268,25 @@ class HvsrVault():  # pragma: no cover
         ----------
         boundary : ndarray
             x, y coordinates defining the spatial boundary. Must be of
-            shape `(N, 2)`.
+            shape ``(N, 2)``.
 
         Returns
         -------
         tuple
-            Of the form `(new_vertices, indices)` where `new_vertices`
-            defines the vertices of each region and `indices` indicates
-            how these vertices relate to the master statistics.
+            Of the form ``(new_vertices, indices)`` where
+            `new_vertices`` defines the vertices of each region and
+            ``indices`` indicates how these vertices relate to the
+            provided coordiantes.
 
         """
-
         mask = self._boundary_to_mask(boundary)
         return self._bounded_voronoi(mask)
 
     def _bounded_voronoi(self, mask, radius=1E6):  # pragma: no cover
         """Vertices of bounded voronoi region.
+
+        .. warning::
+            Private methods are subject to change without warning.
 
         Parameters
         ----------
@@ -335,6 +325,9 @@ class HvsrVault():  # pragma: no cover
     @staticmethod
     def _voronoi_finite_polygons_2d(vor, radius=None):  # pragma: no cover
         """Convert infinite 2D Voronoi regions to finite regions.
+        
+        .. warning::
+            Private methods are subject to change without warning.
 
         Parameters
         ----------

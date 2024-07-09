@@ -1,29 +1,32 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@7.6.7
-  codecov: codecov/codecov@1.0.2
+  coverage-reporter: codacy/coverage-reporter@14.0.0
+  codecov: codecov/codecov@4.1.0
 
 workflows:
   build:
     jobs:
-      - test-36:
-          context:
-            - docker          
-      - test-37:
-          context:
-            - docker
       - test-38:
           context:
             - docker
       - test-39:
           context:
             - docker
+      - test-310:
+          context:
+            - docker
+      - test-311:
+          context:
+            - docker
+      - test-312:
+          context:
+            - docker
 
 jobs:
-  test-36: &test-template
+  test-38: &test-template
     docker:
-      - image: circleci/python:3.6.14
+      - image: cimg/python:3.8.19
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
@@ -31,67 +34,54 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create virtualenv
+          name: Create and Activate Virtual Environment
           command: |
             virtualenv venv
-            . venv/bin/activate
-            mkdir test-results
+            source venv/bin/activate
       - run:
-          name: Install numpy
+          name: Install hvsrpy and Dependencies
           command: |
-            . venv/bin/activate
-            pip install numpy
+            source venv/bin/activate
+            python -m pip install -e .[dev]
       - run:
-          name: Install sigpropy from source
+          name: Run Tests
           command: |
-            . venv/bin/activate
-            pip install git+ssh://git@github.com/jpvantassel/sigpropy.git
-      - run:
-          name: Install hvsrpy and dependencies
-          command: |
-            . venv/bin/activate
-            pip install -e .[dev]
-      - run:
-          name: Run tests
-          command: |
-            . venv/bin/activate
+            source venv/bin/activate
             cd test
             coverage run --source=../hvsrpy -m unittest
-      - run:
-          name: Create coverage xml
-          command: |
-            . venv/bin/activate
-            mv test/.coverage test-results
-            cd test-results
             coverage xml -o cobertura.xml
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-      - codecov/upload:
-          file: test-results/cobertura.xml
+            cp cobertura.xml ..
+      - codecov/upload
       - coverage-reporter/send_report
-
-  test-37:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.7.11
-        auth:
-          username: jpvantassel
-          password: $DOCKER_PASS
-
-  test-38:
-    <<: *test-template
-    docker:
-      - image: circleci/python:3.8.11
-        auth:
-          username: jpvantassel
-          password: $DOCKER_PASS
 
   test-39:
     <<: *test-template
     docker:
-      - image: circleci/python:3.9.6
+      - image: cimg/python:3.9.19
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
+
+  test-310:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.10.14
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
+
+  test-311:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.11.9
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
+
+  test-312:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.12.4
         auth:
           username: jpvantassel
           password: $DOCKER_PASS

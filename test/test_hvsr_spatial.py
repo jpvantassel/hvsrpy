@@ -1,6 +1,6 @@
 # This file is part of hvsrpy, a Python package for
 # horizontal-to-vertical spectral ratio processing.
-# Copyright (C) 2019-2021 Joseph P. Vantassel (jvantassel@utexas.edu)
+# Copyright (C) 2019-2021 Joseph P. Vantassel (joseph.p.vantassel@gmail.com)
 #
 #     This program is free software: you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import numpy as np
 from numpy.random import PCG64
 
 import hvsrpy.hvsr_spatial as spatial
-from testtools import unittest, TestCase
+from testing_tools import unittest, TestCase
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -42,18 +42,18 @@ class TestSpatial(TestCase):
         expected = 1.776388346
         _, returned = spatial._statistics(values, weights)
 
-    def test_montecarlo_f0(self):
+    def test_montecarlo_fn(self):
         means = np.array([0.2, 0.4, 0.6, 0.5])
         stds = np.array([0.05, 0.07, 0.1, 0.01])
         weights = np.array([1, 2, 4, 5])
 
         # Normal
-        generator = PCG64(1994)
-        vals = spatial.montecarlo_f0(means, stds, weights,
-                                     dist_generators="normal",
-                                     dist_spatial="normal",
-                                     nrealizations=3,
-                                     generator=generator)
+        rng = np.random.default_rng(1994)
+        vals = spatial.montecarlo_fn(means, stds, weights,
+                                     distribution_generators="normal",
+                                     distribution_spatial="normal",
+                                     n_realizations=3,
+                                     rng=rng)
         mean, stddev, realizations = vals
 
         # Realizations
@@ -75,12 +75,12 @@ class TestSpatial(TestCase):
         self.assertAlmostEqual(expected, returned, places=3)
 
         # LogNormal
-        generator = PCG64(1994)
-        vals = spatial.montecarlo_f0(means, stds, weights,
-                                     dist_generators="lognormal",
-                                     dist_spatial="lognormal",
-                                     nrealizations=3,
-                                     generator=generator)
+        rng = np.random.default_rng(1994)
+        vals = spatial.montecarlo_fn(means, stds, weights,
+                                     distribution_generators="lognormal",
+                                     distribution_spatial="lognormal",
+                                     n_realizations=3,
+                                     rng=rng)
         mean, stddev, realizations = vals
 
         # Realizations
@@ -101,27 +101,22 @@ class TestSpatial(TestCase):
         returned = stddev
         self.assertAlmostEqual(expected, returned, places=3)
 
-        # Other generators
-        for generator in ["PCG64", "MT19937"]:
-            spatial.montecarlo_f0(means, stds, weights,
-                                  generator=generator)
-
-        # Bad generator
-        generator = "my fancy generator"
-        self.assertRaises(ValueError, spatial.montecarlo_f0,
-                          means, stds, weights, generator=generator)
+        # bad rng
+        rng = "my fancy generator"
+        self.assertRaises(AttributeError, spatial.montecarlo_fn,
+                          means, stds, weights, rng=rng)
 
         # Bad dist_generator
         dist_generators = "my fancy generator"
         self.assertRaises(NotImplementedError,
-                          spatial.montecarlo_f0, means, stds,
-                          weights, dist_generators=dist_generators)
+                          spatial.montecarlo_fn, means, stds,
+                          weights, distribution_generators=dist_generators)
 
         # Bad dist_spatial
         dist_spatial = "my fancy distribution"
         self.assertRaises(NotImplementedError,
-                          spatial.montecarlo_f0, means, stds,
-                          weights, dist_spatial=dist_spatial)
+                          spatial.montecarlo_fn, means, stds,
+                          weights, distribution_spatial=dist_spatial)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,11 @@
 *.tmp_profiler_run
 .vscode
 html
-examples/example_*
+/examples/data/example_mhvsr_io.csv
+/examples/data/preprocess.json
+/examples/data/process.json
+/examples/data/UT*.png
+/examples/data/UT*.csv
 
 # Folders
 .ipynb_checkpoints

@@ -1,7 +1,7 @@
 .. _cli:
 
-CLI Reference
-=============
+Command Line Interface (CLI) Reference
+======================================
 
 .. click:: hvsrpy.cli:cli
    :prog: hvsrpy

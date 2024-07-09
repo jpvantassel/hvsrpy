@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+matplotlib = "*"
+numba = "*"
+numpy = ">=1.22"
+scipy = "*"
+obspy = "*"
+pandas = "*"
+shapely = "*"
+termcolor = "*"
+click = ">8.0.0"
+pyqt5 = "*"
+hvsrpy = {editable = true, path = "."}
+
+[dev-packages]
+tox = "*"
+jupyterlab = "*"
+coverage = "*"
+sphinx-click = "*"
+hvsrpy = {editable = true, path = "."}
+autopep8 = "*"
+sphinx-rtd-theme = "*"
+
+[requires]
+python_version = ">=3.8"
