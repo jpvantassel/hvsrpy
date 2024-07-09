@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@7.6.7
-  codecov: codecov/codecov@1.0.2
+  coverage-reporter: codacy/coverage-reporter@14.0.0
+  codecov: codecov/codecov@4.1.0
 
 workflows:
   build:
@@ -34,45 +34,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create virtualenv
+          name: Create and Activate Virtual Environment
           command: |
             virtualenv venv
-            . venv/bin/activate
-            mkdir test-results
+            source venv/bin/activate
       - run:
-          name: Install numpy
-          command: |
-            . venv/bin/activate
-            pip install numpy
-      - run:
-          name: Install sigpropy from source
-          command: |
-            . venv/bin/activate
-            pip install git+ssh://git@github.com/jpvantassel/sigpropy.git
-      - run:
-          name: Install hvsrpy and dependencies
-          command: |
-            . venv/bin/activate
-            pip install -e .[dev]
+          name: Install hvsrpy and Dependencies
+            python -m pip install -e .[dev]
       - run:
           name: Run tests
           command: |
-            . venv/bin/activate
             cd test
             coverage run --source=../hvsrpy -m unittest
-      - run:
-          name: Create coverage xml
-          command: |
-            . venv/bin/activate
-            mv test/.coverage test-results
-            cd test-results
-            coverage xml -o cobertura.xml
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-      - codecov/upload:
-          file: test-results/cobertura.xml
+      - codecov/upload
       - coverage-reporter/send_report
 
   test-39:
