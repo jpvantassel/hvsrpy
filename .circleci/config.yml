@@ -16,11 +16,17 @@ workflows:
       - test-310:
           context:
             - docker
+      - test-311:
+          context:
+            - docker
+      - test-312:
+          context:
+            - docker
 
 jobs:
   test-38: &test-template
     docker:
-      - image: cimg/python:3.8.13
+      - image: cimg/python:3.8.19
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
@@ -72,7 +78,7 @@ jobs:
   test-39:
     <<: *test-template
     docker:
-      - image: cimg/python:3.9.13
+      - image: cimg/python:3.9.19
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
@@ -80,7 +86,23 @@ jobs:
   test-310:
     <<: *test-template
     docker:
-      - image: cimg/python:3.10.6
+      - image: cimg/python:3.10.14
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
+
+  test-311:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.11.9
+        auth:
+          username: jpvantassel
+          password: $DOCKER_PASS
+
+  test-312:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.12.4
         auth:
           username: jpvantassel
           password: $DOCKER_PASS
