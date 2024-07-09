@@ -34,22 +34,23 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create and Activate Virtual Environment
+          name: Create and activate virtual environment
           command: |
             virtualenv venv
             source venv/bin/activate
       - run:
-          name: Install hvsrpy and Dependencies
+          name: Install hvsrpy and dependencies
           command: |
             source venv/bin/activate
             python -m pip install -e .[dev]
       - run:
-          name: Run Tests
+          name: Run tests
           command: |
             source venv/bin/activate
             cd test
             coverage run --source=../hvsrpy -m unittest
-            coverage xml -o coverage.xml
+            coverage xml -o cobertura.xml
+            cp cobertura.xml ..
       - codecov/upload
       - coverage-reporter/send_report
 
