@@ -751,7 +751,8 @@ def plot_azimuthal_contour_3d(hvsr,
     ax.plot_surface(np.log10(mesh_frq), mesh_azi, mesh_amp, rstride=1,
                     cstride=1, cmap=cm.plasma, linewidth=0, antialiased=False)
     for coord in list("xyz"):
-        getattr(ax, f"w_{coord}axis").set_pane_color((1, 1, 1))
+        getattr(ax, f"{coord}axis").pane.fill = False
+        getattr(ax, f"{coord}axis").pane.set_edgecolor('white')
     ax.set_xticks(np.log10(np.array([0.01, 0.1, 1, 10, 100])))
     ax.set_xticklabels(["$10^{"+str(x)+"}$" for x in range(-2, 3)])
     ax.set_xlim(np.log10((hvsr.frequency[0], hvsr.frequency[-1])))
