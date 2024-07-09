@@ -19,19 +19,19 @@
 
 import re
 
-NEWLINE = r"[\r\n?|\n]"
+# NEWLINE = r"[\r\n?|\n]"
 
 # DataWrangler | saf
 # ------------------
-saf_npts_expr = f"NDAT = (\d+){NEWLINE}"
-saf_fs_expr = f"SAMP_FREQ = (\d+){NEWLINE}"
-saf_sample_expr = "-?\d+" 
-saf_row_expr = f"^({saf_sample_expr})\s({saf_sample_expr})\s({saf_sample_expr}){NEWLINE}"
-saf_v_ch_expr = f"CH(\d)_ID = V"
-saf_n_ch_expr = f"CH(\d)_ID = N"
-saf_e_ch_expr = f"CH(\d)_ID = E"
-saf_north_rot_expr = "NORTH_ROT = (\d+)"
-saf_version_expr = "SESAME ASCII data format \(saf\) v. (\d)"
+saf_npts_expr = r"NDAT = (\d+)[\r\n?|\n]"
+saf_fs_expr = r"SAMP_FREQ = (\d+)[\r\n?|\n]"
+saf_sample_expr = r"-?\d+" 
+saf_row_expr = r"^(-?\d+)\s(-?\d+)\s(-?\d+)[\r\n?|\n]"
+saf_v_ch_expr = r"CH(\d)_ID = V"
+saf_n_ch_expr = r"CH(\d)_ID = N"
+saf_e_ch_expr = r"CH(\d)_ID = E"
+saf_north_rot_expr = r"NORTH_ROT = (\d+)"
+saf_version_expr = r"SESAME ASCII data format \(saf\) v. (\d)"
 
 saf_npts_exec = re.compile(saf_npts_expr)
 saf_fs_exec = re.compile(saf_fs_expr)
@@ -45,12 +45,12 @@ saf_version_exec = re.compile(saf_version_expr)
 
 # DataWrangler | minishark
 # ------------------------
-mshark_npts_expr = f"#Sample number:\t(\d+){NEWLINE}"
-mshark_fs_expr = f"#Sample rate \(sps\):\t(\d+){NEWLINE}"
-mshark_gain_expr = f"#Gain:\t(\d+){NEWLINE}"
-mshark_conversion_expr = f"#Conversion factor:\t(\d+){NEWLINE}"
-mshark_sample_expr = "-?\d+" 
-mshark_row_expr = f"({mshark_sample_expr})\t({mshark_sample_expr})\t({mshark_sample_expr}){NEWLINE}"
+mshark_npts_expr = r"#Sample number:\t(\d+)[\r\n?|\n]"
+mshark_fs_expr = r"#Sample rate \(sps\):\t(\d+)[\r\n?|\n]"
+mshark_gain_expr = r"#Gain:\t(\d+)[\r\n?|\n]"
+mshark_conversion_expr = r"#Conversion factor:\t(\d+)[\r\n?|\n]"
+mshark_sample_expr = r"-?\d+" 
+mshark_row_expr = r"(-?\d+)\t(-?\d+)\t(-?\d+)[\r\n?|\n]"
 
 mshark_npts_exec = re.compile(mshark_npts_expr)
 mshark_fs_exec = re.compile(mshark_fs_expr)
@@ -60,10 +60,10 @@ mshark_row_exec = re.compile(mshark_row_expr)
 
 # DataWrangler | peer
 # -------------------
-peer_direction_expr = f", (UP|VER|\d|\d\d|\d\d\d|[FGDCESHB][HLGMN][ENZ]){NEWLINE}" 
-peer_npts_expr = "NPTS=\s*(\d+),"
-peer_dt_expr = f"DT=\s*(\d*\.\d+)\s"
-peer_sample_expr = "(-?\d*\.\d+[eE][+-]?\d*)"
+peer_direction_expr = r", (UP|VER|\d|\d\d|\d\d\d|[FGDCESHB][HLGMN][ENZ])[\r\n?|\n]" 
+peer_npts_expr = r"NPTS=\s*(\d+),"
+peer_dt_expr = r"DT=\s*(\d*\.\d+)\s"
+peer_sample_expr = r"(-?\d*\.\d+[eE][+-]?\d*)"
 
 peer_direction_exec = re.compile(peer_direction_expr)
 peer_npts_exec = re.compile(peer_npts_expr)
@@ -72,12 +72,12 @@ peer_sample_exec = re.compile(peer_sample_expr)
 
 # ObjectIO
 # --------
-azimuth_expr = "azimuth (\d+\.\d+) deg | hvsr curve \d+"
+azimuth_expr = r"azimuth (\d+\.\d+) deg | hvsr curve \d+"
 
 azimuth_exec = re.compile(azimuth_expr)
 
 # HvsrGeopsy
 # ----------
-geopsy_line_expr = f"(\d+\.\d+)\t(\d+\.\d+)\t(\d+\.\d+)\t\d+\.\d+{NEWLINE}"
+geopsy_line_expr = r"(\d+\.\d+)\t(\d+\.\d+)\t(\d+\.\d+)\t\d+\.\d+[\r\n?|\n]"
 
 geopsy_line_exec = re.compile(geopsy_line_expr)
