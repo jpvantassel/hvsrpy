@@ -40,12 +40,14 @@ jobs:
             source venv/bin/activate
       - run:
           name: Install hvsrpy and Dependencies
+          command: |
             python -m pip install -e .[dev]
       - run:
-          name: Run tests
+          name: Run Tests
           command: |
             cd test
             coverage run --source=../hvsrpy -m unittest
+            coverage xml -o coverage.xml
       - codecov/upload
       - coverage-reporter/send_report
 
