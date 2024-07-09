@@ -375,6 +375,8 @@ TRADITIONAL_PROCESSING_REGISTER = {
     "arithmetic_mean": traditional_hvsr_processing,
     "squared_average": traditional_hvsr_processing,
     "quadratic_mean": traditional_hvsr_processing,
+    "root_mean_square": traditional_hvsr_processing,
+    "effective_amplitude_spectrum" : traditional_hvsr_processing,
     "geometric_mean": traditional_hvsr_processing,
     "total_horizontal_energy": traditional_hvsr_processing,
     "vector_summation": traditional_hvsr_processing,
