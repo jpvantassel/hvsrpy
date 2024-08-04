@@ -26,7 +26,7 @@ import re
 saf_npts_expr = r"NDAT = (\d+)[\r\n?|\n]"
 saf_fs_expr = r"SAMP_FREQ = (\d+)[\r\n?|\n]"
 saf_sample_expr = r"-?\d+" 
-saf_row_expr = r"^(-?\d+)\s(-?\d+)\s(-?\d+)[\r\n?|\n]"
+saf_row_expr = r"^(-?\d+.?\d*)\s(-?\d+.?\d*)\s(-?\d+.?\d*)[\r\n?|\n]"
 saf_v_ch_expr = r"CH(\d)_ID = V"
 saf_n_ch_expr = r"CH(\d)_ID = N"
 saf_e_ch_expr = r"CH(\d)_ID = E"
