@@ -2,7 +2,7 @@
 
 > Joseph P. Vantassel, [jpvantassel.com](https://www.jpvantassel.com/)
 
-[![DOI](https://zenodo.org/badge/219310971.svg)](https://zenodo.org/badge/latestdoi/219310971)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12735911.svg)](https://doi.org/10.5281/zenodo.12735911)
 [![PyPI - License](https://img.shields.io/pypi/l/hvsrpy)](https://github.com/jpvantassel/hvsrpy/blob/main/LICENSE.txt)
 [![CircleCI](https://circleci.com/gh/jpvantassel/hvsrpy.svg?style=svg)](https://circleci.com/gh/jpvantassel/hvsrpy)
 [![Documentation Status](https://readthedocs.org/projects/hvsrpy/badge/?version=latest)](https://hvsrpy.readthedocs.io/en/latest/?badge=latest)
