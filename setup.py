@@ -75,7 +75,7 @@ setup(
                       'pandas', 'shapely', 'termcolor', 'matplotlib',
                       'click>8.0.0', 'numba', 'scikit-learn'],
     extras_require={
-        'dev': ['tox', 'jupyterlab', 'coverage', 'sphinx', 'sphinx_rtd_theme', 'sphinx-click', 'autopep8'],
+        'dev': ['tox', 'jupyterlab', 'coverage', 'sphinx', 'sphinx_rtd_theme', 'sphinx-click', 'autopep8', 'build', 'twine'],
     },
     package_data={
     },

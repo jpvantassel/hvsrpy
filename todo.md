@@ -12,3 +12,4 @@
 - Anthropogenic peak pre-processing.
 - Include FAS output in HVSR.
 - HVSR forward modeling.
+- Move to pyproject.toml
