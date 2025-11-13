@@ -792,8 +792,8 @@ def plot_azimuthal_summary(hvsr,
                            plot_peak_individual_invalid_curves=False,
                            ):  # pragma: no cover
 
-    fig = plt.figure(figsize=(6, 5), dpi=150)
-    gs = fig.add_gridspec(nrows=4, ncols=2, wspace=0.3,
+    fig = plt.figure(figsize=(6.5, 5), dpi=150)
+    gs = fig.add_gridspec(nrows=4, ncols=2, wspace=0.15,
                           hspace=0.2, width_ratios=(1.2, 0.8))
     ax0 = fig.add_subplot(gs[0:3, 0:1], projection='3d')
     ax1 = fig.add_subplot(gs[0:2, 1:2])
@@ -836,6 +836,7 @@ def plot_azimuthal_summary(hvsr,
         ax=ax
     )
     ax.get_legend().remove()
+    ax.set_xlim(hvsr.frequency[0], hvsr.frequency[-1])
     ax.legend(loc="lower left", bbox_to_anchor=(-1.9, -0.1), ncols=2)
 
     if plot_peak_mean_curve:
