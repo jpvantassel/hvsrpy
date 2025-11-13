@@ -17,5 +17,4 @@
 
 """Metadata for hvsrpy."""
 
-# only used so far for hvsrweb update
-__version__ = "2.1.0"
+__version__ = "2.2.0"

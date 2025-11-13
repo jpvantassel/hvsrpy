@@ -4,12 +4,14 @@
 
 ## In-Progress for Upcoming Release (v2.2.0)
 
+- Example notebook for `plot_azimuthal_contour_2d_polar`
+- Move to pyproject.toml
+- Include FAS output in HVSR.
+
 ## Under Consideration for a Future Release
 
 ## Unassigned
 
 - Automatic consideration of multiple peaks.
 - Anthropogenic peak pre-processing.
-- Include FAS output in HVSR.
 - HVSR forward modeling.
-- Move to pyproject.toml
