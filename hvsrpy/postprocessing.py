@@ -39,6 +39,7 @@ __all__ = [
     "plot_pre_and_post_rejection",
     "summarize_hvsr_statistics",
     "plot_azimuthal_contour_2d",
+    "plot_azimuthal_contour_2d_polar",
     "plot_azimuthal_contour_3d",
     "plot_azimuthal_summary",
     "plot_voronoi",
@@ -726,6 +727,58 @@ def plot_azimuthal_contour_2d(hvsr,
 
     if ax_was_none:
         return (fig, (ax, cax))
+
+
+def plot_azimuthal_contour_2d_polar(hvsr,
+                                    distribution_mc="lognormal",
+                                    contourf_kwargs=None,
+                                    ):  # pragma: no cover
+    # prepare figure
+    fig = plt.figure(figsize=(3, 3), dpi=150)
+    gs = fig.add_gridspec(nrows=1, ncols=2, wspace=0.35,
+                          width_ratios=(1, 0.05))
+    ax = fig.add_subplot(gs[0, 0], projection='polar')
+    cax = fig.add_subplot(gs[0, 1])
+
+    # prepare dat
+    frequencies, azimuths = np.meshgrid(hvsr.frequency,
+                                        np.radians(hvsr.azimuths))
+    mean_curves = hvsr.mean_curve_by_azimuth(distribution=distribution_mc)
+    azimuths = np.vstack((azimuths, azimuths+np.pi, azimuths[0:1, :]+2*np.pi))
+    frequencies = np.vstack((frequencies, frequencies, frequencies[0:1, :]))
+    amplitudes = np.vstack((mean_curves, mean_curves, mean_curves[0:1, :]))
+
+    # contourf plot
+    default_contourf_kwargs = dict(cmap=cm.plasma, levels=10)
+    if contourf_kwargs is None:
+        contourf_kwargs = {}
+    contourf_kwargs = {**default_contourf_kwargs, **contourf_kwargs}
+    contour = ax.contourf(azimuths, frequencies, amplitudes, **contourf_kwargs)
+
+    # customize axes
+    ax.set_rscale("log")
+    rticks = np.array([0.001, 0.03, 0.01, 0.03, 0.1,
+                      0.3, 1, 3, 10, 30, 100, 300])
+    rticks = rticks[np.logical_and(rticks > np.min(
+        frequencies), rticks < np.max(frequencies))]
+    ax.set_rticks(rticks)
+    ax.set_yticklabels([str(rtick) for rtick in rticks])
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction("clockwise")
+    ax.set_rlabel_position(135)
+    ax.grid(False, axis="x")
+    ax.tick_params(axis='y', colors='white')
+
+    # plot colorbar
+    if np.max(amplitudes) < 6.5:
+        ticks = np.arange(0, 7, 1)
+    elif np.max(amplitudes) < 14:
+        ticks = np.arange(0, 16, 2)
+    else:
+        ticks = np.arange(0, (np.max(amplitudes)//5+1)*5, 5)
+    plt.colorbar(contour, cax=cax, orientation="vertical", ticks=ticks)
+
+    return (fig, (ax, cax))
 
 
 def plot_azimuthal_contour_3d(hvsr,
