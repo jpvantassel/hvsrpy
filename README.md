@@ -102,6 +102,12 @@ New high noise model (NHNM) and new low noise model (NLNM).
 > Peterson, J., (1993). Observation and Modeling of Seismic Background
 > Noise (Open-File Report No. 93–322). U.S. Geologic Survey, Albuquerque, New Mexico.
 
+Polar plots for azimuthal mHVSR.
+
+> Marzorati, S., C. Ladina, E. Falcucci, S. Gori, G. Ameri, and F. Galadini (2011). Site effects
+> “on the rock”: The case of Castelvecchio Subequo (L'Aquila, central Italy), Bull. Earthq. Eng.
+> 9, no. 3, 841–868. https://doi.org/10.1007/s10518-011-9263-5
+
 `hvsrpy` would not exist without the help of many others. As a
 display of our gratitude, we thank them individually
 [here](https://github.com/jpvantassel/hvsrpy/blob/main/thanks.md).
