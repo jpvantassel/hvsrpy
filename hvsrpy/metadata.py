@@ -17,4 +17,5 @@
 
 """Metadata for hvsrpy."""
 
-__version__ = "2.2.0"
+# 2.2.0rc0 was for hvsrweb v0.4.0; issue with ipython display
+__version__ = "2.2.0rc1"

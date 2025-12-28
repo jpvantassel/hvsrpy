@@ -614,6 +614,87 @@ def _read_peer(fnames, obspy_read_kwargs=None, degrees_from_north=None):
     return SeismicRecording3C(ns, ew, vt,
                               degrees_from_north=degrees_from_north, meta=meta)
 
+def _read_trc(fnames, obspy_read_kwargs=None, degrees_from_north=None):
+    """Read seismic data from file in *.trc format.
+
+    .. warning::
+        Private API is subject to change without warning.
+
+    Parameters
+    ----------
+    fnames : str
+        Name of the (*trc), file, full
+        path may be used if desired. The file should contain three
+        traces with the appropriate channel names.
+    obspy_read_kwargs : dict, optional
+        Ignored, kept only to maintain consistency with other read
+        functions.
+    degrees_from_north : float, optional
+        Rotation in degrees of the sensor's north component relative to
+        magnetic north; clock wise positive. Default is 0.0
+        indicating the sensor's north component is aligned with
+        magnetic north.
+
+    Returns
+    -------
+    SeismicRecording3C
+        Initialized 3-component seismic recording object.
+
+    """
+    msg = f"The trc file reader is EXPERIMENTAL, use with caution."
+    warnings.warn(msg, UserWarning)
+
+    if isinstance(fnames, (list, tuple)):
+        msg = f"Only 1 trc file allowed; {len(fnames)} provided."
+        raise ValueError(msg)
+    else:
+        fname = fnames
+
+    with open(fname, "rb") as f:
+        f.seek(16430)
+        sampling_rate_in_hz = int.from_bytes(f.read(2), 'little', signed=False)
+
+        f.seek(16470)
+        channels_guessed = int.from_bytes(f.read(2), 'little', signed=False)
+
+        f.seek(17408)
+        ns_bad = False if f.read(6).decode("utf-8") == "ONTR H" else True
+
+        f.seek(17440)
+        ew_bad = False if f.read(6).decode("utf-8") == "AETS  " else True
+
+        f.seek(17472)
+        vt_bad = False if f.read(6).decode("utf-8") == "PU    " else True
+
+    if channels_guessed in [1, 6]:
+        num_channels = 6
+        data_type = np.uint16
+    else:
+        print("error with channels")
+        raise ValueError("Channel being used is not what was expected.")
+    
+    if ns_bad or ew_bad or vt_bad:
+        print("error with good v bad")
+        raise ValueError("Channel order is not what was expected.")
+
+    raw_data = np.fromfile(fname, offset=49152, dtype=data_type)
+    interleaved_data = raw_data.reshape(-1, num_channels)
+    centered_data = (interleaved_data.astype(np.int32) - 32768).astype(np.int16)
+    
+    dt_in_seconds = (1/sampling_rate_in_hz)
+    ns = TimeSeries(centered_data[:,0], dt_in_seconds=dt_in_seconds)
+    ew = TimeSeries(centered_data[:,1], dt_in_seconds=dt_in_seconds)
+    vt = TimeSeries(centered_data[:,2], dt_in_seconds=dt_in_seconds)
+
+    if degrees_from_north is None:
+        msg = f"The trc file {fname} does not include the "
+        msg += "orientation from north, assuming equal to zero."
+        degrees_from_north = 0
+        warnings.warn(msg, UserWarning)
+
+    meta = {"file name(s)": str(fname)}
+    return SeismicRecording3C(ns, ew, vt,
+                              degrees_from_north=degrees_from_north, meta=meta)
 
 READ_FUNCTION_DICT = {
     "mseed": _read_mseed,
@@ -621,7 +702,8 @@ READ_FUNCTION_DICT = {
     "minishark": _read_minishark,
     "sac": _read_sac,
     "gcf": _read_gcf,
-    "peer": _read_peer
+    "peer": _read_peer,
+    "trc": _read_trc,
 }
 
 
