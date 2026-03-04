@@ -29,6 +29,8 @@ __all__ = [
     "HvsrPreProcessingSettings",
     "PsdPreProcessingSettings",
     "PsdProcessingSettings",
+    "FasPreProcessingSettings",
+    "FasProcessingSettings",
     "HvsrTraditionalProcessingSettings",
     "HvsrTraditionalSingleAzimuthProcessingSettings",
     "HvsrTraditionalRotDppProcessingSettings",
@@ -331,6 +333,154 @@ class PsdPreProcessingSettings(PreProcessingSettings):
         self.instrument_transfer_function = instrument_transfer_function
         self.differentiate = differentiate
         self.preprocessing_method = preprocessing_method
+
+
+class FasPreProcessingSettings(PreProcessingSettings):
+    def __init__(self,
+                 hvsrpy_version=__version__,
+                 orient_to_degrees_from_north=0.,
+                 filter_corner_frequencies_in_hz=[None, None],
+                 window_length_in_seconds=60.,
+                 detrend="linear",
+                 ignore_dissimilar_time_step_warning=False,
+                 window_type_and_width=["tukey", 0.1],
+                 fft_settings=None,
+                 instrument_transfer_function=None,
+                 differentiate=False,
+                 preprocessing_method="fas",
+                 ):
+        """Initialize ``FasPreProcessingSettings`` object.
+
+        Parameters
+        ----------
+        hvsrpy_version : str
+            Denotes the version of ``hvsrpy`` used to create the
+            ``Settings`` object. Should not be changed.
+        orient_to_degrees_from_north : float, optional
+            New sensor orientation in degrees from north
+            (clockwise positive). The sensor's north component will be
+            oriented such that it is aligned with the defined
+            orientation.
+        filter_corner_frequencies_in_hz : list of float or None, optional
+            Butterworth filter's corner frequencies in Hz. ``None`` can
+            be used to specify a one-sided filter. For example a high
+            pass filter at 3 Hz would be specified as
+            ``[3, None]``. Default is ``[None, None]`` indicating no
+            filtering will be performed.
+        window_length_in_seconds : float or None, optional
+            Duration length of each split, default is ``60.`` indicating
+            all records will be split into 60-second windows. Use
+            ``None`` to skip splitting records into windows during
+            pre-processing.
+        detrend : {"linear", "constant", "none"}, optional
+            Type of detrending. If ``detrend == "linear"`` (default), the
+            result of a linear least-squares fit to data is subtracted
+            from data. If ``detrend == "constant"``, only the mean of data
+            is subtracted. If ``detrend == "none"``, no detrend is
+            performed. Detrend is done on a window-by-window basis.
+        ignore_dissimilar_time_step_warning : bool, optional
+            If ``True`` a warning will not be raised if records have
+            different time steps, default is ``False`` (i.e., a warning
+            will be raised).
+        window_type_and_width : list, optional
+            A list with entries like ``["tukey", 0.1]`` that control the
+            window type and width, respectively.
+        fft_settings : dict or None, optional
+            Custom settings for ``np.fft.rfft``, default is ``None``
+            indicating ``hvsrpy`` defaults will be used.
+        instrument_transfer_function : InstrumentTransferFunction, optional
+            If the sensor's frequency response is provided it will be
+            removed, default is ``None`` meaning no instrument
+            correction is performed.
+        differentiate : bool, optional
+            If ``True`` the provided signal will be differentiated,
+            default is ``False``.
+        preprocessing_method : str, optional
+            Defines pre-processing for later reference, default is
+            ``'fas'``. Should not be changed.
+
+        Returns
+        -------
+        FasPreProcessingSettings
+            Object contains all user-defined settings to control
+            preprocessing of microtremor or earthquake recordings
+            in preparation for FAS processing.
+
+        """
+        # Need window_type_and_width in FAS preprocessing for use
+        # with differentiation and/or instrument_transfer_function.
+        super().__init__(hvsrpy_version=hvsrpy_version,
+                         orient_to_degrees_from_north=orient_to_degrees_from_north,
+                         filter_corner_frequencies_in_hz=filter_corner_frequencies_in_hz,
+                         window_length_in_seconds=window_length_in_seconds,
+                         detrend=detrend,
+                         ignore_dissimilar_time_step_warning=ignore_dissimilar_time_step_warning)
+        self.attrs.extend(["window_type_and_width",
+                           "fft_settings",
+                           "instrument_transfer_function",
+                           "differentiate",
+                           "preprocessing_method",
+                           ])
+        self.window_type_and_width = window_type_and_width
+        self.fft_settings = fft_settings
+        self.instrument_transfer_function = instrument_transfer_function
+        self.differentiate = differentiate
+        self.preprocessing_method = preprocessing_method
+
+
+class FasProcessingSettings(Settings):
+    def __init__(self,
+                 hvsrpy_version=__version__,
+                 window_type_and_width=["tukey", 0.1],
+                 smoothing=dict(operator="konno_and_ohmachi",
+                                bandwidth=40,
+                                center_frequencies_in_hz=np.geomspace(0.1, 50, 200)),
+                 fft_settings=None,
+                 handle_dissimilar_time_steps_by="keeping_majority_time_step",
+                 processing_method="fas",
+                 ):
+        """Initialize ``FasProcessingSettings`` object.
+
+        Parameters
+        ----------
+        hvsrpy_version : str
+            Denotes the version of ``hvsrpy`` used to create the
+            ``Settings`` object. Should not be changed.
+        window_type_and_width : list, optional
+            A list with entries like ``["tukey", 0.1]`` that control the
+            window type and width, respectively.
+        smoothing : dict, optional
+            Smoothing information like ``dict(operator="konno_and_ohmachi",
+            bandwidth=40, center_frequencies_in_hz=np.geomspace(0.1, 50, 200))``.
+        fft_settings : dict or None, optional
+            Custom settings for ``np.fft.rfft``, default is ``None``
+            indicating ``hvsrpy`` defaults will be used.
+        handle_dissimilar_time_steps_by : {"frequency_domain_resampling", "keeping_smallest_time_step", "keeping_majority_time_step"}, optional
+            Method to resolve multiple records with a different
+            time step, default is ``"keeping_majority_time_step"``.
+        processing_method : str, optional
+            Defines processing_method for later reference, default is
+            ``'fas'``. Should not be changed.
+
+        Returns
+        -------
+        FasProcessingSettings
+            Object contains all user-defined settings to control
+            FAS processing of microtremor or earthquake recordings.
+
+        """
+        super().__init__(hvsrpy_version=hvsrpy_version)
+        self.attrs.extend(["window_type_and_width",
+                           "smoothing",
+                           "fft_settings",
+                           "handle_dissimilar_time_steps_by",
+                           "processing_method"
+                           ])
+        self.window_type_and_width = window_type_and_width
+        self.fft_settings = fft_settings
+        self.smoothing = dict(smoothing)
+        self.handle_dissimilar_time_steps_by = handle_dissimilar_time_steps_by
+        self.processing_method = processing_method
 
 
 class PsdProcessingSettings(Settings):

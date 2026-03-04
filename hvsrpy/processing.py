@@ -27,6 +27,7 @@ from .hvsr_diffuse_field import HvsrDiffuseField
 from .timeseries import TimeSeries
 from .settings import HvsrTraditionalSingleAzimuthProcessingSettings
 from .psd import Psd
+from .fas import Fas
 
 
 def arithmetic_mean(ns, ew, settings=None):
@@ -65,7 +66,7 @@ COMBINE_HORIZONTAL_REGISTER = {
     "squared_average": squared_average,
     "quadratic_mean": squared_average,
     "root_mean_square": squared_average,
-    "effective_amplitude_spectrum" : squared_average,
+    "effective_amplitude_spectrum": squared_average,
     "geometric_mean": geometric_mean,
     "total_horizontal_energy": total_horizontal_energy,
     "vector_summation": total_horizontal_energy,
@@ -376,7 +377,7 @@ TRADITIONAL_PROCESSING_REGISTER = {
     "squared_average": traditional_hvsr_processing,
     "quadratic_mean": traditional_hvsr_processing,
     "root_mean_square": traditional_hvsr_processing,
-    "effective_amplitude_spectrum" : traditional_hvsr_processing,
+    "effective_amplitude_spectrum": traditional_hvsr_processing,
     "geometric_mean": traditional_hvsr_processing,
     "total_horizontal_energy": traditional_hvsr_processing,
     "vector_summation": traditional_hvsr_processing,
@@ -512,6 +513,61 @@ def rpsd(records, settings):
                 vt=Psd(fft_frq, psd_vt))
 
 
+def rfas(records, settings):
+    """Compute Fourier amplitude spectra of real-valued, time-domain data.
+
+    records : iterable of SeismicRecording3C
+        Time-domain data in the form of iterable object containing
+        ``SeismicRecording3C`` objects. This is the data that will be
+        processed.
+    settings : FasProcessingSettings
+        ``FasProcessingSettings`` object that controls how the
+        time-domain data will be processed.
+
+    Returns
+    -------
+    Fas
+        Instantiated Fas object according to the processing settings
+        selected.
+
+    """
+    prepare_fft_settings(records, settings)
+    # allocate array for fas results.
+    recording_count = len(records)
+    fcs = np.array(settings.smoothing["center_frequencies_in_hz"])
+    dt = records[0].vt.dt_in_seconds
+    check_nyquist_frequency(dt, fcs)
+    fft_frq = np.fft.rfftfreq(settings.fft_settings["n"], dt)
+    raw_spectra = np.empty((recording_count*3, len(fft_frq)))
+
+    # compute fas
+    for ridx, record in enumerate(records):
+        # window time series to mitigate frequency-domain artifacts.
+        record.window(*settings.window_type_and_width)
+
+        # compute fft.
+        fft_ns = np.abs(rfft(record.ns.amplitude, **settings.fft_settings))
+        fft_ew = np.abs(rfft(record.ew.amplitude, **settings.fft_settings))
+        fft_vt = np.abs(rfft(record.vt.amplitude, **settings.fft_settings))
+
+        # store.
+        raw_spectra[0*recording_count + ridx, :] = fft_ns
+        raw_spectra[1*recording_count + ridx, :] = fft_ew
+        raw_spectra[2*recording_count + ridx, :] = fft_vt
+
+    # smooth all at once to boost performance.
+    operator, bandwidth = settings.smoothing["operator"], settings.smoothing["bandwidth"]
+    smooth_spectra = SMOOTHING_OPERATORS[operator](
+        fft_frq, raw_spectra, fcs, bandwidth)
+
+    return dict(ns=Fas(fcs,
+                       smooth_spectra[0*recording_count:1*recording_count]),
+                ew=Fas(fcs,
+                       smooth_spectra[1*recording_count:2*recording_count]),
+                vt=Fas(fcs,
+                       smooth_spectra[2*recording_count:3*recording_count]))
+
+
 def diffuse_field_hvsr_processing(records, settings):
     prepare_fft_settings(records, settings)
 
@@ -557,7 +613,9 @@ PROCESSING_METHODS = {
     "azimuthal": azimuthal_hvsr_processing,
     "diffuse_field": diffuse_field_hvsr_processing,
     "psd": rpsd,
+    "fas": rfas,
 }
+
 
 def process(records, settings):
     """Process time domain data.

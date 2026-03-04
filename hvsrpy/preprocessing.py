@@ -143,6 +143,7 @@ def psd_preprocess(records, settings):
 PREPROCESSING_METHODS = {
     "hvsr": hvsr_preprocess,
     "psd": psd_preprocess,
+    "fas": psd_preprocess,
 }
 
 
