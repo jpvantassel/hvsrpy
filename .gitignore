@@ -20,3 +20,6 @@ scratch
 env
 test/.coverage
 test/htmlcov
+.venv/
+venv/
+env/
