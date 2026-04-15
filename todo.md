@@ -6,6 +6,7 @@
 
 - Move to pyproject.toml
 - Include FAS output in HVSR.
+- Add latest python version.
 
 ## Under Consideration for a Future Release
 
