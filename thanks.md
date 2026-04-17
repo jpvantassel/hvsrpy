@@ -1,12 +1,14 @@
 # *Special Thanks To
 
-> Last update: 5 June 2024
+> Last update: 17 April 2026
 
 - __Dana Brannon__ for developing the first version of the
 _simple_hvsrpy_interface.ipynb_ figure, now included in 
 _example_mhvsr_traditional_window_rejection.ipynb_ example.
 - __Tianjian Cheng__ for providing many helpful test cases from his
 research for validating the calculations in _hvsrpy_.
+- __Cécile Cornou__ for feedback on the terminology used to refer to the
+site's resonance frequency.
 - __Brady Cox__ for providing valuable feedback and support through the
 early development of this project.
 - __Albert Kottke__ for his comments on improving _hvsrpy_,

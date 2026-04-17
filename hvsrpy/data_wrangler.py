@@ -641,9 +641,6 @@ def _read_trc(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         Initialized 3-component seismic recording object.
 
     """
-    msg = f"The trc file reader is EXPERIMENTAL, use with caution."
-    warnings.warn(msg, UserWarning)
-
     if isinstance(fnames, (list, tuple)):
         msg = f"Only 1 trc file allowed; {len(fnames)} provided."
         raise ValueError(msg)
@@ -670,11 +667,9 @@ def _read_trc(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         num_channels = 6
         data_type = np.uint16
     else:
-        print("error with channels")
         raise ValueError("Channel being used is not what was expected.")
     
     if ns_bad or ew_bad or vt_bad:
-        print("error with good v bad")
         raise ValueError("Channel order is not what was expected.")
 
     raw_data = np.fromfile(fname, offset=49152, dtype=data_type)
@@ -691,6 +686,9 @@ def _read_trc(fnames, obspy_read_kwargs=None, degrees_from_north=None):
         msg += "orientation from north, assuming equal to zero."
         degrees_from_north = 0
         warnings.warn(msg, UserWarning)
+
+    msg = f"The trc file reader is EXPERIMENTAL, use with caution."
+    warnings.warn(msg, UserWarning)
 
     meta = {"file name(s)": str(fname)}
     return SeismicRecording3C(ns, ew, vt,

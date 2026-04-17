@@ -637,8 +637,8 @@ def summarize_hvsr_statistics(hvsr,
             ])
 
         df = pd.DataFrame(data=data, columns=columns,
-                          index=["Resonant Site Frequency, fn (Hz)",
-                                 "Resonant Site Period, Tn (s)",
+                          index=["Resonance Frequency, fn (Hz)",
+                                 "Resonance Period, Tn (s)",
                                  "Resonance Amplitude, An"])
         mc_f, mc_a = hvsr.mean_curve_peak(distribution=distribution_mc)
         caption = f"The peak of the mean curve is at {mc_f:.3f} Hz with amplitude {mc_a:.3f}."
@@ -933,7 +933,7 @@ def plot_voronoi(valid_sensor_coordinates,
                                vmax=np.max(valid_mean_fn))
     cmap = cm.autumn
     mpl.colorbar.ColorbarBase(cax, cmap=cmap, norm=norm,
-                              label="Resonant Frequency (Hz)")
+                              label="Resonance Frequency (Hz)")
 
     # plot tesselations
     for _dat, vertices in zip(valid_mean_fn, tesselation_vertices):
@@ -1012,8 +1012,8 @@ def summarize_spatial_statistics(spatial_mean,
     df = pd.DataFrame(data=data,
                       columns=columns,
                       index=[
-                          "Resonant Site Frequency, fn (Hz)",
-                          "Resonant Site Period, Tn (s)",
+                          "Resonance Frequency, fn (Hz)",
+                          "Resonance Period, Tn (s)",
                       ])
 
     s = df.style.format(precision=3)

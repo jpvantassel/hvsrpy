@@ -121,7 +121,7 @@ open-source software, including:
 including: MiniSEED, SAF, MiniShark, SAC, GCF, and PEER.
 -   Multiple methods to combine the horizontal components including: arithmetic_mean, squared-average, quadratic-mean, geometric-mean, total-horizontal-energy, vector-summation, maximum-horizontal-value,
 rotD50, or single-azimuth.
--   Ability to use a lognormal distribution for the site resonant
+-   Ability to use a lognormal distribution for the site resonance
 frequency (`fn`) so the uncertainty in `fn` can be represented consistently
 in frequency and period.
 -   Direct access to the raw HVSR data from each time window and azimuth
